@@ -221,6 +221,7 @@ desc: 愛染明王 (Aizen Myo-o), a fierce young man with spiky blond hair, a go
 
 ## dulao
 refs: ../huangquan-episodes/characters/gallery/杜先生/1.jpg ../huangquan-episodes/characters/gallery/杜先生/3.jpg
+px: --ban #e2b65a,#f3d58c --gamma 0.75
 desc: 杜老大 (Boss Du of the Black Dragon gang, Mr. Du's counterpart on Gengyin Earth), the same face as the reference man: middle-aged East Asian man, swept-back salt-and-pepper grey hair, round thin glasses, grey goatee, a small gold earring; dressed as a gangster boss: black open-collar shirt with the edge of a dragon tattoo visible on the chest, black trousers, black shoes.
 
 ## tiedan
@@ -229,6 +230,7 @@ desc: 鐵蛋 (Tiedan), a high-school girl spirit medium: long straight black hai
 
 ## guangtou
 refs: 
+px: --ban #e2b65a,#f3d58c --gamma 0.75
 desc: 光頭小弟 (the bald henchman of the Black Dragon gang), a stocky young man with a shaved bald head, thick eyebrows, wearing a black tank top under an open short-sleeve shirt, black trousers, sneakers, carrying a wooden baseball bat on his shoulder; tough but goofy expression.
 
 ## gengyin
@@ -255,6 +257,7 @@ desc: 小樂 (Xiaole), a young woman with a chin-length brown bob, a cream beret
 
 ## daniu
 refs: ../huangquan-puzzle/art/daniu.webp
+px: --ban #e2b65a,#f3d58c --gamma 0.75
 desc: 大牛 (Daniu), a muscular bald man with a small goatee, white tank top, dark trousers, holding a wooden ancestral tablet with both hands; remorseful expression. Match the photo reference.
 
 ## moti
@@ -263,10 +266,12 @@ desc: 茉蒂 (Moti), a punk young woman with a black bob under a cream knit bean
 
 ## abinmom
 refs: ../huangquan-puzzle/art/abinmom.webp
+px: --ban #e2b65a,#f3d58c --gamma 0.75
 desc: 阿斌的媽媽 (Abin's mom), a middle-aged woman with curly shoulder-length black hair, a pink t-shirt with a cute white bunny face, blue jeans; kind, teary smile. Match the photo reference.
 
 ## laoren
 refs: ../huangquan-episodes/characters/gallery/老人/1.jpg ../huangquan-episodes/characters/gallery/老人/2.jpg
+px: --ban #e2b65a,#f3d58c --gamma 0.75
 desc: 獨居的爺爺 (the old man living alone), a skinny elderly East Asian man, bald with short white hair on the sides, gentle smile, wearing a white-and-blue striped polo shirt and grey slacks, holding a small red envelope. Match the photo reference.
 
 ## waipo
@@ -290,6 +295,7 @@ desc: 林怡曼 (Lin Yiman), a high-school girl with long black hair and a small
 ## linbobo
 refs: ../huangquan-puzzle/art/vn/linbobo-normal.webp
 face: only
+px: --ban #e2b65a,#f3d58c --gamma 0.75
 desc: 林伯伯 (Uncle Lin), a weathered middle-aged East Asian man with short black hair, navy polo shirt, dark trousers. Match the photo reference.
 
 ## bohong
@@ -300,6 +306,7 @@ desc: 王柏宏 (Wang Bohong), a young man with short black hair, black track ja
 ## afu
 refs: ../huangquan-puzzle/art/afu.webp
 face: only
+px: --ban #e2b65a,#f3d58c --gamma 0.75
 desc: 阿副 (Afu), a firefighter with long wet black hair and stubble, soot on his face, wearing a red-and-black firefighter turnout coat with yellow reflective stripes. Match the photo reference.
 
 ## xiaoqing

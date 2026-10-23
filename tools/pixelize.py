@@ -281,6 +281,8 @@ def do_face(src, dst, opts):
 
 
 def do_preview(folder, dst, only=None):
+    if only:
+        only = [n for n in only if os.path.exists(os.path.join(folder, n + ".png"))]
     names = only or sorted(f[:-4] for f in os.listdir(folder)
                    if f.endswith(".png") and not f.endswith("-face.png") and not f.startswith("_"))
     S = 3
