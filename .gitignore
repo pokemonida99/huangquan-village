@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.DS_Store
+# 生圖原檔（大，不部署）
+art/_raw/
+tools/chars_src/
+concept/*.png
+concept/*.log
+refs/

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#16142b">
+<title>三途川物語</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="view"></canvas>
+
+  <header id="topbar">
+    <div class="pill" id="tb-money" title="冥紙"><span class="ico">💴</span><b>0</b></div>
+    <div class="pill" id="tb-merit" title="功德"><span class="ico">🪷</span><b>0</b></div>
+    <div class="pill" id="tb-date"><b>第1年 1月 第1週</b></div>
+    <div class="pill" id="tb-star" title="街區評價"><b>☆0</b></div>
+    <div class="pill" id="tb-helped"><span class="ico">🙏</span>已幫助 <b>0</b> 人</div>
+    <button class="pill btn" id="tb-speed" title="速度">▶</button>
+  </header>
+
+  <div id="weekbar"><i></i></div>
+  <div id="goal" hidden></div>
+  <div id="toasts"></div>
+  <div id="notices"></div>
+
+  <div id="placebar" hidden>
+    <span id="place-label"></span>
+    <button id="place-ok">✔ 建造</button>
+    <button id="place-cancel">✕</button>
+  </div>
+
+  <nav id="bottombar">
+    <button data-panel="build"><span>🏠</span>建設</button>
+    <button data-panel="residents"><span>👻</span>居民</button>
+    <button data-panel="patrol"><span>🏮</span>巡守</button>
+    <button data-panel="items"><span>🧧</span>道具</button>
+    <button data-panel="settings"><span>⚙️</span>設定</button>
+  </nav>
+
+  <section id="sheet" hidden>
+    <div class="sheet-head"><h2 id="sheet-title"></h2><button id="sheet-close">✕</button></div>
+    <div id="sheet-body"></div>
+  </section>
+
+  <div id="dialog" hidden>
+    <div class="dlg-title" id="dlg-title" hidden></div>
+    <div class="dlg-box">
+      <div class="dlg-face" id="dlg-face"></div>
+      <div class="dlg-text"><div class="dlg-name" id="dlg-name"></div><div id="dlg-line"></div><div class="dlg-ep" id="dlg-ep"></div></div>
+      <div class="dlg-next">▼</div>
+    </div>
+  </div>
+
+  <div id="modal" hidden></div>
+</div>
+
+<!-- 內建範例資料（data/*.js 缺的時候補位） -->
+<script src="src/sample-data.js"></script>
+<!-- 引擎 -->
+<script src="src/util.js"></script>
+<script src="src/data.js"></script>
+<script src="src/assets.js"></script>
+<script src="src/map.js"></script>
+<script src="src/state.js"></script>
+<script src="src/entities.js"></script>
+<script src="src/sim.js"></script>
+<script src="src/story.js"></script>
+<script src="src/battle.js"></script>
+<script src="src/render.js"></script>
+<script src="src/input.js"></script>
+<script src="src/ui.js"></script>
+<script src="src/main.js"></script>
+<!-- 最後：依序載入 data/*.js（有就用、沒有就跳過），然後開機 -->
+<script src="src/boot.js"></script>
+</body>
+</html>

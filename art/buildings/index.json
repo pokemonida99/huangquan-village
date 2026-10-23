@@ -1,0 +1,356 @@
+{
+ "yakiniku": {
+  "w": 64,
+  "h": 80,
+  "size": [
+   2,
+   2
+  ],
+  "damaged": "art/buildings/yakiniku-damaged.png"
+ },
+ "tattoo": {
+  "w": 64,
+  "h": 54,
+  "size": [
+   2,
+   2
+  ],
+  "damaged": "art/buildings/tattoo-damaged.png"
+ },
+ "photo": {
+  "w": 64,
+  "h": 66,
+  "size": [
+   2,
+   2
+  ],
+  "damaged": "art/buildings/photo-damaged.png"
+ },
+ "salon": {
+  "w": 64,
+  "h": 58,
+  "size": [
+   2,
+   1
+  ],
+  "damaged": "art/buildings/salon-damaged.png"
+ },
+ "mengpo": {
+  "w": 64,
+  "h": 54,
+  "size": [
+   2,
+   1
+  ]
+ },
+ "manga": {
+  "w": 64,
+  "h": 54,
+  "size": [
+   2,
+   2
+  ]
+ },
+ "sushi": {
+  "w": 64,
+  "h": 54,
+  "size": [
+   2,
+   2
+  ]
+ },
+ "paper": {
+  "w": 64,
+  "h": 55,
+  "size": [
+   2,
+   1
+  ]
+ },
+ "incense": {
+  "w": 32,
+  "h": 28,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "flower": {
+  "w": 32,
+  "h": 25,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "teahouse": {
+  "w": 64,
+  "h": 57,
+  "size": [
+   2,
+   1
+  ]
+ },
+ "inn": {
+  "w": 64,
+  "h": 64,
+  "size": [
+   2,
+   2
+  ]
+ },
+ "tower": {
+  "w": 64,
+  "h": 128,
+  "size": [
+   2,
+   2
+  ]
+ },
+ "nightstall": {
+  "w": 32,
+  "h": 33,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "cityhall": {
+  "w": 96,
+  "h": 94,
+  "size": [
+   3,
+   2
+  ]
+ },
+ "temple": {
+  "w": 64,
+  "h": 60,
+  "size": [
+   2,
+   2
+  ]
+ },
+ "gecko": {
+  "w": 96,
+  "h": 75,
+  "size": [
+   3,
+   2
+  ]
+ },
+ "festival": {
+  "w": 96,
+  "h": 72,
+  "size": [
+   3,
+   3
+  ]
+ },
+ "station": {
+  "w": 96,
+  "h": 77,
+  "size": [
+   3,
+   2
+  ],
+  "damaged": "art/buildings/station-damaged.png"
+ },
+ "higanbana": {
+  "w": 32,
+  "h": 24,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "swing": {
+  "w": 32,
+  "h": 34,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "bench": {
+  "w": 32,
+  "h": 17,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "garden": {
+  "w": 64,
+  "h": 48,
+  "size": [
+   2,
+   2
+  ]
+ },
+ "lantern": {
+  "w": 32,
+  "h": 71,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "clinic": {
+  "w": 64,
+  "h": 54,
+  "size": [
+   2,
+   1
+  ]
+ },
+ "costume": {
+  "w": 64,
+  "h": 55,
+  "size": [
+   2,
+   1
+  ]
+ },
+ "tattoo2": {
+  "w": 64,
+  "h": 59,
+  "size": [
+   2,
+   1
+  ]
+ },
+ "mala": {
+  "w": 64,
+  "h": 67,
+  "size": [
+   2,
+   2
+  ]
+ },
+ "sawhall": {
+  "w": 64,
+  "h": 54,
+  "size": [
+   2,
+   2
+  ]
+ },
+ "shrine": {
+  "w": 64,
+  "h": 56,
+  "size": [
+   2,
+   2
+  ]
+ },
+ "yimin": {
+  "w": 64,
+  "h": 51,
+  "size": [
+   2,
+   2
+  ]
+ },
+ "house": {
+  "w": 32,
+  "h": 32,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "dogpark": {
+  "w": 32,
+  "h": 38,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "catstop": {
+  "w": 32,
+  "h": 29,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "barrier": {
+  "w": 32,
+  "h": 36,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "fries": {
+  "w": 32,
+  "h": 35,
+  "size": [
+   1,
+   1
+  ]
+ },
+ "redbridge": {
+  "w": 32,
+  "h": 65,
+  "size": [
+   1,
+   2
+  ]
+ },
+ "naihe": {
+  "w": 64,
+  "h": 95,
+  "size": [
+   2,
+   3
+  ]
+ },
+ "yakiniku-damaged": {
+  "w": 64,
+  "h": 68,
+  "size": [
+   2,
+   2
+  ],
+  "of": "yakiniku"
+ },
+ "tattoo-damaged": {
+  "w": 64,
+  "h": 59,
+  "size": [
+   2,
+   2
+  ],
+  "of": "tattoo"
+ },
+ "photo-damaged": {
+  "w": 64,
+  "h": 60,
+  "size": [
+   2,
+   2
+  ],
+  "of": "photo"
+ },
+ "salon-damaged": {
+  "w": 64,
+  "h": 56,
+  "size": [
+   2,
+   1
+  ],
+  "of": "salon"
+ },
+ "station-damaged": {
+  "w": 96,
+  "h": 76,
+  "size": [
+   3,
+   2
+  ],
+  "of": "station"
+ }
+}

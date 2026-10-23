@@ -1,0 +1,91 @@
+{
+ "file": "art/tiles/worldmap.png",
+ "w": 360,
+ "h": 540,
+ "scale": 2,
+ "note": "x, y＝地點圖示中心（worldmap.png 原尺寸像素）；地名牌建議畫在 (x, y + 22)。id 給 C 線 data/maps.js 對應用。",
+ "places": [
+  {
+   "id": "sanzu",
+   "name": "三途川",
+   "home": true,
+   "x": 134,
+   "y": 243
+  },
+  {
+   "id": "saw",
+   "name": "刀鋸地獄",
+   "open": {
+    "start": true
+   },
+   "x": 60,
+   "y": 60
+  },
+  {
+   "id": "gaoxiong",
+   "name": "庚寅地球・高熊市",
+   "open": {
+    "start": true
+   },
+   "region": "gengyin",
+   "x": 309,
+   "y": 183
+  },
+  {
+   "id": "xinjue",
+   "name": "庚寅地球・心堀江",
+   "open": {
+    "rank": 1
+   },
+   "region": "gengyin",
+   "x": 299,
+   "y": 369
+  },
+  {
+   "id": "seaside",
+   "name": "陽間海邊",
+   "open": {
+    "month": 7
+   },
+   "x": 42,
+   "y": 197
+  },
+  {
+   "id": "ruins",
+   "name": "古神遺跡",
+   "open": {
+    "rank": 2
+   },
+   "x": 190,
+   "y": 60
+  },
+  {
+   "id": "demon2",
+   "name": "魔界第二王國",
+   "open": {
+    "rank": 3
+   },
+   "x": 211,
+   "y": 190
+  },
+  {
+   "id": "demon3",
+   "name": "魔界第三王國",
+   "open": {
+    "rank": 4
+   },
+   "x": 200,
+   "y": 373
+  },
+  {
+   "id": "north",
+   "name": "北境",
+   "open": {
+    "rank": 5
+   },
+   "hidden": true,
+   "x": 81,
+   "y": 404
+  }
+ ]
+}
