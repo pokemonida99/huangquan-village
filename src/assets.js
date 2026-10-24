@@ -18,16 +18,11 @@ window.Assets = (function () {
   function mobSprite(id) { return "art/chars/" + (/^mob-/.test(id) ? id : "mob-" + id) + ".png"; }
 
   function init() {
-    var tidx = HQ.artIndex && HQ.artIndex.tiles;
-    if (tidx) load(tidx.file || tidx.image || "art/tiles/ground.png", function (img) { MapGen.useTileset(img, tidx); });
-    PROPS.forEach(function (p) { load("art/props/" + p + ".png", MapGen.redrawSoon); });
-    var bidx = HQ.artIndex && HQ.artIndex.buildings;
-    D.buildings.forEach(function (b) {
-      if (!b.sprite) return;
-      if (bidx && !bidx[b.id]) return; // 有索引就只載索引列出的，少一堆 404
-      load(b.sprite);
-      if (b.damaged) load(b.damaged);
-    });
+    PROPS.forEach(function (p) { load("art/props/" + p + ".png"); });
+    // 等角建築圖（art/iso/index.json 列出的才有；沒有的建築由 Render 程式畫方塊屋）
+    var iidx = (HQ.artIndex && HQ.artIndex.iso) || {};
+    Object.keys(iidx).forEach(function (id) { if (id[0] !== "_") { load("art/iso/" + id + ".png"); if (iidx[id].damaged) load("art/iso/" + id + "-damaged.png"); } });
+    if (iidx._train) { load("art/iso/train-loco.png"); load("art/iso/train-car.png"); }
     var cidx = HQ.artIndex && HQ.artIndex.chars;
     function tryChar(path, id) { if (cidx && !cidx[id]) return; load(path); }
     D.chars.forEach(function (c) {

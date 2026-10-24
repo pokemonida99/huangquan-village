@@ -74,9 +74,12 @@ HQ.chars = [
     perk: "列車來客 +1",
     sprite: "art/chars/mimi.png", face: "art/chars/mimi-face.png",
     arrive: [
-      ["EP1-03", "列車進站　請引渡貓就位", "車站廣播"],
-      ["EP1-03", "下車的乘客請依手中車票　跟隨相對編號的引渡貓前往地府居所", "車站廣播"],
-      ["EP1-03", "以後我是三途川的引渡貓　你下班要常來陪我玩哦"]
+      [null, "一隻貓從月台跑了過來，在語彤腳邊坐下。", "字卡"],
+      [null, "妳就是新來的實習月老？我是 917 號引渡貓，咪咪。下車的亡魂都是我帶路的。", "mimi"],
+      ["EP1-13", "早上和下午各一班車　其他時間都在睡覺", "mimi"],
+      [null, "所以車站旁邊要有個候車亭，讓我等車的時候可以睡。", "mimi"],
+      ["EP1-03", "以後我是三途川的引渡貓　你下班要常來陪我玩哦", "mimi"],
+      [null, "好，一言為定！", "yutong"]
     ],
     lines: [
       ["EP1-13", "早上和下午各一班車　其他時間都在睡覺"],
@@ -92,8 +95,11 @@ HQ.chars = [
     perk: "悲傷亡魂安心度上升加快",
     sprite: "art/chars/heitang.png", face: "art/chars/heitang-face.png",
     arrive: [
-      ["EP2-02", "我叫黑糖"],
-      ["EP2-02", "他不接受我的安慰　我要怎麼累積功德"]
+      [null, "剛下車的亡魂身邊，坐著一個安安靜靜的少年。", "字卡"],
+      ["EP2-02", "我叫黑糖", "heitang"],
+      [null, "我是慰靈犬。有人陪著，難過的亡魂會比較快安心。", "heitang"],
+      ["EP2-02", "引渡貓和慰靈犬要合作　幫助靈魂適應地府", "mimi"],
+      [null, "那就住下來吧！我幫你蓋一間小屋。", "yutong"]
     ],
     lines: [
       ["EP2-01", "綠色的糖有毒……　你別吃……"],
@@ -110,8 +116,12 @@ HQ.chars = [
     cutin: "異界降臨・閉島繩束",
     sprite: "art/chars/lee.png", face: "art/chars/lee-face.png",
     arrive: [
-      ["EP1-15", "刀鋸使李國志聽令　即日起命你掌管（黃泉燒肉店）", "guanyin"],
-      ["EP1-15", "刀鋸使李國志遵命　謝觀音菩薩賞賜"]
+      [null, "觀音菩薩帶著一個人來到河岸。", "字卡"],
+      ["EP1-15", "刀鋸使李國志聽令　即日起命你掌管黃泉燒肉店", "guanyin"],
+      ["EP1-15", "刀鋸使李國志遵命　謝觀音菩薩賞賜", "lee"],
+      [null, "燒肉店就開在這條河岸上。讓亡魂上路之前，好好吃最後一頓。", "guanyin"],
+      [null, "吃完遺願馬卡龍的亡魂，就能放下執念去投胎。", "lee"],
+      [null, "業鏡羅漢，以後請多指教！", "yutong"]
     ],
     lines: [
       ["EP1-02", "如入火聚　得清涼門"],
@@ -128,8 +138,11 @@ HQ.chars = [
     perk: "燒肉店可多接一桌客人",
     sprite: "art/chars/xiaoyu.png", face: "art/chars/xiaoyu-face.png",
     arrive: [
-      ["SP1-01", "過世後我到地府打工……", "字卡"],
-      ["SP1-01", "先喝點孟婆湯　等等給你們菜單"]
+      [null, "燒肉店來了一位穿粉紅韓服的新店員。", "字卡"],
+      [null, "我是小雨，過世以後就在地府打工，今天起在燒肉店幫忙。", "xiaoyu"],
+      ["EP1-06", "我們可不是一家普通的燒肉店哦", "xiaoyu"],
+      [null, "那我可以當第一位客人嗎？", "yutong"],
+      ["SP1-01", "先喝點孟婆湯　等等給你們菜單", "xiaoyu"]
     ],
     lines: [
       ["EP1-01", "吃下遺願馬卡龍　你將完成心裡的執念"],
@@ -146,7 +159,11 @@ HQ.chars = [
     cutin: "給直升機元氣",
     sprite: "art/chars/dabao.png", face: "art/chars/dabao-face.png",
     arrive: [
-      ["EP1-14", "今天是我的頭七"]
+      [null, "一位金髮的亡魂下了車，站在空地前看了很久。", "字卡"],
+      ["EP1-14", "今天是我的頭七", "dabao"],
+      [null, "我生前是消防員。頭七過了，我想留在這裡，幫亡魂托夢給陽間的人。", "dabao"],
+      ["EP2-01", "心裡想著你思念的對象　只要他沒死就可以", "dabao"],
+      [null, "那這條街就需要一間托夢照相館了！", "yutong"]
     ],
     lines: [
       ["EP2-01", "心裡想著你思念的對象　只要他沒死就可以"],
@@ -162,7 +179,10 @@ HQ.chars = [
     perk: "頭七整理儀容；和照相館相鄰＝頭七套餐",
     sprite: "art/chars/baimei.png", face: "art/chars/baimei-face.png",
     arrive: [
-      ["EP1-14", "我雖然是新人　但活著的時候做了五十年的百元快剪哦"]
+      [null, "燒肉店隔壁的空地前，站著一位戴黑框眼鏡的紫髮女生。", "字卡"],
+      ["EP1-14", "我雖然是新人　但活著的時候做了五十年的百元快剪哦", "baimei"],
+      ["EP1-14", "靈魂都想漂亮的回去　看自己思念的人　在碧落髮廊能讓靈魂變的美美的唷", "baimei"],
+      [null, "那就開一間髮廊吧！", "yutong"]
     ],
     lines: [
       ["EP1-14", "靈魂都想漂亮的回去　看自己思念的人　在碧落髮廊能讓靈魂變的美美的唷"],
@@ -178,7 +198,10 @@ HQ.chars = [
     perk: "任何店都能補位；接待外賓",
     sprite: "art/chars/huji.png", face: "art/chars/huji-face.png",
     arrive: [
-      ["EP2-04", "請在這邊稍等"]
+      [null, "一位戴著粉紅貓耳、拖著粉紅狐尾的女生，在街口發起了傳單。", "字卡"],
+      [null, "我是狐姬，什麼工都打。這條街這麼熱鬧，一定缺人手吧？", "huji"],
+      [null, "缺！非常缺！", "yutong"],
+      [null, "那就說好了。工錢要用功德算喔。", "huji"]
     ],
     lines: [
       ["EP2-06", "是我等了三輩子的人"],
@@ -196,8 +219,11 @@ HQ.chars = [
     cutin: "異界降臨・如墜五里霧",
     sprite: "art/chars/jiuwei.png", face: "art/chars/jiuwei-face.png",
     arrive: [
-      ["EP6-06", "臭神明　不要碰我妹"],
-      ["EP6-06", "謝謝當初你和月老帶我們到三途川修行　不然我也不可能得到赤坂武士的消息", "huji"]
+      [null, "一隻藍色的九尾狐找上門來，劈頭就問狐姬在哪裡。", "字卡"],
+      [null, "這位是……", "yuelao"],
+      ["EP6-06", "臭神明　不要碰我妹", "jiuwei"],
+      ["EP6-04", "姐？", "huji"],
+      [null, "我在這條街設個結界。有我在，魔氣別想靠近我妹。", "jiuwei"]
     ],
     lines: [
       ["EP6-04", "敢欺負我妹"],
@@ -213,7 +239,10 @@ HQ.chars = [
     perk: "甜點回復安心度",
     sprite: "art/chars/yangzi.png", face: "art/chars/yangzi-face.png",
     arrive: [
-      ["EP4-06", "孟婆是很偉大的神　她不止發明孟婆湯和遺願馬卡龍　還研究出各種可以讓靈魂快樂的甜點心", "no7"]
+      [null, "孟婆甜食屋的主人回來了。", "字卡"],
+      ["EP4-06", "孟婆是很偉大的神　她不止發明孟婆湯和遺願馬卡龍　還研究出各種可以讓靈魂快樂的甜點心", "no7"],
+      [null, "有空來店裡坐坐。想吃什麼，七號都會知道。", "yangzi"],
+      [null, "月老看著她的背影，很久都沒有說話。", "字卡"]
     ],
     lines: [
       ["EP4-03", "喜歡我就來找我說話啊　每次來一整個下午　就坐在那邊"],
@@ -228,6 +257,12 @@ HQ.chars = [
     movein: { rank: 1, traits: { 美味: 45 } }, brings: "mengpo",
     perk: "甜食屋推薦最適合的甜點（安心度加成）",
     sprite: "art/chars/no7.png", face: "art/chars/no7-face.png",
+    arrive: [
+      [null, "一位有著機械手臂的魂偶，捧著一盤甜點走了進來。", "字卡"],
+      [null, "我是七號，孟婆甜食屋的店員。我想在這條街開店。", "no7"],
+      ["EP4-06", "搭配我感應情緒的能力　可以推薦給客人最適合的甜食", "no7"],
+      [null, "太好了！甜點也是很多亡魂的心願呢。", "yutong"]
+    ],
     lines: [
       ["EP4-06", "我是最新型的魂偶　我的靈魂核心可以感受人的情緒　感到觀眾開始無聊的時候　我會加些動作　挑起觀眾的情緒"],
       ["EP4-06", "搭配我感應情緒的能力　可以推薦給客人最適合的甜食"],
@@ -241,6 +276,11 @@ HQ.chars = [
     movein: { request: "du-door" }, brings: "tattoo2",
     perk: "分店也能做文印（一天一組）",
     sprite: "art/chars/du.png", face: "art/chars/du-face.png",
+    arrive: [
+      [null, "杜先生答應留下來，顧月老紋身店的分店。", "字卡"],
+      ["EP2-04", "我想幫助相愛的人", "du"],
+      [null, "有你幫忙，每週能做的文印就更多了。", "yuelao"]
+    ],
     lines: [
       ["EP2-02", "我不需要慰靈犬"],
       ["EP2-03", "謝謝你們　我會努力走出來"],
@@ -256,8 +296,10 @@ HQ.chars = [
     cutin: "醫者令・鎮魂",
     sprite: "art/chars/huatuo.png", face: "art/chars/huatuo-face.png",
     arrive: [
-      ["EP5-21", "各位觀眾　大家晚安　我是華佗"],
-      ["EP5-21", "所以這場巡迴演出結束後　我會回去三途川找他"]
+      [null, "月老的好朋友華佗結束了東京的巡迴演出，回到三途川。", "字卡"],
+      [null, "好久不見。聽說你收了個徒弟？", "huatuo"],
+      [null, "她叫語彤。你的醫館，就開在這條街吧。", "yuelao"],
+      ["EP6-08", "在我面前沒有詛咒可以帶走靈魂", "huatuo"]
     ],
     lines: [
       ["EP5-21", "希望各位今晚　能享受忘憂舞的快樂"],
@@ -272,6 +314,12 @@ HQ.chars = [
     movein: { map: "daoju" }, brings: "sawhall",
     perk: "解鎖職業「刀鋸使」",
     sprite: "art/chars/paofu.png", face: "art/chars/paofu-face.png",
+    arrive: [
+      [null, "刀鋸地獄的事平息之後，刀鋸使領班泡芙也來到三途川。", "字卡"],
+      [null, "業鏡羅漢以前是我的同事。這條街要是缺人練功，就來我的道場。", "paofu"],
+      [null, "可以拜託你嗎？", "yutong"],
+      ["EP3-16", "no problem", "paofu"]
+    ],
     lines: [
       ["EP3-16", "這尊要怎麼處理"],
       ["EP3-16", "no problem"],
@@ -284,6 +332,11 @@ HQ.chars = [
     movein: { popularity: 200, traits: { 秩序: 15 } }, brings: null,
     perk: "市役所開放轉職窗口；奧客事件改為加分",
     sprite: "art/chars/xiaomi.png", face: "art/chars/xiaomi-face.png",
+    arrive: [
+      [null, "市役所來了一位新的櫃台人員。", "字卡"],
+      [null, "我是小米。申請令旗、辦轉職，都到櫃台找我。", "xiaomi"],
+      [null, "聽說小米最會對付來鬧事的亡魂了。", "yutong"]
+    ],
     lines: [
       ["EP2-15", "你的情況還不能申請黑令旗"],
       ["EP2-15", "你想幹嘛"],
@@ -296,6 +349,10 @@ HQ.chars = [
     perk: "微笑式神：街區防衛",
     cutin: "微笑式神",
     sprite: "art/chars/lvyi.png", face: "art/chars/lvyi-face.png",
+    arrive: [
+      [null, "市役所又多了一位穿綠衣的職員，臉上一直掛著微笑。", "字卡"],
+      ["EP4-01?", "世間苦難　微笑面對", "lvyi"]
+    ],
     lines: [
       ["EP4-01?", "世間苦難　微笑面對"],
       ["EP4-01?", "魔界第二王國的魔王　利維坦　闖入了三途川"]
@@ -307,8 +364,10 @@ HQ.chars = [
     perk: "守宮廣場的工作功德加成",
     sprite: "art/chars/mi.png", face: "art/chars/mi-face.png",
     arrive: [
+      [null, "守宮廣場蓋好了，一隻戴安全帽的守宮精靈搖搖晃晃地走了出來。", "字卡"],
       ["EP3-03", "這裡由守宮精靈負責維護　是給擅長畫畫的靈魂賺功德的地方", "lee"],
-      ["EP3-03", "他是「謎」　因為近親繁殖而有走路不穩的基因缺陷", "lee"]
+      ["EP3-03", "他是「謎」　因為近親繁殖而有走路不穩的基因缺陷", "lee"],
+      ["EP3-08", "我想存功德去吃遺願馬卡龍", "mi"]
     ],
     lines: [
       ["EP3-08", "我想存功德去吃遺願馬卡龍"],
@@ -322,6 +381,12 @@ HQ.chars = [
     movein: { request: "nova-art" }, brings: "manga",
     perk: "語の漫畫：語彤把爸爸燒來的漫畫整理成店，讓諾瓦從喜歡的事入手學畫",
     sprite: "art/chars/nova.png", face: "art/chars/nova-face.png",
+    arrive: [
+      [null, "戴著獨角鯨帽的諾瓦，抱著畫本跑來找語彤。", "字卡"],
+      [null, "大姐姐，我可以跟你學畫畫嗎？", "nova"],
+      ["EP4-08", "人類的世界好漂亮哦　這麼脆弱的建築　在魔界撐不到三天就毀了", "nova"],
+      [null, "那我們開一間漫畫店，一起畫吧！", "yutong"]
+    ],
     lines: [
       ["SP4-01", "大姐姐　那兩位神明打得贏我爸嗎"],
       ["EP4-08", "人類的世界好漂亮哦　這麼脆弱的建築　在魔界撐不到三天就毀了"],
@@ -335,6 +400,10 @@ HQ.chars = [
     movein: { resident: "mimi", popularity: 300 }, brings: null,
     perk: "列車來客 +1",
     sprite: "art/chars/gongwan.png", face: "art/chars/gongwan-face.png",
+    arrive: [
+      [null, "車站又來了一隻黑色的引渡貓。", "字卡"],
+      [null, "牠是 295 號，貢丸君。以後車站有兩隻貓帶路了！", "mimi"]
+    ],
     lines: [
       ["EP1-03", "這是295號引渡貓「貢丸君」", "lee"],
       ["EP1-03", "老練的橘貓站長　是不會被逗貓棒輕易誘惑", "lee"]
@@ -345,6 +414,10 @@ HQ.chars = [
     movein: { resident: "gongwan", popularity: 600 }, brings: null,
     perk: "列車來客 +1；偶爾和咪咪吵架",
     sprite: "art/chars/cat918.png", face: "art/chars/cat918-face.png",
+    arrive: [
+      [null, "咪咪隔壁的 918 號引渡貓也搬過來了。", "字卡"],
+      ["EP1-13", "車站才不好　隔壁的918號超吵", "mimi"]
+    ],
     lines: [
       ["EP1-13", "車站才不好　隔壁的918號超吵", "mimi"]
     ] },
@@ -356,6 +429,11 @@ HQ.chars = [
     perk: "出征與保衛戰的援軍（冰牆）",
     cutin: "剪刀　石頭　石頭　石頭",
     sprite: "art/chars/leviathan.png", face: "art/chars/leviathan-face.png",
+    arrive: [
+      [null, "那一仗之後，魔界第二王國的魔王利維坦親自來到三途川。", "字卡"],
+      ["EP4-01", "神魔共體啊　歌畫雙絕的小月老　有事想請教", "leviathan"],
+      [null, "……請說。", "yutong"]
+    ],
     lines: [
       ["EP4-01", "神魔共體啊　歌畫雙絕的小月老　有事想請教"],
       ["EP4-07", "我希望諾瓦能變成給魔界帶來美好的人"],
@@ -371,6 +449,10 @@ HQ.chars = [
     perk: "保衛戰援軍：麻將拳、召喚第二王國戰士",
     cutin: "麻將拳",
     sprite: "art/chars/rat.png", face: "art/chars/rat-face.png",
+    arrive: [
+      [null, "一隻騎著粉紅三輪車的倉鼠也跟著來了。", "字卡"],
+      ["EP4-13", "利維坦大人口才不好　派本軍師前來　跟你們解釋本次的襲擊事件", "rat"]
+    ],
     lines: [
       ["EP4-13", "利維坦大人口才不好　派本軍師前來　跟你們解釋本次的襲擊事件"],
       ["EP4-16", "看我的麻將拳"],
@@ -385,6 +467,11 @@ HQ.chars = [
     perk: "中元節陽間海邊的援手；保衛戰守車站",
     cutin: "silence！",
     sprite: "art/chars/qianliyan.png", face: "art/chars/qianliyan-face.png",
+    arrive: [
+      [null, "媽祖的部將千里眼，來三途川幫忙中元節的事。", "字卡"],
+      ["EP4-11", "三途川現在這麼嗨哦", "qianliyan"],
+      [null, "中元節辛苦了！", "yutong"]
+    ],
     lines: [
       ["EP4-09", "silence！"],
       ["EP4-09", "這是順風耳開發的靜音咒　用了就完全聽不到外界的聲音哦"],
@@ -397,6 +484,10 @@ HQ.chars = [
     desc: "柴犬頭的埃及死神阿努柴，哈索爾的部下，常被支開去排隊買和菓子。",
     movein: { month: 8 }, brings: null,
     sprite: "art/chars/shencha.png", face: "art/chars/shencha-face.png",
+    arrive: [
+      [null, "一位柴犬頭的埃及死神，跟在哈索爾後面來了。", "字卡"],
+      [null, "我是神差，哈索爾大人的部下。請多指教。", "shencha"]
+    ],
     lines: [
       ["EP2-15", "是魔氣"],
       ["EP3-08", "不要打了　兩位愛神大人"]
@@ -406,6 +497,11 @@ HQ.chars = [
     desc: "埃及愛神，看到魔就會一掌打死，黏著月老。愛神祭期間來訪。",
     movein: { month: 8 }, brings: null,
     sprite: "art/chars/hathor.png", face: "art/chars/hathor-face.png",
+    arrive: [
+      [null, "愛神祭快到了，埃及的愛神哈索爾來到三途川。", "字卡"],
+      ["EP3-03", "好久不見了　月下底迪", "hathor"],
+      [null, "月老默默躲到了語彤身後。", "字卡"]
+    ],
     lines: [
       ["EP3-03", "好久不見了　月下底迪"],
       ["EP3-10", "我可是有和奈特學過射箭哦"],
@@ -417,6 +513,11 @@ HQ.chars = [
     desc: "希臘愛神維納斯，戴月桂冠、拿豎琴，常迷路，和哈索爾互看不順眼。開了收惡魔的藝術學院。",
     movein: { month: 8 }, brings: null,
     sprite: "art/chars/aphrodite.png", face: "art/chars/aphrodite-face.png",
+    arrive: [
+      [null, "一位戴著月桂冠、抱著豎琴的女神，在車站前迷了路。", "字卡"],
+      ["EP3-05", "我好像又迷路了　那個笨蛋月老　不是說要來機場接我嗎？", "aphrodite"],
+      [null, "這裡是三途川車站喔……我帶您去找師傅吧。", "yutong"]
+    ],
     lines: [
       ["EP3-05", "我好像又迷路了　那個笨蛋月老　不是說要來機場接我嗎？"],
       ["EP3-10", "丘比特的弓術還是我教的"],
@@ -428,6 +529,11 @@ HQ.chars = [
     desc: "日本愛神，畫浮世繪，想收語彤當徒弟，送她仿製甘露寶瓶。",
     movein: { month: 8 }, brings: null,
     sprite: "art/chars/aizen.png", face: "art/chars/aizen-face.png",
+    arrive: [
+      [null, "日本的愛神愛染明王也來了，一路走一路畫。", "字卡"],
+      [null, "他在語彤的畫板前停了下來。", "字卡"],
+      ["EP3-03", "小妹妹畫的真好", "aizen"]
+    ],
     lines: [
       ["EP3-03", "小妹妹畫的真好"],
       ["EP3-03", "我想用浮世繪　跟你的素描比賽"],

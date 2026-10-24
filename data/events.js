@@ -56,17 +56,16 @@ HQ.events = [
   { id: "offering-manga", title: "最新的藍衣小偵探", once: true,
     when: { random: 0.04, resident: ["yutong", "xiaoyu"] },
     lines: [
-      ["EP3-02", "太好看了吧", "xiaoyu"],
-      ["EP3-02", "雖然店裡的客人都不是回頭客　但我也想他們用餐愉快", "yutong"],
       ["EP3-02", "今天有你的貢品哦", "xiaoyu"],
       ["EP3-02", "最新的藍衣小偵探！　還有？", "yutong"],
-      ["EP3-02", "你這個白癡", "yutong"]
+      ["EP3-02", "太好看了吧", "xiaoyu"]
     ],
     effect: { traits: { 思念: 3, 美味: 2 } } },
 
   { id: "offering-doll", title: "三年前沒拿下的娃娃", once: true,
     when: { random: 0.04, resident: "dabao" },
     lines: [
+      [null, "陽間有人燒了一個娃娃下來，附著一張紙條。", "字卡"],
       ["EP1-14", "兄弟……　三年前你沒拿下的娃娃　幫你拿下了", "afu"],
       ["EP1-14", "大寶……　任務結束了　好好休息", "afu"]
     ],
@@ -75,6 +74,7 @@ HQ.events = [
   { id: "offering-letter", title: "給你的掛號信", once: true,
     when: { random: 0.04, resident: ["huji", "yuelao"] },
     lines: [
+      [null, "陽間寄來一封給狐姬的信。", "字卡"],
       ["EP2-14", "有你的供品　想看嗎？", "yuelao"],
       ["EP2-14", "我在陽間還有認識的人活著嗎？", "huji"],
       ["EP2-14", "給神秘的小狐狸　那天我看到是妳替我擋住火勢", "akasaka"],
@@ -91,7 +91,7 @@ HQ.events = [
     when: { random: 0.03, resident: "dabao", rank: 1 },
     lines: [
       ["EP2-08", "恭喜大寶因生前英勇事蹟　入祀忠烈祠　贈予大寶功德值120", "天界通知"],
-      ["EP2-08", "我們四個都可以去北境玩了", "xiaoyu"]
+      [null, "大寶生前在山火裡救人的事，天界記下了。", "字卡"]
     ],
     effect: { merit: 120, next: { event: "palpitation-afu", inWeeks: 0 } } },
 
@@ -147,7 +147,10 @@ HQ.events = [
     lines: [
       [null, "一位亡魂在市役所櫃台拍桌，要求馬上發令旗。", "字卡"],
       ["EP2-15", "你的情況還不能申請黑令旗", "xiaomi"],
-      ["EP2-15", "不用　小米可是對付奧客的專家喲", "yuelao"]
+      [null, "師傅，要不要過去幫忙？", "yutong", {"resident": "xiaomi"}],
+      ["EP2-15", "不用　小米可是對付奧客的專家喲", "yuelao", {"resident": "xiaomi"}],
+      [null, "請、請冷靜一點……", "yutong", {"absent": "xiaomi"}],
+      [null, "那位亡魂罵了半天，才甩門走了。", "字卡", {"absent": "xiaomi"}]
     ],
     effect: { popularity: -10, ifResident: { xiaomi: { popularity: 5, traits: { 秩序: 2 } } } } },
 
@@ -163,6 +166,7 @@ HQ.events = [
   { id: "moki-burst", title: "魔氣暴走",
     when: { trigger: "moki" },
     lines: [
+      [null, "街角冒出一團紫黑色的霧，路過的亡魂都繞開了。", "字卡"],
       ["EP2-15", "是魔氣", "shencha"],
       ["EP2-15", "地府是不允許魔存在的哦", "yuelao"]
     ],
@@ -174,6 +178,7 @@ HQ.events = [
   { id: "yuelao-snack", title: "月老躲髮廊偷吃零食",
     when: { random: 0.04, resident: ["yuelao", "dabao"], building: "salon" },
     lines: [
+      [null, "月老又躲進髮廊了。", "字卡"],
       ["EP3-06", "我櫃子的零食少了好多　你在吃什麼？　是不是我的中元節貢品", "dabao"],
       ["EP3-06", "這是我自己帶的", "yuelao"],
       ["EP3-06", "你屁　一個埃及神就把你嚇到　躲來這邊騙吃騙喝", "dabao"],
@@ -184,6 +189,7 @@ HQ.events = [
   { id: "cat-fight", title: "隔壁的 918 號超吵",
     when: { random: 0.04, resident: ["mimi", "cat918"] },
     lines: [
+      [null, "咪咪，車站住得還習慣嗎？", "xiaoyu"],
       ["EP1-13", "車站才不好　隔壁的918號超吵", "mimi"],
       ["EP1-13", "我已經聯合三花幫　明天圍毆它", "mimi"],
       ["EP1-13", "貓貓要好好相處", "xiaoyu"],
@@ -205,6 +211,8 @@ HQ.events = [
   { id: "yimin", title: "六萬功德的業鏡羅漢", once: true,
     when: { trigger: "built", building: "yimin" },
     lines: [
+      [null, "義民廟蓋好了，以前受過阿志幫助的人都來上香。", "字卡"],
+      [null, "謝謝大家幫忙！", "yutong"],
       ["EP2-11", "不用客氣啦　以前阿志幫助過的村民　幫他蓋義民廟祭拜　他現在可是有6萬功德的業鏡羅漢哦", "baimei"],
       ["EP2-11", "這樣就可以去北境了", "dabao"]
     ],
@@ -279,8 +287,9 @@ HQ.events = [
   { id: "huji-guide", title: "接待魔界外賓", once: true,
     when: { flag: "leviathan-visit", resident: "huji" },
     lines: [
-      ["EP4-04", "這次的任務……　得加錢", "huji"],
+      [null, "觀音菩薩找狐姬去接待魔界來的客人。", "字卡"],
       ["EP4-04", "有接待過外賓經驗　同時又有一定功力的靈魂　除了你我想不到別的人選", "guanyin"],
+      ["EP4-04", "這次的任務……　得加錢", "huji"],
       ["EP4-04", "我會讓業鏡羅漢以保鏢身分保障你的安全　給你三倍功德", "guanyin"],
       ["EP4-04", "謝觀音姐姐隆恩　小女子必定完成任務", "huji"]
     ],
@@ -300,9 +309,10 @@ HQ.events = [
   { id: "invasion-sign", title: "屋頂上的視線", once: true,
     when: { rank: 3, resident: "huji", random: 0.08, noflag: "invasion-done" },
     lines: [
-      ["EP4-10", "他第一天見面　就把我壓在牆上　說什麼我是在玩火", "huji"],
-      ["EP4-10", "惡魔不懂人的禮節　很多話都亂聽亂說", "lee"],
-      ["EP4-10", "剛來就遇到百年妖狐　真幸運", "第三王國惡魔"]
+      [null, "夜裡，屋頂上有一雙眼睛一直盯著街上。", "字卡"],
+      ["EP4-10", "剛來就遇到百年妖狐　真幸運", "第三王國惡魔"],
+      [null, "誰在那裡！", "huji"],
+      [null, "人影一閃，就不見了。", "字卡"]
     ],
     effect: { defense: { id: "invasion3", inWeeks: 2 } } },
 
@@ -310,6 +320,7 @@ HQ.events = [
   { id: "nightmare", title: "沒由來的惡夢", once: true,
     when: { rank: 4, resident: ["dabao", "xiaoyu", "huatuo"], random: 0.05 },
     lines: [
+      [null, "大寶做了一個夢。", "字卡"],
       ["EP6-02", "邪神帝……　克蘇魯已經輸了", "lucifer"],
       ["EP6-02", "你就不怕被我詛咒嗎？", "邪神帝"],
       ["EP6-02", "又是這個噩夢　小時候在大地震前也有夢到", "dabao"],
@@ -367,61 +378,41 @@ HQ.events = [
      resident: id      某人入住
 */
 HQ.tutorial = [
+  // 開場：月老帶語彤到河岸，第一件事是蓋紋身店。台詞以遊戲自己的順序為主，劇中原句只放在接得上的地方。
   { id: "t1", title: "三途川岸邊",
     lines: [
-      [null, "三途川岸邊，一塊空地。語彤剛拜月老為師，成了實習月老。", "字卡"],
-      ["EP3-13", "我想你教我愛戀文印", "yutong"],
-      ["EP3-13", "教什麼？", "yuelao"],
-      ["EP3-13", "愛戀文印", "yutong"],
-      ["EP3-13", "為什麼", "yuelao"],
+      [null, "三途川岸邊。列車每天早晚各一班，把剛過世的亡魂載到這裡。", "字卡"],
+      [null, "車站前只有一間茶館，其他都還是空地。", "字卡"],
+      [null, "師傅，這裡就是我要負責的地方？", "yutong"],
+      [null, "對。從今天起，這片河岸交給你這個實習月老。", "yuelao"],
+      [null, "亡魂下了車，心裡還掛著放不下的事。幫他們了卻心願、安心上路，就是我們的工作。", "yuelao"],
+      [null, "你當初說想學愛戀文印。為什麼？", "yuelao"],
       ["EP3-13", "因為我想幫助相愛的人不分離", "yutong"],
-      ["EP3-13", "你知道神為什麼喜歡幫人類嗎　因為你們執著的樣子　會讓神想起還是人類時的可愛", "yuelao"]
+      ["EP3-13", "你知道神為什麼喜歡幫人類嗎　因為你們執著的樣子　會讓神想起還是人類時的可愛", "yuelao"],
+      [null, "那就從紋身店開始。我在店裡替人做文印，你負責讓客人找得到這裡。", "yuelao"],
+      [null, "按下面的「建設」，把「月老紋身店」蓋在車站附近吧。", "yuelao"]
     ],
-    goal: { resident: "yuelao" } },
-
-  { id: "t2", title: "月老紋身店",
-    lines: [
-      ["EP2-04", "用情至深的靈魂　可用300功德值　在我這求取愛戀文印", "yuelao"],
-      [null, "先把紋身店蓋在車站附近，下車的亡魂才找得到。", "yuelao"]
-    ],
+    join: ["yuelao"],
     goal: { build: "tattoo" } },
 
-  { id: "t3", title: "列車進站",
+  { id: "t2", title: "第一班列車",
     lines: [
       ["EP1-03", "列車進站　請引渡貓就位", "車站廣播"],
-      ["EP1-03", "下車的乘客請依手中車票　跟隨相對編號的引渡貓前往地府居所", "車站廣播"],
-      [null, "亡魂頭上的泡泡是他們的心願。滿足心願，安心度就會上升。", "yuelao"]
-    ],
-    goal: { guests: 3 } },
-
-  { id: "t4", title: "第一組文印",
-    lines: [
-      [null, "兩個想求文印的亡魂都到店裡了。試著替他們牽紅線。", "yuelao"],
-      ["EP2-04", "文印可以跨越輪迴　即便過奈何橋也不會消散", "yuelao"]
+      [null, "來了。看亡魂頭上的泡泡，那是他們現在最想做的事。", "yuelao"],
+      [null, "想求文印的人會走進紋身店。等兩個人都到了，我們就替他們牽紅線。", "yuelao"],
+      [null, "其他心願也一樣：蓋了對的店，亡魂就會去。心願滿足了，他們就越來越安心。", "yuelao"]
     ],
     goal: { wenyin: 1 } },
 
-  { id: "t5", title: "幫助人數",
+  { id: "t3", title: "第一組文印",
     lines: [
-      [null, "一組文印就是兩個人。上面的數字是你幫助過的人數。", "yuelao"],
-      [null, "觀音每季會來巡察。年底看幫助人數，夠了就能升階。", "yuelao"],
-      ["EP3-17", "況且你現在是實習月老　如果他頻繁吵你　你也可以挑優秀的信徒跟他配對", "yuelao"],
-      ["EP3-17", "好啦", "yutong"]
-    ],
-    goal: { helped: 2 } },
-
-  { id: "t6", title: "街坊",
-    lines: [
-      [null, "街區有了特徵，就會有人來訪。滿意的話，他們會留下來當街坊，還會帶自己的店來。", "yuelao"],
-      [null, "第一位應該是車站的引渡貓。", "yuelao"]
-    ],
-    goal: { resident: "mimi" } },
-
-  { id: "t7", title: "交給你了",
-    lines: [
-      ["EP4-03", "那就交給你了　要小心自己的安全　畢竟惡魔是比魔還要兇惡的存在", "yuelao"],
-      ["EP4-03", "我還有事要忙　先走了", "yuelao"],
-      [null, "（月老往孟婆甜食屋的方向走去了。）", "字卡"]
+      [null, "成功了！", "yutong"],
+      ["EP2-04", "文印可以跨越輪迴　即便過奈何橋也不會消散", "yuelao"],
+      [null, "一組文印，就是幫助了兩個人。右下角的牌子記著你幫過多少人。", "yuelao"],
+      [null, "觀音菩薩每一季會來巡察。幫助的人夠多，年底就能從實習月老升上去。", "yuelao"],
+      [null, "安心的亡魂有時會想留下來。邀請他們當街坊，街上就多了幫手。", "yuelao"],
+      [null, "街上熱鬧起來，地府的熟面孔也會搬來，各自帶著自己的店。", "yuelao"],
+      [null, "我在紋身店裡。有事就來找我。", "yuelao"]
     ],
     goal: null }
 ];

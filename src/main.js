@@ -27,7 +27,7 @@ window.HQGame = (function () {
     UI.init();
     if (HQ.artIndex && HQ.artIndex.worldmap) UI.setWorldmap(HQ.artIndex.worldmap);
     Render.cam.z = Render.defaultZoom();
-    Render.centerOn(15 * CFG.TILE, 8 * CFG.TILE);
+    Render.centerOn(16 * CFG.TILE, 7 * CFG.TILE);
     if (!saved) setTimeout(Story.tutorialTick, 600);
     else UI.toast("💾 讀取存檔：第" + G.state.year + "年 " + G.state.month + "月");
     Story.visibleRequests();

@@ -156,134 +156,143 @@ window.MapGen = (function () {
     return null;
   };
 
-  // ---- 地面圖層 ----
-  // 有 E 線的 tileset（art/tiles/ground.png＋index.json）就用；沒有就程式畫色塊
-  var TS = null;   // { img, cell(name) → [sx, sy] | null, has(name) }
-  M.useTileset = function (img, idxJson) {
-    var cols = idxJson.cols || Math.max(1, Math.floor(img.width / 32));
-    var tiles = idxJson.tiles || {};
-    function cell(name) {
-      var v = tiles[name];
-      if (!v && idxJson.alias && idxJson.alias[name]) v = tiles[idxJson.alias[name]];
-      if (!v) return null;
-      if (typeof v === "number") return [(v % cols) * 32, Math.floor(v / cols) * 32];
-      if (v.i != null) return [(v.i % cols) * 32, Math.floor(v.i / cols) * 32];
-      if (v.x != null) return [v.x, v.y];
-      return null;
-    }
-    TS = { img: img, cell: cell };
-    M.redrawGround();
-  };
-  M.tileset = function () { return TS; };
+  // ---- 地面圖層（等角） ----
+  // 程式畫 48×24 的菱形地磚，整張地面先畫進一張大畫布（水波兩格動畫各一張）。
+  // 樹、道具這些站著的東西不畫進地面，交給 Render 跟人物一起依前後排序。
+  var TS = null;
+  M.useTileset = function (img, idxJson) { TS = { img: img, idx: idxJson }; };   // 舊的正交 tileset，等角版不用
+  M.tileset = function () { return null; };
 
   function h2(x, y, k) { var n = (x * 374761393 + y * 668265263 + k * 1013904223) | 0; n = (n ^ (n >>> 13)) * 1274126177; return ((n ^ (n >>> 16)) >>> 0) / 4294967296; }
   function isWet(x, y) { if (!inb(x, y)) return false; var k = M.kind[idx(x, y)]; return k === K.WATER || k === K.BRIDGE; }
+  function hex(c) { return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]; }
 
-  function blit(g, name, x, y) { var c = TS.cell(name); if (!c) return false; g.drawImage(TS.img, c[0], c[1], T, T, x * T, y * T, T, T); return true; }
-  function pick(g, names, x, y, salt) { for (var i = 0; i < 3; i++) { var n = names[Math.floor(h2(x, y, salt + i) * names.length)]; if (blit(g, n, x, y)) return true; } return blit(g, names[0], x, y); }
-  function drawProp(g, name, x, y) {
-    var img = Assets.get("art/props/" + name + ".png");
-    if (!img) return false;
-    g.drawImage(img, x * T + Math.round((T - img.width) / 2), (y + 1) * T - img.height - 1);
-    return true;
-  }
-
-  function drawTileTS(g, x, y, frame) {
-    var i = idx(x, y), k = M.kind[i];
-    var water = frame ? "water_1" : "water_0";
-    if (k === K.WATER) return blit(g, water, x, y);
-    if (k === K.BRIDGE) {
-      blit(g, water, x, y);
-      var wl = inb(x - 1, y) && M.kind[idx(x - 1, y)] === K.BRIDGE, wr = inb(x + 1, y) && M.kind[idx(x + 1, y)] === K.BRIDGE;
-      return blit(g, !wl ? "bridge_h_a" : !wr ? "bridge_h_b" : "bridge_h_m", x, y);
-    }
-    if (k === K.RAIL) { blit(g, y === 0 ? "barren_0" : "dirt_1", x, y); return false; }
-    // 陸地：先判斷是不是河岸
-    var n = isWet(x, y - 1), s = isWet(x, y + 1), w = isWet(x - 1, y), e = isWet(x + 1, y), bank = null;
-    if (n && w) bank = "bank_nw"; else if (n && e) bank = "bank_ne"; else if (s && w) bank = "bank_sw"; else if (s && e) bank = "bank_se";
-    else if (n) bank = "bank_n"; else if (s) bank = "bank_s"; else if (w) bank = "bank_w"; else if (e) bank = "bank_e";
-    else if (isWet(x - 1, y - 1)) bank = "bank_inw"; else if (isWet(x + 1, y - 1)) bank = "bank_ine"; else if (isWet(x - 1, y + 1)) bank = "bank_isw"; else if (isWet(x + 1, y + 1)) bank = "bank_ise";
-    var base = k === K.STONE ? ["stone_0", "stone_1"] : k === K.PATH ? ["dirt_0", "dirt_1"] : k === K.RED ? ["redline_0", "redline_1"] :
-      (k === K.BARREN || (k === K.PROP && M.zone[i] === 4)) ? ["barren_0", "barren_1"] : ["grass_0", "grass_1", "grass_2", "grass_0"];
-    if (bank && (k === K.GRASS || k === K.FLOWER || k === K.TREE || k === K.PROP || k === K.BARREN)) { blit(g, water, x, y); blit(g, bank, x, y); }
-    else pick(g, base, x, y, 3);
-    if (k === K.FLOWER) { if (!bank) blit(g, h2(x, y, 9) < 0.5 ? "grass_flower" : "grass_1", x, y); blit(g, h2(x, y, 7) < 0.5 ? "lily_a" : "lily_b", x, y); }
-    else if (k === K.GRASS && !bank && h2(x, y, 11) < 0.12) blit(g, h2(x, y, 12) < 0.6 ? "grass_tuft" : "pebbles", x, y);
-    return true;
-  }
-
-  // 沒有 tileset 時的程式色塊
-  var PAL = {
-    grass: ["#2f4a2a", "#3a5a30", "#4f7a3a"], path: ["#5a3a26", "#6e4a2e", "#8a5a36"], stone: ["#4a4470", "#5f5a8a", "#3a355c"],
-    water: ["#1e4a55", "#2e6b73", "#4fa3a5"], rail: ["#221f3d", "#5a3a26", "#8f86a6"], bridge: ["#8a5a36", "#c08a52", "#5a3a26"],
-    flower: ["#a8242e", "#e0423a", "#4f7a3a"], barren: ["#2c2848", "#3a355c", "#4a4470"], red: ["#6b1a22", "#a8242e", "#e0423a"]
+  // 開羅式明亮配色，帶一點黃泉的暮色
+  var C = {
+    grass: ["#5ea84a", "#4f963f", "#72bd58", "#86cc66"], dark: ["#4a8a3c", "#3f7a34"],
+    dirt: ["#d8b06c", "#c69d58", "#e6c68a"], stone: ["#aaa6c0", "#8f8aa8", "#c3bfd6", "#7a7594"],
+    red: ["#cf4d45", "#b23c36", "#e56b5e"], barren: ["#958a72", "#7e7460", "#5f574a", "#a89c80"],
+    water: ["#3ca9bd", "#3297ad", "#8fdde2", "#2a8299"], bank: ["#dcc48e", "#b99c66"],
+    rail: ["#8b8174", "#6e655a", "#a39a8c"], plank: ["#b27a44", "#8a5a32", "#cf9a5e"],
+    flower: ["#d8342f", "#f15c4b", "#9a1f24"], soil: ["#8a6440", "#6c4c30", "#5a3e27", "#4a8a3c"]
   };
-  function speckle(g, p, x, y, n) { for (var i = 0; i < n; i++) { g.fillStyle = h2(x, y, i) < 0.5 ? p[1] : p[2]; g.fillRect(x * T + ((h2(x, y, i + 30) * 15) | 0) * 2, y * T + ((h2(x, y, i + 60) * 15) | 0) * 2, 2, 2); } }
-  function drawTileProc(g, kind, x, y, frame) {
-    var px = x * T, py = y * T, p, i;
-    switch (kind) {
-      case K.GRASS: case K.TREE: case K.PROP: case K.FLOWER:
-        p = M.zone[idx(x, y)] === 4 ? PAL.barren : PAL.grass; g.fillStyle = p[0]; g.fillRect(px, py, T, T); speckle(g, p, x, y, 14);
-        if (kind === K.FLOWER) for (i = 0; i < 5; i++) {
-          var fx = px + 3 + ((h2(x, y, i + 5) * 12) | 0) * 2, fy = py + 6 + ((h2(x, y, i + 9) * 10) | 0) * 2;
-          g.fillStyle = PAL.flower[2]; g.fillRect(fx + 1, fy + 2, 1, 4);
-          g.fillStyle = h2(x, y, i) < 0.5 ? PAL.flower[0] : PAL.flower[1]; g.fillRect(fx, fy, 3, 2);
-        }
-        if (kind === K.TREE) { g.fillStyle = "#3a2a1e"; g.fillRect(px + 14, py + 18, 4, 12); g.fillStyle = "#2f4a2a"; g.fillRect(px + 4, py + 2, 24, 18); g.fillStyle = "#16142b"; g.fillRect(px + 4, py + 16, 24, 4); }
-        if (kind === K.PROP) { g.fillStyle = "#4a4470"; g.fillRect(px + 8, py + 14, 16, 12); g.fillStyle = "#5f5a8a"; g.fillRect(px + 10, py + 12, 10, 4); }
-        break;
-      case K.BARREN: p = PAL.barren; g.fillStyle = p[0]; g.fillRect(px, py, T, T); speckle(g, p, x, y, 10); break;
-      case K.PATH: p = PAL.path; g.fillStyle = p[1]; g.fillRect(px, py, T, T); speckle(g, p, x, y, 10); break;
-      case K.RED: p = PAL.red; g.fillStyle = p[0]; g.fillRect(px, py, T, T); g.fillStyle = p[2]; g.fillRect(px, py + 15, T, 2); break;
-      case K.STONE:
-        p = PAL.stone; g.fillStyle = p[0]; g.fillRect(px, py, T, T);
-        g.fillStyle = p[2]; g.fillRect(px, py + 15, T, 2); g.fillRect(px + 15, py, 2, 15); g.fillRect(px + 7, py + 17, 2, 15); g.fillRect(px + 25, py + 17, 2, 15);
-        break;
-      case K.WATER:
-        p = PAL.water; g.fillStyle = p[0]; g.fillRect(px, py, T, T);
-        for (i = 0; i < 4; i++) { g.fillStyle = p[1]; g.fillRect(px + ((h2(x, y, i + frame) * 12) | 0) * 2, py + 4 + i * 7, 8, 2); }
-        break;
-      case K.RAIL:
-        g.fillStyle = y === 0 ? "#16142b" : PAL.rail[0]; g.fillRect(px, py, T, T);
-        break;
-      case K.BRIDGE:
-        drawTileProc(g, K.WATER, x, y, frame);
-        p = PAL.bridge; g.fillStyle = p[0]; g.fillRect(px, py + 4, T, 24);
-        g.fillStyle = p[2]; for (i = 0; i < 8; i++) g.fillRect(px + i * 4, py + 4, 1, 24);
-        g.fillStyle = p[1]; g.fillRect(px, py + 3, T, 2); g.fillRect(px, py + 27, T, 2);
-        break;
-    }
-  }
-  function drawRails(g, x) {
-    // 鐵軌（兩條軌道＋枕木），tileset 沒有軌道，一律程式畫
-    var px = x * T, py = T;
-    g.fillStyle = "#5a3a26"; for (var i = 0; i < 4; i++) g.fillRect(px + i * 8 + 1, py + 8, 4, 18);
-    g.fillStyle = "#8f86a6"; g.fillRect(px, py + 11, T, 2); g.fillRect(px, py + 21, T, 2);
+  Object.keys(C).forEach(function (k) { C[k] = C[k].map(hex); });
+
+  // 菱形遮罩：第 y 列的左右範圍
+  var TW = ISO.TW, TH = ISO.TH;
+  function rowSpan(y) { var hw = y < TH / 2 ? 2 * (y + 1) : 2 * (TH - y); return [TW / 2 - hw, TW / 2 + hw]; }
+  // 到四個邊的距離（0 = 在邊上）：ul 左上鄰 (x-1)、ur 右上鄰 (y-1)、lr 右下鄰 (x+1)、ll 左下鄰 (y+1)
+  function edgeDist(px, py) {
+    var u = (px + 0.5) / (TW / 2) - 1, v = (py + 0.5) / (TH / 2) - 1;
+    return { ul: 1 + u + v, ur: 1 - u + v, lr: 1 - u - v, ll: 1 + u - v };
   }
 
-  function drawTile(g, x, y, frame) {
-    var i = idx(x, y), k = M.kind[i];
-    if (!(TS && drawTileTS(g, x, y, frame))) drawTileProc(g, k, x, y, frame);
-    if (k === K.RAIL && y === 1) drawRails(g, x);
+  function tileColor(x, y, k, px, py, frame) {
+    var n = h2(x * 64 + px, y * 64 + py, 1), n2 = h2(x * 64 + px, y * 64 + py, 2);
+    var zone4 = M.zone[idx(x, y)] === 4;
+    switch (k) {
+      case K.WATER: case K.BRIDGE: {
+        var e = edgeDist(px, py);
+        // 鄰格是陸地的那一邊畫沙岸
+        var land = [["ul", x - 1, y], ["ur", x, y - 1], ["lr", x + 1, y], ["ll", x, y + 1]];
+        for (var i = 0; i < 4; i++) {
+          var L = land[i]; if (!inb(L[1], L[2]) || isWet(L[1], L[2])) continue;
+          var d = e[L[0]];
+          if (d < 0.16) return d < 0.08 ? C.bank[0] : C.bank[1];
+          if (d < 0.3) return C.water[3];
+        }
+        if (k === K.BRIDGE) {
+          var along = isWet(x - 1, y) && M.kind[idx(x - 1, y)] === K.BRIDGE || isWet(x + 1, y) && M.kind[idx(x + 1, y)] === K.BRIDGE;
+          var e2 = edgeDist(px, py), side = along ? Math.min(e2.ur, e2.ll) : Math.min(e2.ul, e2.lr);
+          if (side > 0.18) { var plank = along ? ((px + 2 * py) >> 2) % 3 : ((px - 2 * py + 96) >> 2) % 3; return plank === 0 ? C.plank[1] : (n < 0.15 ? C.plank[2] : C.plank[0]); }
+        }
+        var wave = ((px + y * 7 + (frame ? 6 : 0)) % 16 < 3) && ((py + x * 5) % 6 === 0);
+        return wave ? C.water[2] : n < 0.5 ? C.water[0] : C.water[1];
+      }
+      case K.PATH: return n < 0.12 ? C.dirt[1] : n > 0.92 ? C.dirt[2] : C.dirt[0];
+      case K.STONE: {
+        // 石板：斜向縫線
+        var a = (px + 2 * py) % 24, b = (px - 2 * py + 96) % 24;
+        if (a === 0 || b === 0) return C.stone[1];
+        return n < 0.1 ? C.stone[3] : n > 0.9 ? C.stone[2] : C.stone[0];
+      }
+      case K.RED: {
+        var e3 = edgeDist(px, py);
+        if (Math.min(e3.ul, e3.ur, e3.lr, e3.ll) < 0.12) return C.stone[1];
+        return n < 0.15 ? C.red[1] : n > 0.9 ? C.red[2] : C.red[0];
+      }
+      case K.RAIL: return n < 0.3 ? C.rail[1] : n > 0.85 ? C.rail[2] : C.rail[0];
+      case K.BARREN: return n < 0.12 ? C.barren[1] : n > 0.95 ? C.barren[2] : n > 0.88 ? C.barren[3] : C.barren[0];
+      default: {
+        if (zone4) return n < 0.12 ? C.barren[1] : n > 0.93 ? C.barren[3] : C.barren[0];
+        // 草：雜點＋小草叢
+        if (k === K.FLOWER && n2 < 0.05) return n < 0.5 ? C.flower[0] : C.flower[1];
+        if (k === K.FLOWER && n2 < 0.07) return C.flower[2];
+        var tuft = h2(x, y, 5) < 0.35 && Math.abs(px - 12 - ((h2(x, y, 6) * 24) | 0)) < 2 && Math.abs(py - 8 - ((h2(x, y, 7) * 8) | 0)) < 2;
+        if (tuft) return py % 2 ? C.grass[3] : C.dark[0];
+        return n < 0.1 ? C.grass[1] : n > 0.93 ? C.grass[2] : C.grass[0];
+      }
+    }
   }
-  // 高的點綴（樹、道具）要等整張地面畫完再由上往下疊，才不會被下一列蓋掉
-  function drawTall(g) {
+
+  function drawTile(img, x, y, frame) {
+    var k = M.kind[idx(x, y)];
+    var ox = ISO.gx(x, y) - TW / 2, oy = ISO.gy(x, y), Wd = img.width, data = img.data;
+    for (var py = 0; py < TH; py++) {
+      var sp = rowSpan(py), yy = oy + py;
+      for (var px = sp[0]; px < sp[1]; px++) {
+        var c = tileColor(x, y, k, px, py, frame), o = (yy * Wd + ox + px) * 4;
+        data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2]; data[o + 3] = 255;
+      }
+    }
+    // 鐵軌：枕木＋兩條軌道（沿 x 方向）
+    if (k === K.RAIL && y === 0) for (py = 0; py < TH; py++) {
+      sp = rowSpan(py); yy = oy + py;
+      for (px = sp[0]; px < sp[1]; px++) {
+        var e = edgeDist(px, py), across = e.ll;   // 0 在下緣（y+1 那邊）
+        var col = null;
+        if (Math.abs(across - 0.55) < 0.05 || Math.abs(across - 1.35) < 0.05) col = [196, 190, 205];
+        else if (across > 0.4 && across < 1.5 && (((px + 2 * py) >> 1) % 6 === 0)) col = [110, 74, 46];
+        if (col) { o = (yy * Wd + ox + px) * 4; data[o] = col[0]; data[o + 1] = col[1]; data[o + 2] = col[2]; }
+      }
+    }
+  }
+  // 地圖邊緣的土台側面（左下、右下兩面）
+  function drawSlab(img, x, y, face) {
+    var Wd = img.width, data = img.data, S = ISO.SLAB, wet = isWet(x, y);
+    var bx = ISO.gx(x, y), by = ISO.gy(x, y);
+    for (var i = 0; i < TW / 2; i++) {
+      var X = face === "ll" ? bx - TW / 2 + i : bx + i;
+      var top = face === "ll" ? by + TH / 2 + (i >> 1) : by + TH - (i >> 1) - 1;
+      for (var j = 1; j <= S; j++) {
+        var c;
+        if (wet) c = j < 3 ? C.water[2] : C.water[3];
+        else c = j <= 2 ? C.soil[3] : (j + (h2(x * 32 + i, y, j) < 0.2 ? 1 : 0)) % 6 === 0 ? C.soil[2] : C.soil[face === "ll" ? 0 : 1];
+        if (face === "lr" && !wet) c = c.map(function (v) { return v * 0.85; });
+        var o = ((top + j) * Wd + X) * 4;
+        data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2]; data[o + 3] = 255;
+      }
+    }
+  }
+
+  // 站著的點綴（樹、道具），Render 每格依前後排序畫
+  M.standing = [];
+  M.redrawGround = function () {
+    M.standing = [];
     for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
       var i = idx(x, y), k = M.kind[i];
-      if (k === K.TREE) drawProp(g, "willow", x, y);
-      else if (k === K.PROP) drawProp(g, M.prop[i], x, y);
+      if (k === K.TREE) M.standing.push({ x: x, y: y, name: "willow" });
+      else if (k === K.PROP) M.standing.push({ x: x, y: y, name: M.prop[i] });
     }
-  }
-
-  M.redrawGround = function () {
-    var frames = [0, 1];
-    frames.forEach(function (f) {
+    [0, 1].forEach(function (f) {
       var key = f ? "ground2" : "ground";
-      if (!M[key]) { M[key] = document.createElement("canvas"); M[key].width = W * T; M[key].height = H * T; }
+      if (!M[key]) { M[key] = document.createElement("canvas"); M[key].width = ISO.W; M[key].height = ISO.H; }
       var g = M[key].getContext("2d");
-      g.imageSmoothingEnabled = false;
-      for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) drawTile(g, x, y, f);
-      drawTall(g);
+      var img = g.createImageData(ISO.W, ISO.H);
+      for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) drawTile(img, x, y, f);
+      for (x = 0; x < W; x++) drawSlab(img, x, H - 1, "ll");
+      for (y = 0; y < H; y++) drawSlab(img, W - 1, y, "lr");
+      g.putImageData(img, 0, 0);
     });
     if (window.Render) Render.dirty = true;
   };

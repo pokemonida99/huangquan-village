@@ -18,9 +18,10 @@ window.D = {};
   // 台詞：C 線格式 [集數|null, 句子, 說話者id?]；範例格式 [說話者, 句子]；也接受 {who, text, ep} 與字串
   function isEp(a) { return a === null || (typeof a === "string" && /^(EP|SP|外傳|月老外傳|番外)|^\S*\d+-\d+\??$/.test(a)); }
   D.normLine = function (l, defaultId) {
-    var who = "", id = "", text = "", ep = "";
+    var who = "", id = "", text = "", ep = "", cond = null;
     if (typeof l === "string") text = l;
     else if (Array.isArray(l)) {
+      cond = l[3] && typeof l[3] === "object" ? l[3] : null;   // 第 4 欄：{ resident: id } 有入住才講、{ absent: id } 沒入住才講
       if (isEp(l[0])) { ep = l[0] || ""; text = l[1] || ""; id = l[2] || defaultId || ""; }
       else { id = l[0] || ""; text = l[1] || ""; ep = l[2] || ""; }
     } else if (l && typeof l === "object") { id = l.id || l.who || l.speaker || l.char || defaultId || ""; text = l.text || l.line || ""; ep = l.ep || ""; }
@@ -29,7 +30,7 @@ window.D = {};
     var c = D.charById && D.charById[id];
     who = c ? c.name : id;
     if (id === "字卡") who = "";
-    return { who: who, id: c ? c.id : "", text: text, ep: ep, guess: guess };
+    return { who: who, id: c ? c.id : "", text: text, ep: ep, guess: guess, cond: cond };
   };
   D.normLines = function (lines, who) { return arr(lines).map(function (l) { return D.normLine(l, who); }); };
 

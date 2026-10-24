@@ -23,6 +23,7 @@ window.CFG = {
   W: 32, H: 48,
   WEEK_SEC: 30,             // 一週幾秒（x1 速度）
   TRAINS_PER_WEEK: 14,      // 一天早晚兩班 × 7 天
+  TRAIN_STOP: 1.9, TRAIN_SEC: 6.2,   // 畫面列車：幾秒停穩下客、幾秒開出地圖（要跟 Render 的 TRAIN 一致）
   SOUL_CAP: 40,
   SOUL_SPEED: 2.2,          // 格／秒
   START_MONEY: 3000,

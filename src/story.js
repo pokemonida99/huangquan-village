@@ -4,7 +4,18 @@ window.Story = (function () {
 
   function L(who, text, id) { return { who: who, text: text, id: id || S.charIdByName(who) || "", ep: "" }; }
   // C：說話者是「還沒入住的街坊」的句子可以跳過
-  S.filterLines = function (lines) { return lines.filter(function (l) { var c = l.id && D.charById[l.id]; return !c || c.kind !== "resident" || G.state.charsIn[l.id]; }); };
+  // 對話一律過濾：還沒搬來的街坊、沒來訪的外賓不會突然開口（正在入住的那位除外）
+  S.filterLines = function (lines) {
+    var s = G.state;
+    return lines.filter(function (l) {
+      if (l.cond && l.cond.resident && !s.charsIn[l.cond.resident]) return false;
+      if (l.cond && l.cond.absent && s.charsIn[l.cond.absent]) return false;
+      var c = l.id && D.charById[l.id];
+      if (!c || c.start || s.charsIn[c.id] || s.visiting === c.id) return true;
+      if (c.kind === "resident") return false;
+      return true;   // 外賓、委託人、陽間的人：出現在他們自己的事件裡
+    });
+  };
   S.charIdByName = function (n) { var c = D.charById[n]; return c ? c.id : null; };
 
   // ---------- 效果（C 線 effect 鍵） ----------
@@ -68,10 +79,12 @@ window.Story = (function () {
     G.state.visiting = c.id;
     var lines = (c.arrive && c.arrive.length ? c.arrive : c.lines.slice(0, 2)).slice();
     if (!lines.length) lines = [L(c.name, "這條街看起來不錯，我想住下來。", c.id)];
-    lines.push(L("語彤", c.name + " 要搬來我們這條街了！", "yutong"));
-    if (c.brings && D.bById[c.brings]) lines.push(L("語彤", "還帶來了「" + D.bById[c.brings].name + "」——到「建設」裡找個好位置蓋吧（第一間免費）。", "yutong"));
-    else if (c.perk) lines.push(L("", "（" + c.perk + "）"));
-    UI.dialog({ title: "新街坊來了！" + c.name, lines: lines }, function () {
+    var guest = c.kind === "guest";
+    var note = c.name + (guest ? " 會在街上作客一陣子。" : " 成為街坊了。");
+    if (c.brings && D.bById[c.brings]) note += "「建設」裡可以免費蓋一間「" + D.bById[c.brings].name + "」。";
+    else if (c.perk) note += c.perk;
+    lines.push(L("", "（" + note + "）"));
+    UI.dialog({ title: (guest ? "外賓來訪：" : "新街坊：") + c.name, lines: lines }, function () {
       G.state.visiting = null; S.addCharResident(c);
       if (c.brings && D.bById[c.brings]) UI.highlight("build");
     });
@@ -206,6 +219,7 @@ window.Story = (function () {
   };
   function eventOk(e) {
     var s = G.state, w = e.when || {};
+    if (S.tutorialGoal()) return false;   // 教學還沒走完，先不插隨機事件
     if (w.chain || w.trigger) return false;
     if (e.once && s.fired["once-" + e.id]) return false;
     if (w.month != null && s.fired["ev-" + e.id + "-" + s.year]) return false;
@@ -295,6 +309,8 @@ window.Story = (function () {
     var prev = D.tutorial[s.tut - 1];
     if (prev && prev.goal && !goalMet(prev.goal)) return;
     s.tut++;
+    // join：這段劇情的角色直接加入街坊（先加入，台詞才不會被「還沒搬來」過濾掉）
+    (step.join || []).forEach(function (id) { var c = D.charById[id]; if (c) S.addCharResident(c, true); });
     UI.dialog({ title: step.title, lines: step.lines }, function () {
       if (step.goal && step.goal.build) UI.highlight("build");
       setTimeout(S.tutorialTick, 300);
@@ -375,9 +391,14 @@ window.Story = (function () {
       ((window.HQ && HQ.medals && HQ.medals.annual) || [{ score: 0, medals: 1 }]).forEach(function (m) { if (score >= m.score) med += m.medals; });
       if (med) { s.medals = (s.medals || 0) + med; notes.push("頒發勳章 ×" + med); }
     }
+    // 第一次巡察還是新街區：D 不派任務，換一句鼓勵
+    var firstReview = !s.reviewed;
+    s.reviewed = (s.reviewed || 0) + 1;
+    if (firstReview && grade && grade.task) grade = Object.assign({}, grade, { grade: "C", task: false, first: true });
     // D：指派任務
     if (grade && grade.task) {
-      var task = D.reviewTasks.length ? U.pick(D.reviewTasks) : { id: "task", title: "幫助更多人", need: [{ count: "sendoff", n: 6 }], lines: [] };
+      var doable = D.reviewTasks.filter(taskDoable);
+      var task = doable.length ? U.pick(doable) : { id: "task", title: "幫助更多人", need: [{ count: "sendoff", n: 6 }], lines: [] };
       s.guanyinTask = { id: task.id, title: task.title, need: task.need, base: Object.assign({}, st.actions) };
       notes.push("觀音交付任務：「" + task.title + "」— " + task.need.map(S.needText).join("、") + "（下一季完成功德 ×3）");
       extraLines = extraLines.concat(D.normLines(task.lines || []));
@@ -402,7 +423,8 @@ window.Story = (function () {
     var sc = D.reviewScenes;
     var pre = sc ? D.normLines(sc.arrive) : [L("觀音", "我來看看這條街。", "guanyin")];
     var post = [];
-    if (sc && grade && sc.grade && sc.grade[grade.grade]) post = post.concat(D.normLines(sc.grade[grade.grade]));
+    if (grade && grade.first) post.push(L("觀音菩薩", "才剛開始嘛。下一季，再讓我看看這條河岸。", "guanyin"));
+    else if (sc && grade && sc.grade && sc.grade[grade.grade]) post = post.concat(D.normLines(sc.grade[grade.grade]));
     if (starUp && sc && sc.rankUp) post = post.concat(D.normLines(sc.rankUp));
     if (titleUp && sc && sc.promote && sc.promote[s.title]) post = post.concat(D.normLines(sc.promote[s.title]));
     post = post.concat(extraLines);
@@ -411,6 +433,17 @@ window.Story = (function () {
     });
     State.save();
   };
+  // 觀音交付的任務要街上做得到：需要的街坊已入住、需要的店已經有了
+  function taskDoable(t) {
+    var serves = {};
+    G.buildings.forEach(function (b) { b.def.serves.forEach(function (w) { serves[w] = 1; }); });
+    return t.need.every(function (n) {
+      if (n.resident) return !!G.state.charsIn[n.resident];
+      if (n.count === "wenyin") return !!serves.tattoo;
+      if (n.count === "dream") return !!serves.dream;
+      return true;
+    });
+  }
   function rankMissing(rk) {
     var s = G.state, m = [];
     var shops = G.buildings.filter(function (b) { return (b.def.cat === "shop" || b.def.cat === "food" || b.def.cat === "special") && !b.def.fixed; }).length;

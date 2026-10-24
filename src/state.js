@@ -102,8 +102,9 @@ window.State = (function () {
 
 // 飄字、粒子
 window.FX = {
-  float: function (x, y, text, color) { G.fx.push({ kind: "text", x: x, y: y, text: text, color: color || "#fff", t: 0, life: 1.6 }); },
-  spark: function (x, y, color) { for (var i = 0; i < 10; i++) G.fx.push({ kind: "spark", x: x, y: y, vx: U.rand(-20, 20), vy: U.rand(-40, -10), color: color || "#f3d58c", t: 0, life: U.rand(0.6, 1.2) }); },
+  // x, y 是正交世界座標（人物腳底）；lift 是往畫面上方抬幾 px。存成等角像素，Render 直接畫
+  float: function (x, y, text, color, lift) { var p = ISO.ent(x, y); G.fx.push({ kind: "text", x: p.x, y: p.y - (lift || 0), text: text, color: color || "#fff", t: 0, life: 1.6 }); },
+  spark: function (x, y, color, lift) { var p = ISO.ent(x, y); for (var i = 0; i < 10; i++) G.fx.push({ kind: "spark", x: p.x, y: p.y - (lift || 0), vx: U.rand(-20, 20), vy: U.rand(-40, -10), color: color || "#f3d58c", t: 0, life: U.rand(0.6, 1.2) }); },
   update: function (dt) {
     for (var i = G.fx.length - 1; i >= 0; i--) {
       var f = G.fx[i]; f.t += dt;

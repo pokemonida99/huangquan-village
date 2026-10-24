@@ -24,9 +24,9 @@
   var chain = Promise.resolve();
   DATA_FILES.forEach(function (f) { chain = chain.then(function () { return loadScript(f); }); });
   chain.then(function () {
-    return Promise.all([loadJSON("art/buildings/index.json"), loadJSON("art/tiles/index.json"), loadJSON("art/chars/index.json"), loadJSON("art/tiles/worldmap.json")]);
+    return Promise.all([loadJSON("art/buildings/index.json"), loadJSON("art/iso/index.json"), loadJSON("art/tiles/worldmap.json")]);
   }).then(function (idx) {
-    HQ.artIndex = { buildings: idx[0], tiles: idx[1], chars: idx[2], worldmap: idx[3] };
+    HQ.artIndex = { buildings: idx[0], iso: idx[1] || {}, chars: null, worldmap: idx[2] };
     HQ.bootInfo = { loaded: loaded, missing: missing };
     if (missing.length) console.info("[三途川] 用內建範例補位：", missing.join(", "));
     HQGame.start();

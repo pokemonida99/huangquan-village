@@ -141,12 +141,12 @@
   };
   Soul.prototype.dream = function (b) {
     var d = b.def.extra.dream || { meritCost: CFG.DREAM_MERIT_COST, helped: 1, anshin: 30 };
-    if (G.state.merit < (d.meritCost || 0)) { FX.float(this.px, this.py - 30, "功德不夠，只拍了照", "#c9c0d6"); return; }
+    if (G.state.merit < (d.meritCost || 0)) { FX.float(this.px, this.py, "功德不夠，只拍了照", "#c9c0d6", 30); return; }
     G.state.merit -= d.meritCost || 0;
     this.peace += d.anshin || 30; G.state.stats.dreams++;
     State.addHelped(d.helped || 1);
-    FX.spark(this.px, this.py - 16, "#9fe0d8");
-    FX.float(this.px, this.py - 30, "托夢成功", "#9fe0d8");
+    FX.spark(this.px, this.py, "#9fe0d8", 16);
+    FX.float(this.px, this.py, "托夢成功", "#9fe0d8", 30);
   };
 
   // 離開前判定（B 的模型）：心願全滿足，且 亂數 < 安心度 → 安心了；否則帶著遺憾離開
@@ -168,7 +168,7 @@
     if (!this.go(MapGen.stationDoor.x, MapGen.stationDoor.y)) this.dead = true;
   };
   Soul.prototype.toReincarnate = function () {
-    if (State.mod("blockReincarnate", null)) { this.st = "leave"; FX.float(this.px, this.py - 30, "奈何橋封禁中…", "#c9c0d6"); if (!this.go(MapGen.stationDoor.x, MapGen.stationDoor.y)) this.dead = true; return; }
+    if (State.mod("blockReincarnate", null)) { this.st = "leave"; FX.float(this.px, this.py, "奈何橋封禁中…", "#c9c0d6", 30); if (!this.go(MapGen.stationDoor.x, MapGen.stationDoor.y)) this.dead = true; return; }
     var yk = G.buildings.find(function (b) { return (b.def.extra.macaron || b.def.serves.indexOf("reincarnate") >= 0) && b.door && Sim.isOpen(b); });
     if (yk && !this.ateMacaron) { this.st = "macaron"; this.target = yk; if (this.go(yk.door.x, yk.door.y)) return; }
     this.st = "reinc";
@@ -184,14 +184,14 @@
     State.addMerit(Math.round(merit), this.px, this.py - 20);
     G.state.stats.reincarnated++; State.act("sendoff");
     State.addHelped(1);
-    FX.spark(this.px, this.py - 12, "#f6c6b0");
+    FX.spark(this.px, this.py, "#f6c6b0", 12);
     this.dead = true;
   };
   Soul.prototype.stayAsResident = function () {
     var r = new Resident(this.tx, this.ty, { name: this.name, skin: this.skin });
     G.residents.push(r);
     State.addHelped(1, this.name + " 留下來當街坊");
-    FX.spark(this.px, this.py - 12, "#cfe3c4");
+    FX.spark(this.px, this.py, "#cfe3c4", 12);
     this.dead = true;
   };
 
@@ -217,7 +217,7 @@
         if (this.step(dt) || !this.path) {
           this.ateMacaron = true; this.hidden = true; this.st = "eating"; this.timer = 1.5;
           State.act("macaron");
-          var y = this.target; if (y) { var yd = Sim.doorOf(y); y.visits++; FX.float(yd.x * T + 16, yd.y * T - 8, "遺願馬卡龍", "#f6c6b0"); }
+          var y = this.target; if (y) { var yd = Sim.doorOf(y); y.visits++; FX.float(yd.x * T + 16, yd.y * T, "遺願馬卡龍", "#f6c6b0", 8); }
         }
         break;
       case "eating": if (this.timer <= 0) { this.hidden = false; this.st = "reinc"; if (!this.go(MapGen.exit.x, MapGen.exit.y)) this.reincarnateNow(); } break;
@@ -267,7 +267,7 @@
   Resident.prototype.expNeed = function () { return Math.round(D.expCurve.base * Math.pow(this.lv, D.expCurve.pow)); };
   Resident.prototype.gainExp = function (n) {
     this.exp += n;
-    while (this.exp >= this.expNeed() && this.lv < 99) { this.exp -= this.expNeed(); this.lv++; this.calc(); this.hp = this.maxhp; if (!this.away) FX.float(this.px, this.py - 30, "Lv UP!", "#9fe0d8"); }
+    while (this.exp >= this.expNeed() && this.lv < 99) { this.exp -= this.expNeed(); this.lv++; this.calc(); this.hp = this.maxhp; if (!this.away) FX.float(this.px, this.py, "Lv UP!", "#9fe0d8", 30); }
   };
   Resident.prototype.ownBuilding = function () {
     var c = this.charId && D.charById[this.charId];
@@ -350,12 +350,12 @@
           this.atkT = 0.8;
           for (var h = 0; h < this.hits; h++) {
             var dmg = Math.max(1, Math.round(this.atk * U.rand(0.9, 1.1) - f.def / (this.magic ? 4 : 2)));
-            f.hp -= dmg; FX.float(f.px + U.rand(-6, 6), f.py - 26, "-" + dmg, "#ffffff");
+            f.hp -= dmg; FX.float(f.px + U.rand(-6, 6), f.py, "-" + dmg, "#ffffff", 26);
           }
           if (f.hp <= 0) { Sim.mobKilled(f, this); break; }
           var back = Math.max(1, Math.round(f.atk * U.rand(0.9, 1.1) - this.defn / 2));
-          this.hp -= back; FX.float(this.px + U.rand(-6, 6), this.py - 26, "-" + back, "#e0423a");
-          if (this.hp <= 0) { this.hp = 1; f.engaged = null; FX.float(this.px, this.py - 36, "撤退！", "#f08a6a"); this.goRest(); }
+          this.hp -= back; FX.float(this.px + U.rand(-6, 6), this.py, "-" + back, "#e0423a", 26);
+          if (this.hp <= 0) { this.hp = 1; f.engaged = null; FX.float(this.px, this.py, "撤退！", "#f08a6a", 36); this.goRest(); }
         }
         break;
       case "torest":

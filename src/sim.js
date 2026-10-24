@@ -151,7 +151,7 @@ window.Sim = (function () {
       return blocked.length ? "會擋住「" + blocked[0].def.name + "」的門口" : "這裡不能蓋";
     }
     S.refreshDoors();
-    FX.spark((x + b.w / 2) * T, (y + b.h) * T - 10, "#f3d58c");
+    FX.spark((x + b.w / 2) * T, (y + b.h / 2) * T + 14, "#f3d58c", 20);
     Story.onBuilt(b);
     return "";
   };
@@ -172,7 +172,7 @@ window.Sim = (function () {
     if (G.state.money < c) return "冥紙不夠";
     if (G.state.merit < m) return "功德不夠（要 " + m + "）";
     G.state.money -= c; G.state.merit -= m; b.lv++;
-    FX.float((b.x + b.w / 2) * T, b.y * T, "Lv" + b.lv, "#9fe0d8");
+    FX.float((b.x + b.w / 2) * T, (b.y + b.h / 2) * T + 14, "Lv" + b.lv, "#9fe0d8", 44);
     S.recalc();
     return "";
   };
@@ -233,7 +233,13 @@ window.Sim = (function () {
     s.trainT += dt;
     var iv = CFG.WEEK_SEC / S.trainsPerWeek();
     if (s.trainT >= iv) { s.trainT -= iv; S.train(); }
-    if (G.train) { G.train.t += dt; if (G.train.t > 3.2) G.train = null; }
+    // 畫面上的列車：有乘客才開，停穩才下車，開出地圖才消失（班次很密，乘客先累積到下一班畫面列車）
+    if (!G.train && s.pendingSouls > 0) G.train = { t: 0, dropped: false };
+    if (G.train) {
+      G.train.t += dt;
+      if (!G.train.dropped && G.train.t >= CFG.TRAIN_STOP) { G.train.dropped = true; S.dropSouls(); }
+      if (G.train.t > CFG.TRAIN_SEC) G.train = null;
+    }
 
     mobT -= dt;
     if (mobT <= 0) { mobT = 2.5; S.spawnMob(); }
@@ -257,18 +263,23 @@ window.Sim = (function () {
     return Math.min(lam, CFG.SOULS_CAP_TRAIN);
   };
   S.train = function () {
-    G.train = { t: 0 };
     var lam = S.soulsPerTrain() + (G.state.bonusSouls || 0);
     G.state.bonusSouls = 0;
     var n = Math.floor(lam) + (Math.random() < lam % 1 ? 1 : 0);
-    n = Math.min(n, CFG.SOUL_CAP - G.souls.length);
+    var pend = G.state.pendingSouls || 0;
+    n = Math.max(0, Math.min(n, CFG.SOUL_CAP - G.souls.length - pend));
+    G.state.pendingSouls = pend + n;
+    G.state.stats.guests += n;
+  };
+  S.dropSouls = function () {
+    var n = Math.min(G.state.pendingSouls || 0, CFG.SOUL_CAP - G.souls.length);
+    G.state.pendingSouls = 0;
     var d = MapGen.stationDoor;
     for (var i = 0; i < n; i++) {
       var so = new Soul(d.x, d.y);
       so.px += U.rand(-8, 8);
-      so.timer = 0.6 + i * 0.4; so.st = "idle";
+      so.timer = 0.2 + i * 0.35; so.st = "idle";
       G.souls.push(so);
-      G.state.stats.guests++;
     }
   };
 
@@ -323,7 +334,7 @@ window.Sim = (function () {
       var w = b.def.extra.wenyin || {};
       var dd = S.doorOf(b), X = dd.x * T + T / 2, Y = dd.y * T - 10;
       State.addMerit(Math.round((w.meritPerSet || CFG.PAIR_MERIT) * State.mod("wenyinMul", 1)), X, Y - 10);
-      FX.spark(X, Y, "#e0423a"); FX.float(X, Y - 26, "❤ 緣分 UP", "#e0423a");
+      FX.spark(X, Y, "#e0423a"); FX.float(X, Y, "❤ 緣分 UP", "#e0423a", 26);
       State.addHelped(w.helpedPerSet || 2, "愛戀文印：" + a.name + " ✕ " + c.name);
       Story.onPair(a, c);
     }
@@ -355,13 +366,13 @@ window.Sim = (function () {
     if (Math.random() < chest) {
       var it = U.pick(["incense", "paper", "candy"]);
       G.state.items[it] = (G.state.items[it] || 0) + 1;
-      FX.float(m.px, m.py - 34, "🎁 " + UI.itemName(it), "#f3d58c");
+      FX.float(m.px, m.py, "🎁 " + UI.itemName(it), "#f3d58c", 34);
     }
     if ((m.type.become === "soul" || m.type.toSoul) && G.souls.length < CFG.SOUL_CAP) {
       var so = new Soul(m.tx, m.ty, { peace: 30 });
       so.st = "idle"; so.timer = 0.5;
       G.souls.push(so);
-      FX.float(m.px, m.py - 40, "迷途魂醒過來了", "#c9c0d6");
+      FX.float(m.px, m.py, "迷途魂醒過來了", "#c9c0d6", 40);
     }
     r.st = "idle"; r.timer = 0.5;
   };

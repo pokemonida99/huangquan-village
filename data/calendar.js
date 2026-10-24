@@ -37,7 +37,9 @@ HQ.calendar = [
   { month: 7, name: "七月", events: [
     { id: "qixi", week: 1, title: "七夕",
       lines: [
-        ["月老外傳-01", "像是七夕其實是我的忌日", "yuelao"],
+        [null, "七夕到了，紋身店前排起了隊。", "字卡"],
+        [null, "師傅，七夕對月老來說是大日子吧？", "yutong"],
+        ["月老外傳-01", "七夕其實是我的忌日", "yuelao"],
         ["月老外傳-01", "死在七夕？　也太不浪漫了吧", "yutong"],
         ["月老外傳-06", "後來被我幫助過的戀人　會在七夕　以去月下慶祝為暗號　紀念岳夏澤　以男歡女愛的慶典緬懷我", "yuelao"]
       ],
@@ -46,26 +48,27 @@ HQ.calendar = [
     { id: "ghostmonth", week: 2, weeks: 3, title: "中元・鬼門開",
       lines: [
         [null, "鬼門開了。陽間海邊的抓交替冤魂變多，連三途川外圍也看得到。", "字卡"],
-        ["EP4-09", "沒事　不過中元節陽間磁場很亂", "qianliyan"]
+        [null, "中元節陽間磁場很亂，大家出門小心。", "qianliyan"]
       ],
       mods: { mobMul: { "mob-ghost": 3 } },
       effect: { guest: "qianliyan", spawn: [{ mob: "mob-ghost", n: 3, at: "river" }] } },
     { id: "qianliyan-bracelet", week: 3, title: "千里眼的秘術", once: true,
       when: { resident: "nova" },
       lines: [
+        [null, "中元節的晚上，大家到陽間海邊看煙火。", "字卡"],
         ["EP4-09", "等一下那邊會有煙火哦", "yutong"],
         ["EP4-09", "好香的魔氣　給我吃", "冤魂"],
         ["EP4-09", "抓交替的冤魂　被諾瓦的魔氣吸引過來了", "yutong"],
         ["EP4-09", "silence！", "qianliyan"],
         ["EP4-09", "對不起　我剛剛想到打仗的事情", "nova"],
-        ["EP4-09", "小惡魔　把左手伸出來　這是媽祖加持過的手串　可以驅散恐懼", "qianliyan"],
-        ["EP4-09", "本來過兩日就要下去地府吵你們　結果你們先跑上來了", "qianliyan"]
+        ["EP4-09", "小惡魔　把左手伸出來　這是媽祖加持過的手串　可以驅散恐懼", "qianliyan"]
       ],
       effect: { flag: "bracelet", traits: { 安心: 5 } } },
     { id: "pudu", week: 3, title: "中元普渡",
       lines: [
         [null, "陽間普渡，供品一箱一箱燒下來。", "字卡"],
-        ["EP3-06", "我櫃子的零食少了好多　你在吃什麼？　是不是我的中元節貢品", "dabao"]
+        ["EP3-06", "我櫃子的零食少了好多　你在吃什麼？　是不是我的中元節貢品", "dabao", {"resident": "yuelao"}],
+        ["EP3-06", "這是我自己帶的", "yuelao", {"resident": "dabao"}]
       ],
       effect: { money: 800, merit: 20 }, mods: { offeringMul: 3 }, weeks: 1 }
   ] },
@@ -73,18 +76,21 @@ HQ.calendar = [
     { id: "nightmarket", week: 1, weeks: 2, title: "愛神大夜市",
       when: { rank: 1 },
       lines: [
+        [null, "愛神祭快到了，會場周圍擺起了愛神大夜市，各國的愛神也來了。", "字卡"],
         ["EP3-08", "愛神祭前會場周圍有愛神大夜市　叫業鏡羅漢帶你去散散心", "yuelao"],
-        ["EP3-10", "我可是有和奈特學過射箭哦", "hathor"],
-        ["EP3-10", "丘比特的弓術還是我教的", "aphrodite"],
         ["EP3-10", "愛神祭每年都在不同城市舉辦　是愛神們傳遞愛意的活動", "xiaoyu"],
         ["EP3-10", "月老一定也很在意這個祭典", "xiaoyu"],
-        ["EP3-10", "是手工雞蛋糕", "yutong"]
+        ["EP3-10", "是手工雞蛋糕", "yutong"],
+        [null, "射箭攤前，兩位女神較起勁來。", "字卡"],
+        ["EP3-10", "我可是有和奈特學過射箭哦", "hathor"],
+        ["EP3-10", "丘比特的弓術還是我教的", "aphrodite"]
       ],
       effect: { guest: ["hathor", "aphrodite", "shencha", "aizen"], popularity: 20 },
       mods: { wishMul: { fun: 2, eat: 1.3 } } },
     { id: "sketch-duel", week: 2, title: "素描對決浮世繪", once: true,
       when: { building: "gecko" },
       lines: [
+        [null, "守宮廣場來了一位拿著畫筆的客人，站在語彤的畫前不走。", "字卡"],
         ["EP3-03", "小妹妹畫的真好", "aizen"],
         ["EP3-03", "我想用浮世繪　跟你的素描比賽", "aizen"],
         ["EP3-03", "我接受你的邀請！", "yutong"],
@@ -97,12 +103,12 @@ HQ.calendar = [
     { id: "heartache-market", week: 2, title: "掛念心痛", once: true,
       when: { rank: 1, resident: ["yutong", "lee", "yuelao"] },
       lines: [
+        [null, "夜市逛到一半，語彤突然按著胸口蹲了下來。", "字卡"],
         ["EP3-10", "辣雞……　放開我爸", "yutong"],
         ["EP3-10", "是掛念心痛……", "xiaoyu"],
+        [null, "陽間，語彤的家人被纏上了。", "字卡"],
         ["EP3-10", "是魔氣", "aphrodite"],
         ["EP3-10", "誰敢動他", "lee"],
-        ["EP3-10", "那就別怪我不客氣了", "hathor"],
-        ["EP3-10", "誰准你在三途動手", "yuelao"],
         ["EP3-10", "這邊交給我　語彤給你處理", "yuelao"],
         ["EP3-11", "他們的靈魂好純潔", "hathor"],
         ["EP3-11", "他們是因為人間的因果　而產生魔性", "yuelao"]
@@ -111,6 +117,7 @@ HQ.calendar = [
     { id: "selection", week: 3, title: "愛神祭選拔",
       when: { building: "festival" },
       lines: [
+        [null, "愛神祭選拔開始了，台下擠滿了人。", "字卡"],
         ["EP3-12", "月老　離我近一點啦", "hathor"],
         ["EP3-12", "愛染！　可以跟你換位置嗎？", "yuelao"],
         ["EP3-12", "不要", "aizen"],
@@ -122,6 +129,7 @@ HQ.calendar = [
     { id: "ganlu", week: 4, title: "仿製甘露寶瓶", once: true,
       when: { building: "festival" },
       lines: [
+        [null, "愛神祭結束，愛染明王臨走前又來找語彤。", "字卡"],
         ["EP3-13", "真可惜啊　當我徒弟就不用掃地哦", "aizen"],
         ["EP3-13", "這是我在這裡煉製的仿製甘露寶瓶　在瓶內放入喜歡的飲料並放置一天　就可以變成治癒靈魂的靈藥", "aizen"],
         ["EP3-13", "你畫圖的時候太認真　不小心流露出魔氣　但我相信你的靈魂是善良的", "aizen"],
@@ -145,12 +153,13 @@ HQ.calendar = [
 HQ.reviewScenes = {
   arrive: [
     [null, "觀音菩薩來巡察了。", "字卡"],
+    [null, "觀音菩薩！您親自來了……", "yutong"],
     ["EP1-05", "客氣什麼　陪我散步一下", "guanyin"]
   ],
   grade: {
     S: [
       ["EP1-05?", "改善很多哦", "guanyin"],
-      ["EP6-07", "兩位救了三途川的大英雄　不要吵架呀", "guanyin"]
+      [null, "這條河岸，越來越像亡魂可以安心停留的地方了。", "guanyin"]
     ],
     A: [
       ["EP1-05?", "改善很多哦", "guanyin"]
@@ -159,16 +168,16 @@ HQ.reviewScenes = {
       [null, "還可以，但還有很多人在等。", "guanyin"]
     ],
     C: [
-      ["EP6-01", "你們可不可以成熟點", "guanyin"]
+      [null, "還不夠喔。街上還有很多亡魂，放不下心裡的事。", "guanyin"]
     ],
     D: [
-      ["EP6-01", "你比較穩重　為什麼沒有穩住他", "guanyin"],
-      ["EP4-04", "我會讓業鏡羅漢以保鏢身分保障你的安全　給你三倍功德", "guanyin"]
+      [null, "這一季，幫到的人太少了。", "guanyin"],
+      [null, "我交給你一件事。下一季做到了，功德給你三倍。", "guanyin"]
     ]
   },
   taskDone: [
-    ["EP4-04", "謝觀音姐姐隆恩　小女子必定完成任務", "huji"],
-    [null, "觀音指派的事完成了。功德三倍。", "字卡"]
+    [null, "觀音菩薩交代的事，我做到了！", "yutong"],
+    [null, "觀音交付的任務完成了，功德三倍。", "字卡"]
   ],
   promote: {
     1: [
@@ -176,8 +185,8 @@ HQ.reviewScenes = {
       [null, "語彤升為見習月老。", "字卡"]
     ],
     2: [
-      ["EP3-17", "走吧　去看看你剛做好的神像", "yuelao"],
-      ["EP3-17?", "師傅　這厲害嘞　和我夢到的女月老長得一模一樣呢", "廟公"],
+      [null, "從今天起，你就是正式的月老了。", "yuelao"],
+      [null, "師傅……謝謝你！", "yutong"],
       [null, "語彤成為正式的月老。", "字卡"]
     ]
   },

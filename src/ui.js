@@ -15,20 +15,16 @@ window.UI = (function () {
   UI.itemName = function (id) { return (ITEMS[id] || { name: id }).name; };
 
   UI.init = function () {
-    document.querySelectorAll("#bottombar button").forEach(function (b) {
-      b.addEventListener("click", function () { b.classList.remove("hl"); UI.openSheet(b.dataset.panel); });
+    document.querySelectorAll("[data-panel]").forEach(function (b) {
+      b.addEventListener("click", function () { b.classList.remove("hl"); UI.toggleMenu(false); UI.openSheet(b.dataset.panel); });
     });
+    $("bb-menu").onclick = function () { $("bb-menu").classList.remove("hl"); UI.toggleMenu(); };
     $("sheet-close").onclick = UI.closeSheet;
     $("tb-speed").onclick = UI.toggleSpeed;
     $("tb-date").onclick = UI.toggleSpeed;
     $("place-ok").onclick = confirmPlace;
     $("place-cancel").onclick = UI.cancelPlace;
     $("dialog").addEventListener("click", advanceDialog);
-    // 委託簿按鈕（浮在左下）
-    var rq = document.createElement("button");
-    rq.id = "reqbtn"; rq.innerHTML = "📜<span>委託簿</span><i hidden>!</i>";
-    rq.onclick = function () { UI.openSheet("requests"); };
-    $("app").appendChild(rq);
     setInterval(UI.refreshTop, 250);
     function setTop() { document.documentElement.style.setProperty("--top-h", $("topbar").offsetHeight + "px"); }
     setTop(); window.addEventListener("resize", setTop);
@@ -40,13 +36,19 @@ window.UI = (function () {
     $("tb-money").querySelector("b").textContent = U.fmt(s.money);
     $("tb-money").classList.toggle("neg", s.money < 0);
     $("tb-merit").querySelector("b").textContent = U.fmt(s.merit);
-    $("tb-date").querySelector("b").textContent = "第" + s.year + "年 " + s.month + "月 第" + s.week + "週";
-    $("tb-star").querySelector("b").textContent = s.star ? "★".repeat(s.star) : "☆0";
+    $("tb-y").textContent = s.year; $("tb-m").textContent = s.month; $("tb-w").textContent = s.week;
     $("tb-helped").querySelector("b").textContent = U.fmt(s.helped);
-    $("tb-speed").textContent = s.speed === 0 ? "⏸" : s.speed === 1 ? "▶" : s.speed === 2 ? "▶▶" : "⏩";
+    $("tb-speed").textContent = s.speed === 0 ? "Ⅱ" : s.speed === 1 ? "▶" : s.speed === 2 ? "▶▶" : "▶▶▶";
+    $("tb-speed").classList.toggle("paused", s.speed === 0);
     $("weekbar").querySelector("i").style.width = (s.weekT * 100).toFixed(1) + "%";
+    // 右下評價牌：星數＋往下一個位階的幫助人數
+    var stars = ""; for (var i = 1; i <= 5; i++) stars += Icons.html(i <= s.star ? "star" : "starOff");
+    if ($("g-stars")._v !== s.star) { $("g-stars").innerHTML = stars; $("g-stars")._v = s.star; }
+    var cur = D.titles[s.title] || {}, nxt = D.titles[s.title + 1];
+    $("g-rank").textContent = (cur.name || "") + (nxt ? "　" + U.fmt(s.helped) + "/" + U.fmt(nxt.helped) : "");
+    $("g-bar").style.width = (nxt ? Math.min(100, (s.helped - (cur.helped || 0)) / Math.max(1, nxt.helped - (cur.helped || 0)) * 100) : 100).toFixed(1) + "%";
     var goal = Story.tutorialGoal();
-    $("goal").hidden = !goal; if (goal) $("goal").textContent = "🎯 " + goal;
+    $("goal").hidden = !goal || UI.dialogOpen(); if (goal && $("goal")._v !== goal) { $("goal").innerHTML = "<em>目標</em>" + U.esc(goal); $("goal")._v = goal; }
     if (sheetKind && sheetKind !== "build" && sheetKind !== "patrol-party" && UI._refreshT++ % 8 === 0) UI.renderSheet(true);
   };
   UI._refreshT = 0;
@@ -56,16 +58,33 @@ window.UI = (function () {
     UI.refreshTop();
   };
 
+  // 消息：開羅式，一次一行、從下方橫幅輪流跑，不擋畫面中間。排太多就跑快一點
+  var ribbonQ = [], ribbonOn = false;
   UI.toast = function (msg) {
-    var d = document.createElement("div");
-    d.className = "toast"; d.textContent = msg;
-    $("toasts").appendChild(d);
-    while ($("toasts").children.length > 4) $("toasts").firstChild.remove();
-    setTimeout(function () { d.classList.add("out"); }, 3200);
-    setTimeout(function () { d.remove(); }, 3800);
+    ribbonQ.push(String(msg));
+    if (ribbonQ.length > 8) ribbonQ.shift();
+    if (!ribbonOn) nextRibbon();
   };
-  UI.highlight = function (panel) { var b = document.querySelector('#bottombar [data-panel="' + panel + '"]'); if (b) b.classList.add("hl"); };
-  UI.badge = function (on) { var i = document.querySelector("#reqbtn i"); if (i) i.hidden = !on; };
+  function nextRibbon() {
+    var r = $("ribbon"), msg = ribbonQ.shift();
+    if (msg == null) { ribbonOn = false; r.classList.remove("on"); return; }
+    ribbonOn = true;
+    // 開頭的 emoji 拿掉，改成一顆小菱形
+    var clean = msg.replace(/^[\u2600-\u27bf\ud83c-\udbff\udc00-\udfff\ufe0f\u200d]+\s*/, "");
+    var d = document.createElement("div"); d.className = "rb"; d.innerHTML = "<i class='dot'></i><span>" + Icons.iconize(U.esc(clean)) + "</span>";
+    r.innerHTML = ""; r.appendChild(d); r.classList.add("on");
+    setTimeout(nextRibbon, ribbonQ.length > 2 ? 1400 : 2600);
+  }
+  UI.highlight = function (panel) {
+    var b = document.querySelector('#bottombar [data-panel="' + panel + '"]') || document.querySelector('#menu [data-panel="' + panel + '"]');
+    if (b) b.classList.add("hl");
+    if (b && b.closest("#menu") && $("menu").hidden) $("bb-menu").classList.add("hl");
+  };
+  UI.badge = function (on) { var i = document.querySelector("#reqbtn em"); if (i) i.hidden = !on; };
+  UI.toggleMenu = function (on) {
+    var m = $("menu"); if (on == null) on = m.hidden;
+    m.hidden = !on; $("bb-menu").classList.toggle("on", on);
+  };
 
   // ---------- 亡魂抉擇提示 ----------
   var notices = [];
@@ -73,7 +92,7 @@ window.UI = (function () {
   UI.notice = function (soul) {
     var el = document.createElement("div");
     el.className = "notice";
-    el.innerHTML = "<div>✨ <b>" + U.esc(soul.name) + "</b> 安心了，想留下來當街坊</div><div class='row'><button class='stay'>邀請留下</button><button class='go'>送去投胎</button></div>";
+    el.innerHTML = "<div><b>" + U.esc(soul.name) + "</b> 安心了，想留下來當街坊</div><div class='row'><button class='stay'>邀請留下</button><button class='go'>送去投胎</button></div>";
     el.querySelector(".stay").onclick = function () { UI.dropNotice(soul); soul.stayAsResident(); };
     el.querySelector(".go").onclick = function () { UI.dropNotice(soul); soul.toReincarnate(); };
     $("notices").appendChild(el);
@@ -105,6 +124,7 @@ window.UI = (function () {
       case "patrol-party": h = partyHTML(sheetArg); title.textContent = "出征準備"; break;
       case "items": h = itemsHTML(); title.textContent = "道具"; break;
       case "settings": h = settingsHTML(); title.textContent = "設定"; break;
+      case "info": h = infoHTML(); title.textContent = "情報"; break;
       case "requests": h = requestsHTML(); title.textContent = "委託簿"; UI.badge(false); break;
       case "building": h = buildingHTML(sheetArg); title.textContent = sheetArg.def.name; break;
       case "zone": h = zoneHTML(sheetArg); title.textContent = "擴建"; break;
@@ -112,7 +132,7 @@ window.UI = (function () {
     }
     if (soft && body._last === h) return;
     body._last = h;
-    body.innerHTML = h;
+    body.innerHTML = Icons.iconize(h);
     body.scrollTop = scroll;
     bindSheet(body);
     void s;
@@ -123,10 +143,13 @@ window.UI = (function () {
   var CATS = [["all", "全部"], ["special", "名店"], ["shop", "商店"], ["food", "飲食"], ["home", "住宿"], ["deco", "裝飾"], ["road", "道路"]];
   function serveIcons(def) { return def.serves.map(function (w) { return (D.wishById[w] || {}).icon || "💭"; }).join(""); }
   function traitText(tr) { return Object.keys(tr || {}).map(function (k) { return k + "+" + tr[k]; }).join(" "); }
+  // 縮圖用等角圖（美術或程式畫的方塊屋），道路用格子色
+  var thumbCache = {};
   function thumb(def) {
-    var img = Assets.get(def.sprite);
-    if (img) return "<img class='thumb' src='" + U.esc(def.sprite) + "'>";
-    return "<span class='thumb ph' style='background:" + def.color + "'>" + U.esc(def.name.slice(0, 2)) + "</span>";
+    if (def.cat === "road") return "<span class='thumb ph' style='background:" + def.color + "'>" + U.esc(def.name.slice(0, 2)) + "</span>";
+    var spr = Render.buildingSprite(def), key = def.id + (spr.art ? "@" : "");
+    if (!thumbCache[key]) thumbCache[key] = spr.img.toDataURL ? spr.img.toDataURL() : spr.img.src;
+    return "<img class='thumb' src='" + thumbCache[key] + "'>";
   }
   function buildHTML() {
     var h = "<div class='tabs'>" + CATS.map(function (c) { return "<button data-tab='" + c[0] + "' class='" + (buildTab === c[0] ? "on" : "") + "'>" + c[1] + "</button>"; }).join("") + "</div><div class='cards'>";
@@ -152,7 +175,10 @@ window.UI = (function () {
         "<div class='bar'><i style='width:" + Math.round(r.hp / r.maxhp * 100) + "%'></i></div><small>" + stateText(r) + "　擊退 " + r.kills + "</small></div></button>";
     });
     h += "</div>";
-    var tr = State.traits();
+    return h;
+  }
+  function infoHTML() {
+    var h = "", tr = State.traits();
     h += "<h3>街區特徵</h3><div class='traits'>" + D.traits.map(function (k) { return "<span>" + k + " <b>" + (tr[k] || 0) + "</b></span>"; }).join("") + "</div>";
     var st = G.state.stats, miss = Story.rankMissing();
     h += "<h3>統計</h3><p class='stats'>人氣 " + U.fmt(State.pop()) + "・送行投胎 " + st.reincarnated + "・文印 " + st.pairs + " 組・托夢 " + st.dreams + "・委託 " + st.requests + "・擊退 " + st.kills + "・遺憾離開 " + st.leftUnhappy + "<br>街上亡魂 " + G.souls.length + "・每班列車約 " + Sim.soulsPerTrain().toFixed(2) + " 位<br>位階：" + (D.titles[G.state.title] || {}).name + "（每週文印 " + Sim.wenyinPerWeek() + " 組，本週已做 " + G.state.pairsWeek + "）" + (G.state.medals ? "・勳章 " + G.state.medals : "") + "<br>下一顆星：" + (miss.length ? miss.join("、") : "條件都達成了，等觀音評定") + "</p>";
@@ -414,7 +440,7 @@ window.UI = (function () {
     place = { def: def };
     Render.ghost = { def: def, x: Math.floor(c.x / T) - Math.floor((def.size[0] - 1) / 2), y: Math.floor(c.y / T) - Math.floor((def.size[1] - 1) / 2) };
     $("placebar").hidden = false;
-    $("place-label").textContent = def.name + "　💴" + Sim.costOf(def);
+    $("place-label").innerHTML = U.esc(def.name) + "　" + Icons.html("coin") + " " + U.fmt(Sim.costOf(def)) + "<small>拖曳綠框換位置</small>";
     $("place-ok").hidden = def.cat === "road";
   };
   UI.moveGhost = function (wx, wy) {
@@ -429,7 +455,7 @@ window.UI = (function () {
     if (why) return UI.toast(why);
     var def = place.def;
     if (def.cat !== "road" || Sim.canBuild(def)) UI.cancelPlace();
-    else $("place-label").textContent = def.name + "　💴" + Sim.costOf(def) + "（點地圖繼續鋪，✕ 結束）";
+    else $("place-label").innerHTML = U.esc(def.name) + "　" + Icons.html("coin") + " " + U.fmt(Sim.costOf(def)) + "<small>點地圖繼續鋪，按「取消」結束</small>";
   }
   UI.cancelPlace = function (silent) {
     place = null; Render.ghost = null; $("placebar").hidden = true;
@@ -437,25 +463,31 @@ window.UI = (function () {
   };
 
   // ---------- 點地圖 ----------
-  UI.tapWorld = function (wx, wy) {
+  // 點螢幕：先問 Render 點到哪個人物或建築的圖（等角的屋頂、頭都在格子上方），沒點到才看地面格子
+  UI.tapScreen = function (sx, sy) {
+    var w = Render.toWorld(sx, sy);
+    UI.tapWorld(w.x, w.y, place ? null : Render.pick(sx, sy));
+  };
+  UI.tapWorld = function (wx, wy, hit) {
     if (UI.blocking()) return;
+    UI.toggleMenu(false);
     var tx = Math.floor(wx / T), ty = Math.floor(wy / T);
     if (place) {
       UI.moveGhost(wx, wy);
       if (place.def.cat === "road") confirmPlace();
       return;
     }
+    var he = hit && hit.e;
     // 等待抉擇的亡魂
-    var soul = G.souls.find(function (s) { return !s.hidden && Math.abs(s.px - wx) < 12 && wy > s.py - 28 && wy < s.py + 4; });
+    var soul = he && he.kind === "soul" ? he : null;
     if (soul && soul.st === "decide") { soulChoice(soul); return; }
-    var res = G.residents.find(function (r) { return !r.away && !r.hidden && Math.abs(r.px - wx) < 12 && wy > r.py - 28 && wy < r.py + 4; });
+    var res = he && he.kind !== "soul" && he.kind !== "mob" ? he : null;
     if (res) { UI.openSheet("resident", res); return; }
+    if (hit && hit.b) { Render.sel = hit.b; UI.openSheet("building", hit.b); return; }
     if (soul) { var w = soul.wish(); UI.toast("👻 " + soul.name + "　安心度 " + Math.round(soul.peace) + "　" + (w ? "心願：" + soul.wishes.map(function (x) { return (D.wishById[x] || { icon: "", name: x }).icon + (D.wishById[x] || { name: x }).name; }).join("、") : "心願都完成了") + "　💴" + soul.money); return; }
     if (MapGen.inb(tx, ty)) {
       var uid = MapGen.occ[MapGen.idx(tx, ty)];
       var b = uid && G.buildings.find(function (x) { return x.uid === uid; });
-      // 建築往上畫，點屋頂也算
-      if (!b) b = G.buildings.find(function (x) { return tx >= x.x && tx < x.x + x.w && ty === x.y - 1; });
       if (b) { Render.sel = b; UI.openSheet("building", b); return; }
       var z = MapGen.zones[MapGen.zone[MapGen.idx(tx, ty)]];
       if (z && !z.wild && !MapGen.zoneOpen(z.id)) { UI.openSheet("zone", z); return; }
@@ -470,7 +502,7 @@ window.UI = (function () {
   }
 
   // ---------- 對話框（開羅式：頭像＋名字＋逐字） ----------
-  UI.dialog = function (d, cb) { dlgQ.push({ d: d, cb: cb }); if (!dlgCur) nextDialog(); };
+  UI.dialog = function (d, cb) { d = Object.assign({}, d, { lines: Story.filterLines(d.lines || []) }); dlgQ.push({ d: d, cb: cb }); if (!dlgCur) nextDialog(); };
   UI.dialogOpen = function () { return !!dlgCur; };
   function nextDialog() {
     dlgCur = dlgQ.shift() || null;
@@ -488,7 +520,7 @@ window.UI = (function () {
     $("dlg-face").innerHTML = faceHTML(id, l.who || "…");
     $("dlg-face").dataset.id = id || "";
     $("dlg-name").textContent = l.who ? l.who + "：" : "";
-    $("dlg-ep").textContent = l.ep ? "——" + l.ep + (l.guess ? "（推測）" : "") : "";
+    $("dlg-ep").textContent = "";   // 獨立遊戲：不在對話裡標集數（資料裡還留著出處）
     $("dialog").classList.toggle("narr", !l.who);
     var el = $("dlg-line"), full = l.text || "", i = 0;
     clearInterval(typeT);

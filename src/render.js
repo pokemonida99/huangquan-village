@@ -1,8 +1,10 @@
-// 畫面：鏡頭（整數倍放大）、地面、建築、人物、泡泡、特效、擺放預覽。
+// 畫面（等角）：鏡頭（整數倍放大）、地面、建築、人物、列車、泡泡、特效、擺放預覽、點選。
+// 邏輯座標仍是正交格子（ISO.p 換算）；鏡頭 cam.x / cam.y 是等角畫面上的像素。
 window.Render = (function () {
   var T = CFG.TILE;
   var R = { cam: { x: 0, y: 0, z: 2 }, dirty: true, ghost: null, sel: null };
   var cv, ctx, dpr = 1, VW = 0, VH = 0;
+  var hits = [];   // 這一格畫出來、可以點的東西（由後往前）
 
   R.init = function () {
     try { R.showNames = !!localStorage.getItem("hq-village-names"); } catch (e) { R.showNames = false; }
@@ -17,228 +19,341 @@ window.Render = (function () {
     VH = cv.height = Math.round(window.innerHeight * dpr);
     cv.style.width = window.innerWidth + "px"; cv.style.height = window.innerHeight + "px";
     R.dpr = dpr;
-    R.zMin = Math.max(1, Math.ceil(Math.min(VW / (CFG.W * T), VH / (CFG.H * T)) * 0.999)); // 至少整張寬或高塞滿
-    R.zMin = Math.max(1, Math.floor(VW / (CFG.W * T)) || 1);
-    R.zMax = Math.max(R.zMin + 1, dpr * 4);
+    R.zMin = Math.max(1, Math.floor(VW / ISO.W));
+    R.zMax = Math.max(R.zMin + 1, dpr * 2);
     R.cam.z = U.clamp(R.cam.z, R.zMin, R.zMax);
     R.clamp();
   };
-  R.defaultZoom = function () { return U.clamp(Math.round(dpr * (window.innerWidth < 700 ? 1 : 1.5)), R.zMin, R.zMax); };
+  // 手機：一格菱形約 32 CSS px（開羅的密度）；桌機大一點
+  R.defaultZoom = function () {
+    var want = window.innerWidth < 700 ? 36 : 48, best = 1;   // 一格菱形想要幾 CSS px 寬（開羅手機版約 36）
+    for (var z = 1; z <= R.zMax; z++) if (Math.abs(ISO.TW * z / dpr - want) <= Math.abs(ISO.TW * best / dpr - want)) best = z;
+    return U.clamp(best, R.zMin, R.zMax);
+  };
   R.clamp = function () {
-    var c = R.cam, vw = VW / c.z, vh = VH / c.z, mw = CFG.W * T, mh = CFG.H * T;
-    var top = -60 / c.z * dpr, bot = 90 / c.z * dpr;   // 讓上下 UI 不擋住地圖邊
+    var c = R.cam, vw = VW / c.z, vh = VH / c.z, mw = ISO.W, mh = ISO.H;
+    var top = -70 / c.z * dpr, bot = 110 / c.z * dpr;   // 上下 UI 不擋住地圖邊
     c.x = vw >= mw ? (mw - vw) / 2 : U.clamp(c.x, 0, mw - vw);
     c.y = vh >= mh + top + bot ? (mh - vh) / 2 : U.clamp(c.y, top, mh - vh + bot);
   };
-  R.centerOn = function (wx, wy) { R.cam.x = wx - VW / R.cam.z / 2; R.cam.y = wy - VH / R.cam.z / 2; R.clamp(); };
-  // 以螢幕某點為中心縮放
+  R.centerOn = function (wx, wy) { var p = ISO.p(wx, wy); R.cam.x = p.x - VW / R.cam.z / 2; R.cam.y = p.y - VH / R.cam.z / 2; R.clamp(); };
   R.zoomAt = function (nz, sx, sy) {
     nz = U.clamp(nz, R.zMin, R.zMax);
     var c = R.cam; if (nz === c.z) return;
     var wx = c.x + sx * dpr / c.z, wy = c.y + sy * dpr / c.z;
     c.z = nz; c.x = wx - sx * dpr / nz; c.y = wy - sy * dpr / nz; R.clamp();
   };
-  R.toWorld = function (sx, sy) { return { x: R.cam.x + sx * dpr / R.cam.z, y: R.cam.y + sy * dpr / R.cam.z }; };
+  R.toIso = function (sx, sy) { return { x: R.cam.x + sx * dpr / R.cam.z, y: R.cam.y + sy * dpr / R.cam.z }; };
+  R.toWorld = function (sx, sy) { var p = R.toIso(sx, sy); return ISO.toWorld(p.x, p.y); };
 
-  // ---- 低階畫筆（世界座標 → 螢幕） ----
-  function SX(wx) { return Math.round((wx - R.cam.x) * R.cam.z); }
-  function SY(wy) { return Math.round((wy - R.cam.y) * R.cam.z); }
+  // ---- 低階畫筆（等角像素 → 螢幕） ----
+  function SX(x) { return Math.round((x - R.cam.x) * R.cam.z); }
+  function SY(y) { return Math.round((y - R.cam.y) * R.cam.z); }
   function px(x, y, w, h, col) { ctx.fillStyle = col; ctx.fillRect(SX(x), SY(y), Math.round(w * R.cam.z), Math.round(h * R.cam.z)); }
-  function text(s, wx, wy, size, col, align, outline) {
+  function blit(img, x, y) { ctx.drawImage(img, SX(x), SY(y), img.width * R.cam.z, img.height * R.cam.z); }
+  function text(s, x, y, size, col, align, outline) {
     var fs = Math.round(size * dpr);
     ctx.font = "bold " + fs + "px 'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif";
     ctx.textAlign = align || "center"; ctx.textBaseline = "middle";
-    var x = SX(wx), y = SY(wy);
-    if (outline !== false) { ctx.lineWidth = Math.max(2, fs / 4); ctx.strokeStyle = "rgba(13,11,26,.9)"; ctx.strokeText(s, x, y); }
-    ctx.fillStyle = col || "#fff"; ctx.fillText(s, x, y);
+    var X = SX(x), Y = SY(y);
+    if (outline !== false) { ctx.lineWidth = Math.max(2, fs / 4); ctx.strokeStyle = "rgba(30,20,24,.9)"; ctx.lineJoin = "round"; ctx.strokeText(s, X, Y); }
+    ctx.fillStyle = col || "#fff"; ctx.fillText(s, X, Y);
   }
   R.text = text;
+  // 佔地菱形（格子座標）
+  function footPath(x, y, w, h) {
+    var a = ISO.g(x, y), b = ISO.g(x + w, y), c = ISO.g(x + w, y + h), d = ISO.g(x, y + h);
+    ctx.beginPath(); ctx.moveTo(SX(a.x), SY(a.y)); ctx.lineTo(SX(b.x), SY(b.y)); ctx.lineTo(SX(c.x), SY(c.y)); ctx.lineTo(SX(d.x), SY(d.y)); ctx.closePath();
+  }
 
-  // ---- 角色配色（沒有像素圖時的替身） ----
-  var LOOK = {
-    yutong: { hair: "#0d0b1a", cloth: "#cfe3c4", trim: "#6a9a6a" },
-    yuelao: { hair: "#8a5a36", cloth: "#f3ebdd", trim: "#a8242e" },
-    lee: { hair: "#16142b", cloth: "#16142b", trim: "#a8242e", hat: true },
-    mimi: { animal: "#c08a52", ear: "#f3d58c" },
-    heitang: { animal: "#5a3a26", ear: "#3a2a1e" },
-    xiaoyu: { hair: "#3a355c", cloth: "#e0423a", trim: "#f3ebdd" },
-    dabao: { hair: "#16142b", cloth: "#e2b65a", trim: "#8a5a36" },
-    baimei: { hair: "#f3ebdd", cloth: "#b85aa8", trim: "#7a2a6a" },
-    huji: { hair: "#e2b65a", cloth: "#a8242e", trim: "#f3d58c" },
-    jiuwei: { hair: "#f3ebdd", cloth: "#4a4470", trim: "#9fe0d8" },
-    guanyin: { hair: "#c9c0d6", cloth: "#f3ebdd", trim: "#b85aa8" }
-  };
+  // ---- 顏色小工具 ----
+  function rgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+  function shade(h, f) { var c = rgb(h); return "rgb(" + c.map(function (v) { return Math.max(0, Math.min(255, Math.round(v * f))); }).join(",") + ")"; }
+
+  // ---- 程式畫的等角方塊屋（還沒有等角美術的建築先用這個） ----
+  var ROOF = { special: "#b8352f", shop: "#3f5490", food: "#a5532b", home: "#3f7f8f", fixed: "#b8352f" };
+  var WALL = { special: "#f0e2c2", shop: "#ead9b4", food: "#f2dcae", home: "#e4dcc8", fixed: "#f0e2c2" };
+  var spriteCache = {};
+  // 像素化：透明度二值化＋1px 深色外框，讓程式畫的形狀也像點陣圖
+  function crisp(cvs) {
+    var g = cvs.getContext("2d"), im = g.getImageData(0, 0, cvs.width, cvs.height), d = im.data, Wd = cvs.width, Hd = cvs.height;
+    var a = new Uint8Array(Wd * Hd), i, x, y;
+    for (i = 0; i < Wd * Hd; i++) a[i] = d[i * 4 + 3] >= 110 ? 1 : 0;
+    for (y = 0; y < Hd; y++) for (x = 0; x < Wd; x++) {
+      i = y * Wd + x;
+      if (a[i]) { d[i * 4 + 3] = 255; continue; }
+      var edge = (x > 0 && a[i - 1]) || (x < Wd - 1 && a[i + 1]) || (y > 0 && a[i - Wd]) || (y < Hd - 1 && a[i + Wd]);
+      if (edge) { d[i * 4] = 42; d[i * 4 + 1] = 28; d[i * 4 + 2] = 40; d[i * 4 + 3] = 255; } else d[i * 4 + 3] = 0;
+    }
+    g.putImageData(im, 0, 0);
+    return cvs;
+  }
+  function boxSprite(def) {
+    if (spriteCache[def.id]) return spriteCache[def.id];
+    var w = def.size[0], h = def.size[1], cat = def.cat, m = Math.min(w, h);
+    var deco = cat === "deco";
+    var wallH = deco ? 0 : (def.cat === "home" && w * h === 1 ? 14 : 12 + 6 * m), roofH = deco ? 0 : 8 + 5 * m;
+    var top = wallH + roofH + 8 + 2;
+    var cvs = document.createElement("canvas");
+    cvs.width = (w + h) * ISO.HW + 2; cvs.height = (w + h) * ISO.HH + top + 2;
+    var g = cvs.getContext("2d");
+    function P(u, v, z) { return [(u - v) * ISO.HW + h * ISO.HW + 1, (u + v) * ISO.HH + top - (z || 0)]; }
+    function poly(pts, col) { g.fillStyle = col; g.beginPath(); pts.forEach(function (p, i) { if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }); g.closePath(); g.fill(); }
+    function quadS(u0, u1, z0, z1, col) { poly([P(u0, h, z0), P(u1, h, z0), P(u1, h, z1), P(u0, h, z1)], col); }   // 正面（朝左下）
+    function quadE(v0, v1, z0, z1, col) { poly([P(w, v0, z0), P(w, v1, z0), P(w, v1, z1), P(w, v0, z1)], col); }   // 側面（朝右下）
+    if (deco) drawDeco(def, g, P, poly, w, h);
+    else {
+      var wall = WALL[cat] || "#ead9b4", roof = ROOF[cat] || "#3f5490", acc = def.color || "#8a5a36";
+      quadS(0, w, 0, wallH, wall); quadE(0, h, 0, wallH, shade(wall, 0.78));
+      // 木作腰板
+      quadS(0, w, 0, 5, shade(acc, 0.9)); quadE(0, h, 0, 5, shade(acc, 0.7));
+      // 窗
+      var nwin = Math.max(1, w * 2 - 1);
+      for (var i = 0; i < nwin; i++) {
+        var uc = (i + 0.5) * w / nwin; if (Math.abs(uc - w / 2) < 0.3) continue;
+        quadS(uc - 0.14, uc + 0.14, wallH * 0.42, wallH * 0.78, "#ffd56a");
+      }
+      for (i = 0; i < h; i++) { var vc = i + 0.5; quadE(vc - 0.14, vc + 0.14, wallH * 0.42, wallH * 0.78, "#e8b64e"); }
+      // 門＋門簾
+      var dh = Math.min(wallH - 3, 12);
+      quadS(w / 2 - 0.2, w / 2 + 0.2, 0, dh, "#3a2418"); quadS(w / 2 - 0.22, w / 2 + 0.22, dh - 4, dh, acc);
+      // 屋頂（四坡，屋脊沿長邊）
+      var o = 0.16, z = wallH, NW = P(-o, -o, z), NE = P(w + o, -o, z), SE = P(w + o, h + o, z), SW = P(-o, h + o, z), r1, r2;
+      if (w >= h) { r1 = P(h / 2, h / 2, z + roofH); r2 = P(w - h / 2, h / 2, z + roofH); poly([NW, NE, r2, r1], shade(roof, 1.25)); poly([NW, r1, SW], shade(roof, 1.15)); poly([NE, SE, r2], shade(roof, 0.72)); poly([SW, SE, r2, r1], roof); }
+      else { r1 = P(w / 2, w / 2, z + roofH); r2 = P(w / 2, h - w / 2, z + roofH); poly([NW, SW, r2, r1], shade(roof, 1.15)); poly([NW, NE, r1], shade(roof, 1.25)); poly([NE, SE, r2, r1], shade(roof, 0.72)); poly([SW, SE, r2], roof); }
+      // 屋瓦橫紋
+      g.strokeStyle = shade(roof, 0.78); g.lineWidth = 1;
+      for (var k = 1; k < 3; k++) { var f = k / 3, zz = z + roofH * f; var a1 = P(-o + (h / 2 + o) * f, h + o - (h / 2 + o) * f, zz), b1 = P(w + o - (h / 2 + o) * f * (w >= h ? 1 : 0), h + o - (h / 2 + o) * f, zz); if (w >= h) { g.beginPath(); g.moveTo(a1[0], a1[1]); g.lineTo(b1[0], b1[1]); g.stroke(); } }
+      // 屋簷暗線
+      g.strokeStyle = shade(roof, 0.5); g.beginPath(); g.moveTo(SW[0], SW[1] + 1); g.lineTo(SE[0], SE[1] + 1); g.lineTo(NE[0], NE[1] + 1); g.stroke();
+      // 紅燈籠
+      [0.12, w - 0.12].forEach(function (u) { var p = P(u, h + 0.05, wallH - 2); g.fillStyle = "#e0423a"; g.fillRect(Math.round(p[0]) - 2, Math.round(p[1]), 4, 5); g.fillStyle = "#ffd27a"; g.fillRect(Math.round(p[0]) - 1, Math.round(p[1]) + 1, 2, 3); });
+      // 招牌
+      if (cat === "special" || def.fixed) { var sp = P(w / 2, h + o, wallH + 2); g.fillStyle = "#5a3020"; g.fillRect(Math.round(sp[0]) - 8, Math.round(sp[1]) - 3, 16, 7); g.fillStyle = "#f3d58c"; g.fillRect(Math.round(sp[0]) - 7, Math.round(sp[1]) - 2, 14, 5); }
+    }
+    var spr = { img: crisp(cvs), w: w, h: h, ox: 1, oy: 1 };
+    spriteCache[def.id] = spr;
+    return spr;
+  }
+  function drawDeco(def, g, P, poly, w, h) {
+    var c = P(w / 2, h / 2, 0), x = Math.round(c[0]), y = Math.round(c[1]);
+    function r(ax, ay, aw, ah, col) { g.fillStyle = col; g.fillRect(x + ax, y + ay, aw, ah); }
+    switch (def.id) {
+      case "lantern": r(-1, -26, 2, 26, "#4a3020"); r(-4, -30, 8, 9, "#e0423a"); r(-2, -28, 4, 5, "#ffd27a"); r(-5, -31, 10, 2, "#2a1e28"); break;
+      case "bench": poly([P(0.2, 0.35, 6), P(0.8, 0.35, 6), P(0.8, 0.65, 6), P(0.2, 0.65, 6)], "#b27a44"); poly([P(0.2, 0.35, 6), P(0.8, 0.35, 6), P(0.8, 0.35, 12), P(0.2, 0.35, 12)], "#8a5a32"); r(-8, -4, 2, 5, "#5a3a26"); r(6, -2, 2, 5, "#5a3a26"); break;
+      case "swing": r(-10, -24, 2, 24, "#7a5030"); r(8, -24, 2, 24, "#7a5030"); r(-10, -26, 20, 3, "#8a5a32"); r(-5, -23, 1, 14, "#3a2a1e"); r(4, -23, 1, 14, "#3a2a1e"); r(-6, -9, 12, 3, "#c94a3a"); break;
+      case "higanbana": for (var i = 0; i < 9; i++) { var a = i * 2.4, rr = 4 + (i % 3) * 3; r(Math.round(Math.cos(a) * rr * 1.6) - 1, Math.round(Math.sin(a) * rr * 0.8) - 6, 3, 3, i % 2 ? "#e23a32" : "#ff6a52"); r(Math.round(Math.cos(a) * rr * 1.6), Math.round(Math.sin(a) * rr * 0.8) - 3, 1, 4, "#3f7a34"); } break;
+      case "garden": poly([P(0.3, 0.3, 0), P(1.3, 0.3, 0), P(1.3, 1.1, 0), P(0.3, 1.1, 0)], "#3ca9bd"); poly([P(0.5, 0.5, 0), P(1.1, 0.5, 0), P(1.1, 0.9, 0), P(0.5, 0.9, 0)], "#5cc3d0"); r(10, -30, 16, 16, "#3f7a34"); r(13, -34, 10, 6, "#4f963f"); r(17, -16, 3, 10, "#5a3a26"); r(-20, -6, 8, 5, "#9a96a8"); break;
+      case "redbridge": poly([P(0.25, 0, 3), P(0.75, 0, 3), P(0.75, h, 3), P(0.25, h, 3)], "#c8342e"); poly([P(0.75, 0, 3), P(0.75, h, 3), P(0.75, h, 0), P(0.75, 0, 0)], "#8a1f1c"); break;
+      default: r(-6, -10, 12, 10, def.color || "#4f7a3a"); r(-4, -13, 8, 4, shade(def.color || "#4f7a3a", 1.2));
+    }
+  }
+  // 建築要畫哪張：等角美術 > 程式方塊屋
+  function buildingSprite(def, broken) {
+    var iso = HQ.artIndex && HQ.artIndex.iso && HQ.artIndex.iso[def.id];
+    if (iso) {
+      var img = (broken && iso.damaged && Assets.get("art/iso/" + def.id + "-damaged.png")) || Assets.get("art/iso/" + def.id + ".png");
+      if (img) return { img: img, w: def.size[0], h: def.size[1], ox: 0, oy: 0, art: true };
+    }
+    return boxSprite(def);
+  }
+  R.buildingSprite = buildingSprite;
+  // 圖的左上角（等角像素）：圖寬對齊佔地菱形，底邊對齊佔地下角
+  function spriteOrigin(spr, bx, by) {
+    var left = ISO.footLeft(bx, by, spr.h) - spr.ox, bottom = ISO.footBottom(bx, by, spr.w, spr.h) + spr.oy;
+    return { x: left, y: bottom - spr.img.height };
+  }
+
+  // ---- 人物 ----
   function hashCol(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; var P = ["#e0423a", "#4fa3a5", "#e2b65a", "#b85aa8", "#6a9a6a", "#f08a6a", "#5f5a8a", "#c08a52"]; return P[Math.abs(h) % P.length]; }
-
   function drawGhost(x, y, tint, band, alpha, t) {
     ctx.globalAlpha = alpha;
-    var bob = Math.round(Math.sin(t * 3) * 1);
-    y += bob;
-    px(x - 5, y - 21, 10, 8, tint);
-    px(x - 6, y - 15, 12, 10, tint);
+    y += Math.round(Math.sin(t * 3));
+    px(x - 5, y - 21, 10, 8, tint); px(x - 6, y - 15, 12, 10, tint);
     var w = Math.floor(t * 4) % 2;
     for (var i = 0; i < 3; i++) px(x - 6 + i * 4 + w, y - 5, 2, 2, tint);
     px(x - 3, y - 17, 1, 2, "#221f3d"); px(x + 2, y - 17, 1, 2, "#221f3d");
-    px(x - 4, y - 22, 8, 2, band || "#ffffff"); px(x - 1, y - 24, 2, 2, band || "#ffffff");
+    px(x - 4, y - 22, 8, 2, band || "#ffffff");
     ctx.globalAlpha = 1;
   }
-  function drawPerson(x, y, look, t, moving) {
-    if (look.animal) {
-      px(x - 6, y - 10, 12, 8, look.animal); px(x - 5, y - 16, 10, 7, look.animal);
-      px(x - 5, y - 18, 3, 3, look.ear); px(x + 2, y - 18, 3, 3, look.ear);
-      px(x - 3, y - 14, 1, 2, "#0d0b1a"); px(x + 2, y - 14, 1, 2, "#0d0b1a");
-      var l = moving ? Math.floor(t * 6) % 2 : 0;
-      px(x - 5 + l, y - 2, 2, 2, look.animal); px(x + 3 - l, y - 2, 2, 2, look.animal);
-      px(x + 6, y - 9, 3, 2, look.animal);
-      return;
-    }
-    var leg = moving ? Math.floor(t * 6) % 2 : 0;
-    px(x - 4, y - 4, 3, 4 - leg, "#3a2a1e"); px(x + 1, y - 4, 3, 3 + leg, "#3a2a1e");
-    px(x - 5, y - 14, 10, 11, look.cloth); px(x - 1, y - 14, 2, 11, look.trim);
-    px(x - 4, y - 21, 8, 7, "#f6c6b0");
-    px(x - 5, y - 25, 10, 5, look.hair); px(x - 5, y - 21, 2, 5, look.hair); px(x + 3, y - 21, 2, 5, look.hair);
-    px(x - 2, y - 18, 1, 2, "#0d0b1a"); px(x + 1, y - 18, 1, 2, "#0d0b1a");
-    if (look.hat) { px(x - 6, y - 26, 12, 2, "#0d0b1a"); px(x - 4, y - 32, 8, 6, "#0d0b1a"); px(x - 4, y - 28, 8, 1, "#a8242e"); }
-  }
-  function drawMobBlob(m, t) {
+  function drawMobBlob(m, x, y, t) {
     var C = { lost: "#8f86a6", miasma: "#7a2a6a", lizard: "#4f7a3a", drowner: "#2e6b73" }[m.type.id] || "#7a2a6a";
-    var x = m.px, y = m.py, s = Math.sin(t * 4 + m.uid) * 1.5;
-    px(x - 7, y - 12 + s, 14, 10, C); px(x - 5, y - 16 + s, 10, 4, C); px(x - 8, y - 6, 16, 3, "rgba(13,11,26,.4)");
+    var s = Math.sin(t * 4 + m.uid) * 1.5;
+    px(x - 7, y - 12 + s, 14, 10, C); px(x - 5, y - 16 + s, 10, 4, C);
     px(x - 4, y - 11 + s, 2, 2, "#e0423a"); px(x + 2, y - 11 + s, 2, 2, "#e0423a");
   }
-
-  // 走路圖：64×128，2 欄 × 4 列（下、左、右、上）
+  // 走路圖：64×128，2 欄 × 4 列（下、左、右、上）。格子方向剛好對上等角的四個斜向
   function drawSheet(img, x, y, dir, frame) {
     var z = R.cam.z;
     ctx.drawImage(img, frame * 32, dir * 32, 32, 32, SX(x - 16), SY(y - 30), 32 * z, 32 * z);
   }
-
+  function shadow(x, y) { ctx.globalAlpha = 0.22; px(x - 7, y - 1, 14, 3, "#1a1020"); px(x - 5, y - 2, 10, 5, "#1a1020"); ctx.globalAlpha = 1; }
   function drawWalker(e, t) {
     if (e.hidden) return;
+    var p = ISO.ent(e.px, e.py), x = p.x, y = p.y + 3;
     var moving = !!e.path, frame = moving ? Math.floor(e.anim) % 2 : 0;
+    hits.push({ e: e, x0: x - 11, y0: y - 30, x1: x + 11, y1: y + 3 });
+    shadow(x, y);
     if (e.kind === "mob") {
       var mi = Assets.get("art/chars/mob-" + e.type.id + ".png");
-      if (mi) drawSheet(mi, e.px, e.py, e.dir, frame); else drawMobBlob(e, t);
+      if (mi) drawSheet(mi, x, y, e.dir, frame); else drawMobBlob(e, x, y, t);
       return;
     }
     var spr = e.charId ? Assets.get(D.charById[e.charId] ? D.charById[e.charId].sprite : "") : Assets.get("art/chars/soul-" + e.skin + ".png");
-    if (spr) { ctx.globalAlpha = e.kind === "soul" ? 0.92 : 1; drawSheet(spr, e.px, e.py, e.dir, frame); ctx.globalAlpha = 1; return; }
-    if (e.kind === "soul") drawGhost(e.px, e.py, ["#f3ebdd", "#c9c0d6", "#ffffff", "#cfe3c4", "#f6c6b0", "#c9c0d6", "#9fe0d8", "#f3ebdd"][e.skin - 1], "#ffffff", 0.88, t + e.uid);
-    else if (e.charId) drawPerson(e.px, e.py, LOOK[e.charId] || { hair: "#16142b", cloth: hashCol(e.charId), trim: "#f3ebdd" }, t, moving);
-    else drawGhost(e.px, e.py, "#f3ebdd", hashCol(e.job), 1, t + e.uid);
+    if (spr) { ctx.globalAlpha = e.kind === "soul" ? 0.92 : 1; drawSheet(spr, x, y, e.dir, frame); ctx.globalAlpha = 1; return; }
+    if (e.kind === "soul") drawGhost(x, y, "#f3ebdd", "#ffffff", 0.88, t + e.uid);
+    else drawGhost(x, y, "#f3ebdd", hashCol(e.charId || e.job || "x"), 1, t + e.uid);
   }
 
   function drawBuilding(b) {
-    var def = b.def, x = b.x * T, y = b.y * T, w = b.w * T, h = b.h * T;
-    var img = (b.broken && def.damaged && Assets.get(def.damaged)) || Assets.get(def.sprite);
-    if (img) {
-      ctx.drawImage(img, SX(x), SY(y + h - img.height), img.width * R.cam.z, img.height * R.cam.z);
-    } else {
-      var lift = def.cat === "deco" ? 0 : 12;
-      var col = def.color;
-      if (def.cat === "deco") {
-        if (def.id === "lantern") { px(x + 14, y + 8, 4, 22, "#3a2a1e"); px(x + 10, y + 2, 12, 10, "#e0423a"); px(x + 12, y + 4, 8, 6, "#f3d58c"); }
-        else if (def.id === "bench") { px(x + 3, y + 16, 26, 6, "#8a5a36"); px(x + 3, y + 22, 3, 6, "#5a3a26"); px(x + 26, y + 22, 3, 6, "#5a3a26"); }
-        else { px(x + 2, y + 2, w - 4, h - 4, "#2f4a2a"); for (var i = 0; i < b.w * b.h * 4; i++) px(x + 4 + (i * 7) % (w - 8), y + 4 + ((i * 11) % (h - 8)), 3, 3, i % 2 ? "#e0423a" : "#a8242e"); }
-      } else {
-        px(x + 1, y + 4 - lift, w - 2, h - 4 + lift, "#3a2a1e");
-        px(x + 2, y + 10 - lift, w - 4, h - 12 + lift, col);
-        px(x - 1, y - lift, w + 2, 12, "#221f3d"); px(x - 1, y + 10 - lift, w + 2, 2, "#5f5a8a");
-        var dx = (b.door ? b.door.x * T : x + w / 2 - 6);
-        if (b.door && b.door.y === b.y + b.h) px(Math.max(x + 3, Math.min(x + w - 13, dx + 10)), y + h - 12, 10, 12, "#16142b");
-        // 燈籠
-        px(x + 3, y + 12 - lift, 4, 6, "#e0423a"); px(x + w - 7, y + 12 - lift, 4, 6, "#e0423a");
-        px(x + 4, y + 13 - lift, 2, 3, "#f3d58c"); px(x + w - 6, y + 13 - lift, 2, 3, "#f3d58c");
-      }
-    }
-    if ((b.broken && !(def.damaged && Assets.get(def.damaged))) || b.closedUntil > State.absWeek()) { ctx.globalAlpha = 0.5; px(x, y, w, h, "#0d0b1a"); ctx.globalAlpha = 1; }
+    var spr = buildingSprite(b.def, b.broken), o = spriteOrigin(spr, b.x, b.y);
+    var dim = (b.broken && !(spr.art && HQ.artIndex.iso[b.def.id].damaged)) || b.closedUntil > State.absWeek();
+    if (dim) ctx.filter = "brightness(55%) saturate(60%)";
+    blit(spr.img, o.x, o.y);
+    if (dim) ctx.filter = "none";
+    hits.push({ b: b, spr: spr, x0: o.x, y0: o.y, x1: o.x + spr.img.width, y1: o.y + spr.img.height });
+  }
+  function drawStanding(s) {
+    var img = Assets.get("art/props/" + s.name + ".png");
+    var c = ISO.g(s.x + 0.5, s.y + 0.5);
+    if (!img) { px(c.x - 6, c.y - 12, 12, 12, "#3f7a34"); return; }
+    blit(img, Math.round(c.x - img.width / 2), Math.round(c.y + 5 - img.height));
   }
   function drawBuildingLabel(b) {
-    var def = b.def, x = b.x * T, w = b.w * T, y = b.y * T;
-    var img = Assets.get(def.sprite);
-    var showName = (!img && def.cat !== "deco" && R.cam.z >= dpr) || (R.showNames && def.cat !== "deco" && def.cat !== "road" && R.cam.z >= dpr);
-    if (showName) text(def.name, x + w / 2, y + b.h * T / 2 + 2, def.cat === "fixed" ? 11 : 9, def.cat === "special" ? "#f3d58c" : "#f3ebdd");
-    if (def.maxLv > 1 && b.lv > 1 && R.cam.z >= dpr) text("Lv" + b.lv, x + w - 2, y - (img ? 0 : 6), 8, "#9fe0d8", "right");
-    if (b.broken) text("🔧 受損", x + w / 2, y + 8, 9, "#f08a6a");
+    var def = b.def, spr = buildingSprite(def, b.broken), o = spriteOrigin(spr, b.x, b.y), cx = o.x + spr.img.width / 2;
+    var showName = R.showNames && def.cat !== "deco" && def.cat !== "road" && R.cam.z >= dpr * 0.6;
+    if (showName) text(def.name, cx, o.y + 6, 8.5, def.cat === "special" ? "#ffe9a8" : "#ffffff");
+    if (def.maxLv > 1 && b.lv > 1 && R.cam.z >= dpr * 0.6) text("Lv" + b.lv, o.x + spr.img.width - 6, o.y + spr.img.height - 10, 7.5, "#bff3ea", "right");
+    if (b.broken) text("受損", cx, o.y + 14, 8.5, "#ff9a7a");
   }
 
   function drawBubble(e, t) {
     if (e.hidden || e.kind !== "soul") return;
-    var icon = null, col = "#f3ebdd";
-    if (e.st === "decide") { icon = "✨"; col = "#f3d58c"; }
-    else if (e.st === "reinc" || e.st === "macaron") icon = "🌸";
+    var icon = null, key = null, col = "#fffaf0";
+    if (e.st === "decide") { key = "star"; icon = "✨"; col = "#ffe38a"; }
+    else if (e.st === "reinc" || e.st === "macaron") { key = "lotus"; icon = "🌸"; }
     else if (e.st === "leave") return;
-    else { var w = e.wish(); if (!w) return; icon = (D.wishById[w] || {}).icon || "💭"; }
-    var bx = e.px, by = e.py - 34 + Math.sin(t * 2 + e.uid) * 1;
+    else { var w = e.wish(); if (!w) return; key = { tattoo: "heart", fun: "lantern", gear: "sword" }[w] || w; icon = (D.wishById[w] || {}).icon || "💭"; }
+    var p = ISO.ent(e.px, e.py), bx = p.x, by = p.y - 34 + Math.sin(t * 2 + e.uid);
     var r = e.st === "decide" ? 1 + 0.15 * Math.sin(t * 6) : 1;
+    px(bx - 8 * r - 1, by - 7 * r - 1, 16 * r + 2, 13 * r + 2, "#3a2a2e");
     px(bx - 8 * r, by - 7 * r, 16 * r, 13 * r, col); px(bx - 1, by + 6 * r, 3, 2, col);
-    text(icon, bx, by, 8.5 * r * R.cam.z / dpr, "#000", "center", false);
+    var im = key && Icons.img(key);
+    if (im) blit(im, Math.round(bx - im.width / 2), Math.round(by - im.height / 2));
+    else text(icon, bx, by, 8.5 * r * R.cam.z / dpr, "#000", "center", false);
+  }
+
+  // ---- 列車：進站減速、停車、加速離站開出地圖 ----
+  var TRAIN = { arrive: 1.8, dwell: 3.6, leave: 6.2, stop: 17.2, len: 2, gap: 0.12, cars: 4, v0: 0.1, v1: 0.9 };
+  R.TRAIN_SEC = TRAIN.leave;
+  function trainFront(t) {
+    var A = TRAIN, startU = -2, endU = CFG.W + A.cars * (A.len + A.gap) + 4;
+    if (t < A.arrive) { var p = t / A.arrive; return startU + (A.stop - startU) * (1 - (1 - p) * (1 - p)); }
+    if (t < A.dwell) return A.stop;
+    var q = Math.min(1, (t - A.dwell) / (A.leave - A.dwell)); return A.stop + (endU - A.stop) * q * q;
+  }
+  function trainCar(u0, i, t) {
+    var A = TRAIN, u1 = u0 + A.len, v0 = A.v0, v1 = A.v1, z = 15;
+    var fade = Math.min(1, Math.max(0, (u1 + 1) / 3), Math.max(0, (CFG.W + 1 - u0) / 3));
+    if (fade <= 0) return;
+    ctx.globalAlpha = fade;
+    var art = Assets.get(i === 0 ? "art/iso/train-loco.png" : "art/iso/train-car.png");
+    if (art) {
+      var left = ISO.gx(u0, v1), bottom = ISO.gy(u1, v1);
+      blit(art, Math.round(left), Math.round(bottom - art.height + 2));
+      ctx.globalAlpha = 1; return;
+    }
+    var body = i === 0 ? "#2c3566" : "#a8342e", roof = i === 0 ? "#1c2246" : "#5a2a2a";
+    function Q(pts, col) { ctx.fillStyle = col; ctx.beginPath(); pts.forEach(function (p, k) { var X = SX(p.x), Y = SY(p.y); if (k) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); }); ctx.closePath(); ctx.fill(); }
+    var g = ISO.g;
+    Q([g(u0, v1, 0), g(u1, v1, 0), g(u1, v1, z), g(u0, v1, z)], body);                 // 側面（朝左下）
+    Q([g(u1, v0, 0), g(u1, v1, 0), g(u1, v1, z), g(u1, v0, z)], shade(i === 0 ? "#2c3566" : "#a8342e", 0.7)); // 車頭／車尾（朝右下）
+    Q([g(u0, v0, z), g(u1, v0, z), g(u1, v1, z), g(u0, v1, z)], roof);                 // 車頂
+    // 窗戶
+    for (var k = 0; k < 4; k++) { var a = u0 + 0.25 + k * 0.42; Q([g(a, v1, 6), g(a + 0.24, v1, 6), g(a + 0.24, v1, 11), g(a, v1, 11)], i === 0 && k < 2 ? "#6a74a8" : "#ffd56a"); }
+    Q([g(u0, v1, 0), g(u1, v1, 0), g(u1, v1, 2), g(u0, v1, 2)], "#f3d58c");          // 金色腰線
+    if (i === 0) {
+      var cpt = g(u1 - 0.35, (v0 + v1) / 2, z);
+      px(cpt.x - 2, cpt.y - 7, 5, 7, "#1c2246");
+      var smoke = (t * 2) % 1;
+      ctx.globalAlpha = fade * (0.6 - smoke * 0.5); px(cpt.x - 3 - smoke * 8, cpt.y - 12 - smoke * 14, 7 + smoke * 4, 5 + smoke * 3, "#e9e4f0");
+      ctx.globalAlpha = fade;
+      var lamp = g(u1, (v0 + v1) / 2, 6); px(lamp.x - 1, lamp.y - 2, 3, 3, "#ffe38a");
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawTrain(t) {
+    var front = trainFront(t), A = TRAIN;
+    // 由後往前畫（前面的車廂比較靠右下，蓋住後面）
+    for (var i = A.cars - 1; i >= 0; i--) trainCar(front - A.len - i * (A.len + A.gap), i, t);
+  }
+
+  // ---- 前後排序：建築用佔地矩形比，人物用腳底格 ----
+  function inFrontOf(a, b) {
+    // a 的佔地在 b 的右邊或下邊 → a 比較前面
+    return a.x0 >= b.x1 || a.y0 >= b.y1;
+  }
+  function cmp(a, b) {
+    if (a.rect && b.rect) { if (inFrontOf(a, b)) return 1; if (inFrontOf(b, a)) return -1; return a.key - b.key; }
+    if (a.rect && !b.rect) return (b.gx >= a.x1 || b.gy >= a.y1) ? -1 : 1;
+    if (!a.rect && b.rect) return (a.gx >= b.x1 || a.gy >= b.y1) ? 1 : -1;
+    return a.key - b.key;
   }
 
   R.draw = function () {
     var c = R.cam, t = performance.now() / 1000;
+    hits = [];
     ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = "#0d0b1a"; ctx.fillRect(0, 0, VW, VH);
-    var gl = (Math.floor(t * 2) % 2 && MapGen.ground2) ? MapGen.ground2 : MapGen.ground;
+    ctx.fillStyle = "#1d2236"; ctx.fillRect(0, 0, VW, VH);
+    var gl = (Math.floor(t * 1.5) % 2 && MapGen.ground2) ? MapGen.ground2 : MapGen.ground;
+    var vx0 = c.x, vy0 = c.y, vx1 = c.x + VW / c.z, vy1 = c.y + VH / c.z;
     if (gl) {
-      var sx = Math.max(0, c.x), sy = Math.max(0, c.y);
-      var sw = Math.min(CFG.W * T - sx, VW / c.z), sh = Math.min(CFG.H * T - sy, VH / c.z);
+      var sx = Math.max(0, Math.floor(vx0)), sy = Math.max(0, Math.floor(vy0));
+      var sw = Math.min(ISO.W - sx, Math.ceil(vx1 - sx) + 1), sh = Math.min(ISO.H - sy, Math.ceil(vy1 - sy) + 1);
       if (sw > 0 && sh > 0) ctx.drawImage(gl, sx, sy, sw, sh, SX(sx), SY(sy), sw * c.z, sh * c.z);
     }
-    var x0 = Math.max(0, Math.floor(c.x / T)), y0 = Math.max(0, Math.floor(c.y / T));
-    var x1 = Math.min(CFG.W - 1, Math.ceil((c.x + VW / c.z) / T)), y1 = Math.min(CFG.H - 1, Math.ceil((c.y + VH / c.z) / T));
-    // 河面流光（往下流）
-    var x, y;
-    if (!MapGen.tileset()) for (y = y0; y <= y1; y++) for (x = x0; x <= x1; x++) {
-      if (MapGen.kind[MapGen.idx(x, y)] !== K.WATER) continue;
-      var o = ((t * 10 + x * 7 + y * 13) % 32) | 0;
-      px(x * T + ((x * 11 + y * 5) % 20), y * T + o, 6, 1, "rgba(159,224,216,.45)");
-      if ((x + y) % 3 === 0) px(x * T + 20, y * T + ((o + 16) % 32), 4, 1, "rgba(159,224,216,.3)");
-    }
-    // 奈何橋標記
+    function visible(x0, y0, x1, y1) { return x1 >= vx0 && x0 <= vx1 && y1 >= vy0 && y0 <= vy1; }
+
+    // 奈何橋標記（還沒蓋的時候）
     var ex = MapGen.exit;
-    if (!G.buildings.some(function (b) { return b.def.extra.exit; })) { px(ex.x * T + 12, ex.y * T - 6, 8, 3, "#e0423a"); if (c.z >= dpr) text("奈何橋", ex.x * T + 16, ex.y * T - 10, 8, "#f6c6b0"); }
+    if (!G.buildings.some(function (b) { return b.def.extra.exit; })) { var ep = ISO.g(ex.x + 0.5, ex.y + 0.5); px(ep.x - 4, ep.y - 3, 8, 3, "#e0423a"); text("奈何橋", ep.x, ep.y - 10, 8, "#ffd8c8"); }
 
-    // 列車
-    if (G.train) {
-      var tt = G.train.t, trainX;
-      if (tt < 1.2) trainX = -220 + (1 - Math.pow(1 - tt / 1.2, 2)) * (13 * T + 220);
-      else if (tt < 2.2) trainX = 13 * T;
-      else trainX = 13 * T + Math.pow((tt - 2.2), 2) * 500;
-      for (var car = 0; car < 4; car++) {
-        var cx = trainX - car * 50;
-        px(cx, 22, 46, 20, car === 0 ? "#16142b" : "#6b1a22"); px(cx + 4, 26, 38, 6, "#f3d58c"); px(cx, 40, 46, 3, "#0d0b1a");
-        if (car === 0) { px(cx + 30, 14, 8, 8, "#16142b"); px(cx + 31, 6 - (tt * 20 % 6), 6, 6, "rgba(201,192,214,.5)"); }
-      }
-    }
+    if (G.train) drawTrain(G.train.t);
 
-    // 建築＋人物，依腳底 y 排序
+    // 建築、樹與道具、人物一起排前後
     var list = [];
-    G.buildings.forEach(function (b) { list.push({ y: (b.y + b.h) * T - 1, b: b }); });
-    G.souls.forEach(function (e) { list.push({ y: e.py, e: e }); });
-    G.residents.forEach(function (e) { if (!e.away) list.push({ y: e.py, e: e }); });
-    G.mobs.forEach(function (e) { list.push({ y: e.py, e: e }); });
-    list.sort(function (a, b) { return a.y - b.y; });
-    list.forEach(function (it) { if (it.b) drawBuilding(it.b); else drawWalker(it.e, t); });
+    G.buildings.forEach(function (b) {
+      var spr = buildingSprite(b.def, b.broken), o = spriteOrigin(spr, b.x, b.y);
+      if (!visible(o.x, o.y, o.x + spr.img.width, o.y + spr.img.height)) return;
+      list.push({ rect: true, x0: b.x, y0: b.y, x1: b.x + b.w, y1: b.y + b.h, key: b.x + b.y + b.w + b.h, b: b });
+    });
+    MapGen.standing.forEach(function (s) {
+      var p = ISO.g(s.x + 0.5, s.y + 0.5);
+      if (!visible(p.x - 24, p.y - 64, p.x + 24, p.y + 12)) return;
+      list.push({ rect: true, x0: s.x, y0: s.y, x1: s.x + 1, y1: s.y + 1, key: s.x + s.y + 1, s: s });
+    });
+    function addE(e) {
+      if (e.hidden) return;
+      var p = ISO.ent(e.px, e.py);
+      if (!visible(p.x - 16, p.y - 40, p.x + 16, p.y + 6)) return;
+      list.push({ gx: e.px / T, gy: (e.py - 14) / T, key: ISO.entKey(e.px, e.py), e: e });
+    }
+    G.souls.forEach(addE);
+    G.residents.forEach(function (e) { if (!e.away) addE(e); });
+    G.mobs.forEach(addE);
+    list.sort(cmp);
+    list.forEach(function (it) { if (it.b) drawBuilding(it.b); else if (it.s) drawStanding(it.s); else drawWalker(it.e, t); });
 
-    // 未開放區塊：有 tileset 就疊霧，沒有就壓暗
-    var TS = MapGen.tileset();
+    // 未開放區塊：一層霧
+    var gx0 = 0, gx1 = CFG.W - 1;
     MapGen.zones.forEach(function (z) {
       if (MapGen.zoneOpen(z.id)) return;
-      var zy = z.y0 * T, zh = (z.y1 - z.y0 + 1) * T;
-      if (TS && TS.cell("fog_0")) {
-        ctx.globalAlpha = z.wild ? 0.45 : 0.8;
-        for (var fy = Math.max(z.y0, y0); fy <= Math.min(z.y1, y1); fy++) for (var fx = x0; fx <= x1; fx++) {
-          var fc = TS.cell((fx + fy) % 3 ? "fog_0" : "fog_1");
-          ctx.drawImage(TS.img, fc[0], fc[1], T, T, SX(fx * T), SY(fy * T), T * c.z, T * c.z);
-        }
-        ctx.globalAlpha = 1;
-        var ec = TS.cell("fog_edge_s");
-        if (ec && MapGen.zoneOpen(z.id - 1) && z.y0 - 1 >= y0 && z.y0 - 1 <= y1) for (var ex2 = x0; ex2 <= x1; ex2++) ctx.drawImage(TS.img, ec[0], ec[1], T, T, SX(ex2 * T), SY((z.y0 - 1) * T), T * c.z, T * c.z);
-      } else {
-        ctx.globalAlpha = z.wild ? 0.35 : 0.5; px(0, zy, CFG.W * T, zh, "#0d0b1a"); ctx.globalAlpha = 1;
-        for (var i = 0; i < CFG.W; i += 2) px(i * T, zy, T, 2, "rgba(122,42,106,.6)");
+      ctx.globalAlpha = z.wild ? 0.32 : 0.5;
+      ctx.fillStyle = z.wild ? "#4a3a5a" : "#cfd3e6";
+      for (var gy = z.y0; gy <= z.y1; gy++) {
+        footPath(gx0, gy, gx1 - gx0 + 1, 1); ctx.fill();
       }
+      ctx.globalAlpha = 1;
     });
 
     // 標籤、泡泡
@@ -246,49 +361,74 @@ window.Render = (function () {
     G.souls.forEach(function (e) { drawBubble(e, t); });
     G.residents.forEach(function (e) {
       if (e.away || e.hidden) return;
-      if (e.charId && c.z >= dpr) text(e.name, e.px, e.py + 5, 7.5, "#f3d58c");
-      if (e.st === "fight" || e.hp < e.maxhp) { px(e.px - 8, e.py - 30, 16, 2, "#0d0b1a"); px(e.px - 8, e.py - 30, 16 * Math.max(0, e.hp / e.maxhp), 2, "#8fb85a"); }
-      if (e.st === "work") text("💼", e.px + 9, e.py - 26, 7, "#fff", "center", false);
+      var p = ISO.ent(e.px, e.py);
+      if (e.charId && c.z >= dpr * 0.6) text(e.name, p.x, p.y + 8, 7, "#ffe9a8");
+      if (e.st === "fight" || e.hp < e.maxhp) { px(p.x - 8, p.y - 32, 16, 3, "#2a1e28"); px(p.x - 7, p.y - 31, 14 * Math.max(0, e.hp / e.maxhp), 1, "#7fe05a"); }
+      if (e.st === "work") { px(p.x + 7, p.y - 30, 6, 5, "#8a5a32"); px(p.x + 8, p.y - 31, 4, 1, "#5a3a26"); }
     });
     G.mobs.forEach(function (m) {
-      if (m.hp < m.maxhp) { px(m.px - 8, m.py - 20, 16, 2, "#0d0b1a"); px(m.px - 8, m.py - 20, 16 * Math.max(0, m.hp / m.maxhp), 2, "#e0423a"); }
-      if (c.z >= dpr * 2) text(m.name + " Lv" + m.lv, m.px, m.py + 5, 6.5, "#c9c0d6");
+      var p = ISO.ent(m.px, m.py);
+      if (m.hp < m.maxhp) { px(p.x - 8, p.y - 22, 16, 3, "#2a1e28"); px(p.x - 7, p.y - 21, 14 * Math.max(0, m.hp / m.maxhp), 1, "#ff5a4a"); }
+      if (c.z >= dpr * 1.4) text(m.name + " Lv" + m.lv, p.x, p.y + 8, 6.5, "#e6defa");
     });
     // 區塊牌子
     MapGen.zones.forEach(function (z) {
       if (MapGen.zoneOpen(z.id)) return;
-      var cy = (z.y0 + z.y1 + 1) / 2 * T, cx = 8 * T;
-      if (z.wild) { text("荒岸（外圍）", cx, cy, 10, "#b85aa8"); return; }
+      // 牌子放在這一區、畫面中間那一條斜線上，才不會被切掉
+      var gyc = Math.min(z.y1 + 0.5, z.y0 + 2), gxc = U.clamp(gyc + ((vx0 + vx1) / 2 - ISO.OX) / ISO.HW, 2, CFG.W - 2), p = ISO.g(gxc, gyc);
+      if (z.wild) { text("荒岸（外圍）", p.x, p.y, 10, "#e6c2ff"); return; }
       var nz = Sim.nextZone(), r = Sim.expandReq(z);
-      text((nz && nz.id === z.id ? "🔒 點這裡擴建：" : "🔒 ") + z.name, cx, cy - 8, 11, "#f3ebdd");
-      text("☆" + r.star + "・功德 " + r.merit + "　（現在是外圍，會有怪）", cx, cy + 8, 8, "#c9c0d6");
+      text((nz && nz.id === z.id ? "點這裡擴建：" : "未開放：") + z.name, p.x, p.y - 8, 11, "#ffffff");
+      text("☆" + r.star + "・功德 " + r.merit + "（現在是外圍，會有怪）", p.x, p.y + 8, 8, "#3a3550", "center", false);
     });
 
-    // 特效
+    // 特效（座標已經是等角像素）
     G.fx.forEach(function (f) {
-      var a = 1 - f.t / f.life;
-      ctx.globalAlpha = Math.max(0, a);
+      ctx.globalAlpha = Math.max(0, 1 - f.t / f.life);
       if (f.kind === "text") text(f.text, f.x, f.y, 8, f.color);
       else px(f.x, f.y, 2, 2, f.color);
       ctx.globalAlpha = 1;
     });
 
-    // 選取中的建築
-    if (R.sel) { ctx.strokeStyle = "#f3d58c"; ctx.lineWidth = 2 * dpr; ctx.strokeRect(SX(R.sel.x * T), SY(R.sel.y * T), R.sel.w * T * c.z, R.sel.h * T * c.z); }
+    // 選取中的建築：佔地描金邊
+    if (R.sel) { footPath(R.sel.x, R.sel.y, R.sel.w, R.sel.h); ctx.strokeStyle = "#ffe38a"; ctx.lineWidth = 2 * dpr; ctx.stroke(); }
 
     // 擺放預覽
-    var g = R.ghost;
-    if (g && g.def) {
-      var ok = MapGen.canPlace(g.def, g.x, g.y);
-      ctx.globalAlpha = 0.55;
-      px(g.x * T, g.y * T, g.def.size[0] * T, g.def.size[1] * T, ok ? "#8fb85a" : "#e0423a");
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = ok ? "#cfe3c4" : "#f08a6a"; ctx.lineWidth = 2 * dpr;
-      ctx.strokeRect(SX(g.x * T), SY(g.y * T), g.def.size[0] * T * c.z, g.def.size[1] * T * c.z);
-      text(g.def.name, (g.x + g.def.size[0] / 2) * T, g.y * T - 8, 10, ok ? "#cfe3c4" : "#f08a6a");
-      // 可蓋的格子提示
-      for (y = y0; y <= y1; y++) for (x = x0; x <= x1; x++) if (MapGen.canBuildTile(x, y, g.def.cat === "road")) px(x * T + 15, y * T + 15, 2, 2, "rgba(207,227,196,.35)");
+    var gh = R.ghost;
+    if (gh && gh.def) {
+      var ok = MapGen.canPlace(gh.def, gh.x, gh.y), w = gh.def.size[0], h = gh.def.size[1];
+      // 可蓋的格子點點
+      var tl = ISO.toWorld(vx0, vy0), br = ISO.toWorld(vx1, vy1), tr = ISO.toWorld(vx1, vy0), bl = ISO.toWorld(vx0, vy1);
+      var ax0 = Math.max(0, Math.floor(Math.min(tl.x, bl.x) / T)), ax1 = Math.min(CFG.W - 1, Math.ceil(Math.max(tr.x, br.x) / T));
+      var ay0 = Math.max(0, Math.floor(Math.min(tl.y, tr.y) / T)), ay1 = Math.min(CFG.H - 1, Math.ceil(Math.max(bl.y, br.y) / T));
+      for (var yy = ay0; yy <= ay1; yy++) for (var xx = ax0; xx <= ax1; xx++) if (MapGen.canBuildTile(xx, yy, gh.def.cat === "road")) { var dp = ISO.g(xx + 0.5, yy + 0.5); px(dp.x - 1, dp.y - 1, 2, 2, "rgba(255,255,255,.55)"); }
+      footPath(gh.x, gh.y, w, h); ctx.globalAlpha = 0.5; ctx.fillStyle = ok ? "#7fe05a" : "#ff5a4a"; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = ok ? "#e8ffd8" : "#ffd0c8"; ctx.lineWidth = 2 * dpr; ctx.stroke();
+      if (gh.def.cat !== "road") { var spr = buildingSprite(gh.def), o = spriteOrigin(spr, gh.x, gh.y); ctx.globalAlpha = 0.7; blit(spr.img, o.x, o.y); ctx.globalAlpha = 1; }
+      var lp = ISO.g(gh.x + w / 2, gh.y);
+      text(gh.def.name, lp.x, lp.y - 30, 10, ok ? "#e8ffd8" : "#ffd0c8");
     }
+  };
+
+  // 點畫面：先找人物、建築的圖（由前往後，透明的地方不算），沒有就回傳 null
+  var hitCv = null;
+  function opaqueAt(spr, x, y) {
+    var img = spr.img;
+    if (img.getContext) return img.getContext("2d").getImageData(x, y, 1, 1).data[3] > 0;
+    if (!hitCv) hitCv = document.createElement("canvas");
+    hitCv.width = img.width; hitCv.height = img.height;
+    var g = hitCv.getContext("2d"); g.drawImage(img, 0, 0);
+    return g.getImageData(x, y, 1, 1).data[3] > 0;
+  }
+  R.pick = function (sx, sy) {
+    var p = R.toIso(sx, sy);
+    for (var i = hits.length - 1; i >= 0; i--) {
+      var h = hits[i];
+      if (p.x < h.x0 || p.x >= h.x1 || p.y < h.y0 || p.y >= h.y1) continue;
+      if (h.e) return { e: h.e };
+      if (opaqueAt(h.spr, Math.floor(p.x - h.x0), Math.floor(p.y - h.y0))) return { b: h.b };
+    }
+    return null;
   };
 
   return R;

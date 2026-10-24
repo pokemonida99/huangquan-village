@@ -60,8 +60,7 @@ window.Input = (function () {
     delete pts[e.pointerId];
     if (Object.keys(pts).length < 2) pinch = null;
     if (down && !down.moved && performance.now() - down.t < 500) {
-      var w = Render.toWorld(e.clientX, e.clientY);
-      UI.tapWorld(w.x, w.y);
+      UI.tapScreen(e.clientX, e.clientY);
     }
     if (!Object.keys(pts).length) down = null;
   }
