@@ -330,3 +330,9 @@ small.ok { color: var(--jade) !important; }
 .rv-petals i:nth-child(16) { left: 51%; animation-delay: 1.5s; animation-duration: 5.3s; }
 .rv-petals i:nth-child(17) { left: 23%; animation-delay: 4.7s; animation-duration: 4.9s; }
 @keyframes rvfall { to { transform: translate(30px, 105vh) rotate(540deg); } }
+
+/* ---- 按鍵回饋：按下去會往下沉、變暗（手機也看得到） ---- */
+button, .card, .slot { transition: transform .06s ease-out, filter .06s ease-out; }
+button.pressed, .card.pressed, .slot.pressed, button:active { transform: translateY(2px) scale(.96); filter: brightness(.85); }
+#title-tap.pressed, #title-tap:active, #dialog.pressed { transform: none; filter: none; }
+#title-tap.pressed span { transform: translateX(-50%) translateY(2px) scale(.96); filter: brightness(.85); }

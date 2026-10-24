@@ -31,6 +31,10 @@
 - 評定配樂：放 `art/audio/review.mp3` 就會自動在評定時播（背景音樂暫停，關掉評定再接回）；沒有檔案就用合成號角。
 - 業鏡羅漢頭像換成溫和版（`tools/chars_src/lee-face-v1.png`，舊的 `lee-face-old.png`）；標題主視覺同步換臉（`art/_raw/title/title-v2.png`）。
 
+### 評定配樂、按鍵回饋
+- 評定配樂 `art/audio/review.mp3`＝使用者用 Suno 做的〈A Bright Achievement〉（28 秒，原檔 `art/_raw/audio/review-source.m4a`，降 2 dB）。iPhone 要在第一次點擊時靜音預播解鎖（`sfx.js` 的 `rvMake`）。
+- 按鍵回饋：按下時加 `.pressed`（下沉、縮小、變暗，至少 140ms），Android 震 8ms；點地圖有白色小漣漪（`G.fx` 的 `ring`）。
+
 ## 怎麼跑
 
 preview 工具的伺服器讀不到 `~/Documents`，所以 `launch.json` 的 `huangquan-village`（port 4210）是「接上已經在跑的伺服器」。先在終端機起伺服器，再用 preview 開：

@@ -19,6 +19,21 @@ window.UI = (function () {
       b.addEventListener("click", function () { b.classList.remove("hl"); UI.toggleMenu(false); UI.openSheet(b.dataset.panel); });
     });
     $("bb-menu").onclick = function () { $("bb-menu").classList.remove("hl"); UI.toggleMenu(); };
+    // 按鍵回饋：手指一碰到就加 .pressed（至少亮 140ms，快點也看得到），Android 再震一下
+    var pressedEl = null, pressedAt = 0;
+    document.addEventListener("pointerdown", function (e) {
+      var b = e.target.closest && e.target.closest("button, .card, .slot");
+      if (!b) return;
+      pressedEl = b; pressedAt = performance.now(); b.classList.add("pressed");
+      if (navigator.vibrate) try { navigator.vibrate(8); } catch (er) { /* 不支援 */ }
+    }, true);
+    function release() {
+      var b = pressedEl; if (!b) return; pressedEl = null;
+      setTimeout(function () { b.classList.remove("pressed"); }, Math.max(0, 140 - (performance.now() - pressedAt)));
+    }
+    document.addEventListener("pointerup", release, true);
+    document.addEventListener("pointercancel", release, true);
+    document.addEventListener("touchstart", function () {}, { passive: true });   // 讓 iPhone 的 :active 生效
     // 介面按鈕的點擊聲（對話框另外有翻頁聲）
     document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("button"); if (b && !b.closest("#dialog") && b.id !== "bb-menu" && !b.dataset.panel) SFX.play("click"); }, true);
     $("sheet-close").onclick = UI.closeSheet;
@@ -486,7 +501,8 @@ window.UI = (function () {
   // ---------- 點地圖 ----------
   // 點螢幕：先問 Render 點到哪個人物或建築的圖（等角的屋頂、頭都在格子上方），沒點到才看地面格子
   UI.tapScreen = function (sx, sy) {
-    var w = Render.toWorld(sx, sy);
+    var w = Render.toWorld(sx, sy), ip = Render.toIso(sx, sy);
+    G.fx.push({ kind: "ring", x: ip.x, y: ip.y, t: 0, life: 0.35 });   // 點地圖的小漣漪
     UI.tapWorld(w.x, w.y, place ? null : Render.pick(sx, sy));
   };
   UI.tapWorld = function (wx, wy, hit) {

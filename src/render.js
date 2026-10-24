@@ -386,6 +386,11 @@ window.Render = (function () {
     G.fx.forEach(function (f) {
       ctx.globalAlpha = Math.max(0, 1 - f.t / f.life);
       if (f.kind === "text") text(f.text, f.x, f.y, 8, f.color);
+      else if (f.kind === "ring") {
+        var rr = (3 + f.t / f.life * 14) * c.z;
+        ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2 * dpr;
+        ctx.beginPath(); ctx.ellipse(SX(f.x), SY(f.y), rr, rr * 0.5, 0, 0, Math.PI * 2); ctx.stroke();
+      }
       else px(f.x, f.y, 2, 2, f.color);
       ctx.globalAlpha = 1;
     });

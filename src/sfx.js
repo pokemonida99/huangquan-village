@@ -35,6 +35,12 @@ window.SFX = (function () {
       try { var b = a.createBuffer(1, 1, 22050), s = a.createBufferSource(); s.buffer = b; s.connect(a.destination); s.start(0); } catch (e) { /* 忽略 */ }
     }
     if (!bgm || bgm.paused) startMusic();
+    // iPhone：評定配樂之後會自己開始放，要先在這次點擊裡靜音播一下再停，才算解鎖
+    if (!unlocked && !musicOff) {
+      rvMake(); rv.muted = true;
+      var pp = rv.play();
+      if (pp && pp.then) pp.then(function () { rv.pause(); rv.currentTime = 0; rv.muted = false; }).catch(function () { rv.muted = false; });
+    }
     unlocked = true;
   }
   ["touchend", "pointerup", "click", "keydown"].forEach(function (ev) { window.addEventListener(ev, unlock, { capture: true, passive: true }); });
@@ -80,12 +86,13 @@ window.SFX = (function () {
     last[name] = now;
     SOUNDS[name](now + 0.01);
   }
-  // 觀音評定的配樂：art/audio/review.mp3（之後放進來就會自動用），播的時候背景音樂暫停
+  // 觀音評定的配樂：art/audio/review.mp3（使用者用 Suno 做的〈A Bright Achievement〉），播的時候背景音樂暫停
   var rv = null, rvOk = null;
+  function rvMake() { if (!rv) { rv = new Audio("art/audio/review.mp3"); rv.preload = "auto"; rv.setAttribute("playsinline", ""); rv.onerror = function () { rvOk = false; }; rv.oncanplay = function () { rvOk = true; }; } }
   function reviewMusic(good) {
     if (musicOff) { if (good) play("fanfare"); return; }
     if (rvOk === false) { play("fanfare"); return; }
-    if (!rv) { rv = new Audio("art/audio/review.mp3"); rv.preload = "auto"; rv.onerror = function () { rvOk = false; }; rv.oncanplay = function () { rvOk = true; }; }
+    rvMake(); rv.muted = false;
     if (bgm) bgm.pause();
     rv.currentTime = 0; rv.volume = BGM_VOL;
     var p = rv.play(); if (p && p.catch) p.catch(function () { rvOk = false; play("fanfare"); });
@@ -97,7 +104,7 @@ window.SFX = (function () {
     isOff: function () { return off; },
     musicOff: function () { return musicOff; },
     toggleMusic: function () { musicOff = !musicOff; try { localStorage.setItem("hq-bgm-off", musicOff ? "1" : ""); } catch (e) { /* 私密模式 */ } if (musicOff) stopMusic(); else startMusic(); return musicOff; },
-    debug: function () { return { ctx: ac && ac.state, unlocked: unlocked, bgm: bgm ? (bgm.paused ? "paused" : "playing") + " " + bgm.currentTime.toFixed(1) : "none" }; },
+    debug: function () { return { ctx: ac && ac.state, unlocked: unlocked, bgm: bgm ? (bgm.paused ? "paused" : "playing") + " " + bgm.currentTime.toFixed(1) : "none", review: rv ? (rv.paused ? "paused" : "playing") + " " + rv.currentTime.toFixed(1) : "none" }; },
     toggle: function () { off = !off; try { localStorage.setItem("hq-sfx-off", off ? "1" : ""); } catch (e) { /* 私密模式 */ } if (!off) play("click"); return off; }
   };
 })();

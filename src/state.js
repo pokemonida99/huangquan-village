@@ -127,6 +127,7 @@ window.FX = {
     for (var i = G.fx.length - 1; i >= 0; i--) {
       var f = G.fx[i]; f.t += dt;
       if (f.kind === "text") f.y -= 14 * dt;
+      else if (f.kind === "ring") { /* 原地擴散 */ }
       else { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 30 * dt; }
       if (f.t > f.life) G.fx.splice(i, 1);
     }
