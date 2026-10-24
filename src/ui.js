@@ -19,6 +19,8 @@ window.UI = (function () {
       b.addEventListener("click", function () { b.classList.remove("hl"); UI.toggleMenu(false); UI.openSheet(b.dataset.panel); });
     });
     $("bb-menu").onclick = function () { $("bb-menu").classList.remove("hl"); UI.toggleMenu(); };
+    // 介面按鈕的點擊聲（對話框另外有翻頁聲）
+    document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("button"); if (b && !b.closest("#dialog") && b.id !== "bb-menu" && !b.dataset.panel) SFX.play("click"); }, true);
     $("sheet-close").onclick = UI.closeSheet;
     $("tb-speed").onclick = UI.toggleSpeed;
     $("tb-date").onclick = UI.toggleSpeed;
@@ -83,7 +85,9 @@ window.UI = (function () {
   UI.badge = function (on) { var i = document.querySelector("#reqbtn em"); if (i) i.hidden = !on; };
   UI.toggleMenu = function (on) {
     var m = $("menu"); if (on == null) on = m.hidden;
+    if (m.hidden === !on) return;
     m.hidden = !on; $("bb-menu").classList.toggle("on", on);
+    SFX.play(on ? "open" : "close");
   };
 
   // ---------- 亡魂抉擇提示 ----------
@@ -105,11 +109,12 @@ window.UI = (function () {
   // ---------- 面板 ----------
   UI.openSheet = function (kind, arg) {
     UI.cancelPlace(true);
+    if (!sheetKind) SFX.play("open");
     sheetKind = kind; sheetArg = arg;
     $("sheet").hidden = false;
     UI.renderSheet();
   };
-  UI.closeSheet = function () { $("sheet").hidden = true; sheetKind = null; Render.sel = null; };
+  UI.closeSheet = function () { if (sheetKind) SFX.play("close"); $("sheet").hidden = true; sheetKind = null; Render.sel = null; };
   UI.sheetOpen = function () { return !!sheetKind; };
 
   UI.renderSheet = function (soft) {
@@ -141,7 +146,9 @@ window.UI = (function () {
   // --- 建設 ---
   var buildTab = "all";
   var CATS = [["all", "全部"], ["special", "名店"], ["shop", "商店"], ["food", "飲食"], ["home", "住宿"], ["deco", "裝飾"], ["road", "道路"]];
-  function serveIcons(def) { return def.serves.map(function (w) { return (D.wishById[w] || {}).icon || "💭"; }).join(""); }
+  // 心願的像素圖示（跟地圖上的泡泡同一套）
+  UI.wishIcon = function (w) { var k = { tattoo: "heart", fun: "lantern", gear: "sword" }[w] || w; return Icons.img(k) || k in { eat: 1, rest: 1, shop: 1, prayer: 1, dream: 1, hair: 1, sweets: 1, art: 1, heal: 1, reincarnate: 1, heart: 1, lantern: 1, sword: 1 } ? Icons.html(k) : ((D.wishById[w] || {}).icon || ""); };
+  function serveIcons(def) { return def.serves.map(UI.wishIcon).join(""); }
   function traitText(tr) { return Object.keys(tr || {}).map(function (k) { return k + "+" + tr[k]; }).join(" "); }
   // 縮圖用等角圖（美術或程式畫的方塊屋），道路用格子色
   var thumbCache = {};
@@ -152,7 +159,7 @@ window.UI = (function () {
     return "<img class='thumb' src='" + thumbCache[key] + "'>";
   }
   function buildHTML() {
-    var h = "<div class='tabs'>" + CATS.map(function (c) { return "<button data-tab='" + c[0] + "' class='" + (buildTab === c[0] ? "on" : "") + "'>" + c[1] + "</button>"; }).join("") + "</div><div class='cards'>";
+    var h = "<p class='money-hint'>店的收入＝走進店裡的亡魂付的冥紙。心願對得上的店，客人才會進去。每月底會扣維持費。</p><div class='tabs'>" + CATS.map(function (c) { return "<button data-tab='" + c[0] + "' class='" + (buildTab === c[0] ? "on" : "") + "'>" + c[1] + "</button>"; }).join("") + "</div><div class='cards'>";
     var list = D.buildings.filter(function (b) { return !b.fixed && (buildTab === "all" || b.cat === buildTab); });
     var order = function (d) { if (G.state.gifts[d.id]) return 0; if (!Sim.isUnlocked(d)) return 4; if (d.unique && Sim.count(d.id)) return 3; return Sim.canBuild(d) ? 2 : 1; };
     list = list.map(function (d, i) { return { d: d, k: order(d) * 1000 + i }; }).sort(function (a, b) { return a.k - b.k; }).map(function (o) { return o.d; });
@@ -161,10 +168,10 @@ window.UI = (function () {
       h += "<button class='card" + (why ? " dis" : "") + (gift ? " gift" : "") + "' data-build='" + def.id + "'>" + thumb(def) +
         "<div class='ci'><b>" + U.esc(locked ? "？？？ " + def.name : def.name) + (gift ? " <em>贈</em>" : "") + "</b>" +
         "<small>" + def.size[0] + "×" + def.size[1] + "　💴" + U.fmt(Sim.costOf(def)) + (def.merit ? "　🪷" + def.merit : "") + (def.upkeep ? "　月維持 " + def.upkeep : "") + "</small>" +
-        "<small>" + (serveIcons(def) ? "滿足 " + serveIcons(def) + "　" : "") + (def.price ? "售價 " + def.price + "　" : "") + traitText(def.traits) + "</small>" +
+        "<small>" + (serveIcons(def) ? "滿足 " + serveIcons(def) + "　" : "") + (def.price ? "每位客人付 💴" + def.price + "　" : "") + (def.extra.capacity ? "住 " + def.extra.capacity + " 位街坊　" : "") + traitText(def.traits) + "</small>" +
         (why ? "<small class='why'>" + U.esc(why) + "</small>" : "") + "</div></button>";
     });
-    return h + "</div><p class='hint'>點一下選建築，再點地圖擺位置，按「✔ 建造」。道路可以連續點。</p>";
+    return h + "</div><p class='hint'>點一下選建築，拖曳半透明的建築到想要的位置，按「建造」。道路可以連續點。</p>";
   }
 
   // --- 居民 ---
@@ -177,8 +184,18 @@ window.UI = (function () {
     h += "</div>";
     return h;
   }
+  UI.rulesHTML = function () {
+    return "<details class='rules'" + (G.state.helped < 20 ? " open" : "") + "><summary>遊戲說明</summary><ul>" +
+      "<li><b>目標</b>：幫助更多亡魂。文印、托夢、送行投胎、留下當街坊、完成委託都算「幫助」。年底觀音評定，人數夠就升階。</li>" +
+      "<li><b>亡魂</b>：搭列車來，頭上的泡泡是心願。蓋對的店，他們就會進去，心願完成就更安心。</li>" +
+      "<li><b>冥紙</b> 💴：亡魂在店裡付的錢。用來蓋店、升級，每月底扣維持費。</li>" +
+      "<li><b>功德</b> 🪷：做好事累積，蓋名店、擴建、托夢要用。送行投胎給最多。</li>" +
+      "<li><b>安心度滿</b>：可以邀請留下當街坊（會自己蓋小屋、幫忙顧店、巡守），或送去投胎拿功德。</li>" +
+      "<li><b>街區特徵</b>：每間店會加美味、思念、緣分……特徵夠高，劇中角色就會搬來，帶來自己的店。</li>" +
+      "<li><b>評價 ☆</b>：人氣、店數、街坊夠了，觀音巡察時升星，解鎖新建築和擴建。</li></ul></details>";
+  };
   function infoHTML() {
-    var h = "", tr = State.traits();
+    var h = UI.rulesHTML(), tr = State.traits();
     h += "<h3>街區特徵</h3><div class='traits'>" + D.traits.map(function (k) { return "<span>" + k + " <b>" + (tr[k] || 0) + "</b></span>"; }).join("") + "</div>";
     var st = G.state.stats, miss = Story.rankMissing();
     h += "<h3>統計</h3><p class='stats'>人氣 " + U.fmt(State.pop()) + "・送行投胎 " + st.reincarnated + "・文印 " + st.pairs + " 組・托夢 " + st.dreams + "・委託 " + st.requests + "・擊退 " + st.kills + "・遺憾離開 " + st.leftUnhappy + "<br>街上亡魂 " + G.souls.length + "・每班列車約 " + Sim.soulsPerTrain().toFixed(2) + " 位<br>位階：" + (D.titles[G.state.title] || {}).name + "（每週文印 " + Sim.wenyinPerWeek() + " 組，本週已做 " + G.state.pairsWeek + "）" + (G.state.medals ? "・勳章 " + G.state.medals : "") + "<br>下一顆星：" + (miss.length ? miss.join("、") : "條件都達成了，等觀音評定") + "</p>";
@@ -305,9 +322,9 @@ window.UI = (function () {
   function settingsHTML() {
     var s = G.state, src = D.sources;
     var h = "<div class='btns'>" + SPEEDS.map(function (v) { return "<button data-speed='" + v + "' class='" + (s.speed === v ? "on" : "") + "'>" + (v ? "速度 ×" + v : "暫停") + "</button>"; }).join("") + "</div>";
-    h += "<div class='btns'><button data-act='zin'>🔍 放大</button><button data-act='zout'>🔍 縮小</button><button data-act='home'>📍 回車站</button></div>";
-    h += "<div class='btns'><button data-act='names' class='" + (Render.showNames ? "on" : "") + "'>🏷️ 顯示建築名稱</button></div>";
-    h += "<div class='btns'><button data-act='save'>💾 立即存檔</button><button data-act='reset' class='danger'>🗑️ 重新開始</button></div>";
+    h += "<div class='btns'><button data-act='zin'>放大</button><button data-act='zout'>縮小</button><button data-act='home'>回車站</button></div>";
+    h += "<div class='btns'><button data-act='names' class='" + (Render.showNames ? "on" : "") + "'>顯示建築名稱</button><button data-act='sfx' class='" + (SFX.isOff() ? "" : "on") + "'>音效 " + (SFX.isOff() ? "關" : "開") + "</button></div>";
+    h += "<div class='btns'><button data-act='save'>立即存檔</button><button data-act='reset' class='danger'>重新開始</button></div>";
     h += "<h3>資料來源</h3><p class='stats'>" + Object.keys(src).map(function (k) { return k + "：" + (src[k] === "data" ? "✅ data" : "範例"); }).join("・") + "</p>";
     h += "<h3>說明</h3><p class='hint'>拖曳移動地圖、雙指或滾輪縮放。點亡魂看心願，點建築升級或拆除，點霧裡的牌子擴建。空白鍵暫停。</p>";
     h += "<p class='credit'>非官方粉絲作品。角色與故事出自 IG 劇《黃泉燒肉店》；玩法向開羅《冒險村物語 2》致敬。</p>";
@@ -421,6 +438,7 @@ window.UI = (function () {
         else if (a === "focus") { var r = resById(+b.dataset.res); if (r && !r.away) { UI.closeSheet(); Render.centerOn(r.px, r.py); } return; }
         else if (a === "zin") Render.zoomAt(Render.cam.z + 1, innerWidth / 2, innerHeight / 2);
         else if (a === "zout") Render.zoomAt(Render.cam.z - 1, innerWidth / 2, innerHeight / 2);
+        else if (a === "sfx") { SFX.toggle(); }
         else if (a === "names") { Render.showNames = !Render.showNames; try { localStorage.setItem("hq-village-names", Render.showNames ? "1" : ""); } catch (e) { /* 私密模式 */ } }
         else if (a === "home") { Render.centerOn(15 * T, 6 * T); UI.closeSheet(); return; }
         else if (a === "save") { UI.toast(State.save() ? "💾 已存檔" : "存檔失敗（瀏覽器不讓存）"); return; }
@@ -440,7 +458,7 @@ window.UI = (function () {
     place = { def: def };
     Render.ghost = { def: def, x: Math.floor(c.x / T) - Math.floor((def.size[0] - 1) / 2), y: Math.floor(c.y / T) - Math.floor((def.size[1] - 1) / 2) };
     $("placebar").hidden = false;
-    $("place-label").innerHTML = U.esc(def.name) + "　" + Icons.html("coin") + " " + U.fmt(Sim.costOf(def)) + "<small>拖曳綠框換位置</small>";
+    $("place-label").innerHTML = U.esc(def.name) + "　" + Icons.html("coin") + " " + U.fmt(Sim.costOf(def)) + "<small>按住建築拖曳，換到想要的位置</small>";
     $("place-ok").hidden = def.cat === "road";
   };
   UI.moveGhost = function (wx, wy) {
@@ -452,7 +470,8 @@ window.UI = (function () {
   function confirmPlace() {
     if (!place) return;
     var g = Render.ghost, why = Sim.place(place.def, g.x, g.y);
-    if (why) return UI.toast(why);
+    if (why) { SFX.play("error"); return UI.toast(why); }
+    SFX.play("place");
     var def = place.def;
     if (def.cat !== "road" || Sim.canBuild(def)) UI.cancelPlace();
     else $("place-label").innerHTML = U.esc(def.name) + "　" + Icons.html("coin") + " " + U.fmt(Sim.costOf(def)) + "<small>點地圖繼續鋪，按「取消」結束</small>";
@@ -531,6 +550,7 @@ window.UI = (function () {
   }
   function advanceDialog() {
     if (!dlgCur) return;
+    SFX.play("tick");
     var el = $("dlg-line");
     if (el.textContent.length < (el.dataset.full || "").length) { clearInterval(typeT); el.textContent = el.dataset.full; return; }
     dlgIdx++;
@@ -560,6 +580,7 @@ window.UI = (function () {
   UI.blocking = function () { return !!dlgCur || !$("modal").hidden; };
 
   UI.review = function (r, cb) {
+    SFX.play("fanfare");
     var gface = Assets.face("guanyin");
     var h = "<div class='review'><div class='gy'>" + (gface ? "<img src='" + gface + "'>" : "<span>🪷</span>") + "</div><div class='scroll'><h2>" + U.esc(r.title) + "</h2><table>" +
       r.rows.map(function (x) { return "<tr><td>" + x[0] + "</td><td>" + x[1] + "</td><td>" + x[2] + "</td></tr>"; }).join("") + "</table>" +

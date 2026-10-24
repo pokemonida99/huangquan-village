@@ -214,3 +214,10 @@ small.ok { color: var(--jade) !important; }
 .traits span.on { border-color: var(--jade); background: var(--jade2); }
 #dialog.narr .dlg-face { display: none; }
 #dialog.narr .dlg-text { font-style: italic; color: var(--night4); }
+
+/* ---- 建設說明、遊戲說明 ---- */
+.money-hint { margin: 0 0 8px; padding: 6px 8px; font-size: 12px; line-height: 1.5; background: #fff6dc; border: 2px dashed #c99a5e; border-radius: 4px; }
+.rules { margin: 4px 0 10px; padding: 6px 10px; background: #fff; border: 2px solid #c99a5e; border-radius: 4px; }
+.rules summary { font-weight: 900; color: #a8242e; cursor: pointer; }
+.rules ul { margin: 6px 0 2px; padding-left: 18px; font-size: 13px; line-height: 1.6; }
+.rules li b { color: var(--ink); }

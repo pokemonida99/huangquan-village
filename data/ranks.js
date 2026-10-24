@@ -84,7 +84,7 @@ HQ.balance = {
   weeksPerMonth: 4,
   startMoney: 4000,
   startMerit: 50,
-  startHousing: 2,
+  startHousing: 0,   // 2026-10-24：改成開局蓋好兩間看得到的街坊小屋
 
   // 來客：每班列車亡魂數期望值 = soulsBase + 人氣 / soulsPerPop + 加成（候車亭 +0.15、每隻王牌引渡貓 +0.08、引渡貓職業 guide×0.08），小數部分當機率
   trainsPerWeek: 14,

@@ -42,9 +42,10 @@ window.State = (function () {
   function wipe() { G.noSave = true; try { localStorage.removeItem(CFG.SAVE_KEY); } catch (e) { /* 私密模式 */ } }
 
   // ---- 資源 ----
-  function addMoney(n, x, y) { G.state.money += n; if (n > 0) G.state.monthIncome = (G.state.monthIncome || 0) + n; if (x != null && n) FX.float(x, y, (n > 0 ? "+" : "") + Math.round(n), "#f3d58c"); }
+  function addMoney(n, x, y) { if (n > 0 && x != null) SFX.play("coin", 0.25); G.state.money += n; if (n > 0) G.state.monthIncome = (G.state.monthIncome || 0) + n; if (x != null && n) FX.float(x, y, (n > 0 ? "+" : "") + Math.round(n), "#f3d58c"); }
   function addMerit(n, x, y) { G.state.merit += n; if (x != null && n) FX.float(x, y, (n > 0 ? "+" : "") + Math.round(n) + " 功德", "#f08a6a"); }
   function addHelped(n, why) {
+    SFX.play(/文印/.test(why || "") ? "love" : "bell", 0.6);
     G.state.helped += n;
     G.state.popularity += n * CFG.POP_PER_HELP;
     if (why) UI.toast("🙏 " + why + "　已幫助 +" + n);

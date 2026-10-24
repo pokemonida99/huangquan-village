@@ -155,7 +155,8 @@
     if (this.peace >= 100 && !this.wishes.length) content = true;
     if (content) {
       this.peace = 100;
-      var canStay = State.plainResidents() < State.residentCap() && UI.noticeCount() < 3;
+      // 住處不夠沒關係，留下來的人會自己蓋小屋；上限看街區評價
+      var canStay = State.plainResidents() < (CFG.GENERIC_CAP[G.state.star] || 99) && UI.noticeCount() < 3;
       if (canStay && Math.random() < CFG.STAY_CHANCE) {
         this.st = "decide"; this.timer = CFG.NOTICE_TIMEOUT;
         UI.notice(this);
@@ -191,6 +192,10 @@
     var r = new Resident(this.tx, this.ty, { name: this.name, skin: this.skin });
     G.residents.push(r);
     State.addHelped(1, this.name + " 留下來當街坊");
+    if (State.plainResidents() > State.housing()) {
+      var home = Sim.autoHouse({ x: this.tx, y: this.ty });
+      UI.toast(home ? this.name + " 在街上蓋了一間自己的小屋" : "街上沒有空地蓋小屋了，" + this.name + " 先住在茶館");
+    }
     FX.spark(this.px, this.py, "#cfe3c4", 12);
     this.dead = true;
   };
@@ -267,7 +272,7 @@
   Resident.prototype.expNeed = function () { return Math.round(D.expCurve.base * Math.pow(this.lv, D.expCurve.pow)); };
   Resident.prototype.gainExp = function (n) {
     this.exp += n;
-    while (this.exp >= this.expNeed() && this.lv < 99) { this.exp -= this.expNeed(); this.lv++; this.calc(); this.hp = this.maxhp; if (!this.away) FX.float(this.px, this.py, "Lv UP!", "#9fe0d8", 30); }
+    while (this.exp >= this.expNeed() && this.lv < 99) { this.exp -= this.expNeed(); this.lv++; this.calc(); this.hp = this.maxhp; if (!this.away) { FX.float(this.px, this.py, "Lv UP!", "#9fe0d8", 30); SFX.play("levelup", 1); } }
   };
   Resident.prototype.ownBuilding = function () {
     var c = this.charId && D.charById[this.charId];

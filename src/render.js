@@ -390,8 +390,16 @@ window.Render = (function () {
       ctx.globalAlpha = 1;
     });
 
-    // 選取中的建築：佔地描金邊
-    if (R.sel) { footPath(R.sel.x, R.sel.y, R.sel.w, R.sel.h); ctx.strokeStyle = "#ffe38a"; ctx.lineWidth = 2 * dpr; ctx.stroke(); }
+    // 選取中的建築：佔地描金邊、整棟發亮、頭上跳動的箭頭
+    if (R.sel && G.buildings.indexOf(R.sel) >= 0) {
+      var sb = R.sel, pulse = 0.5 + 0.5 * Math.sin(t * 5);
+      footPath(sb.x, sb.y, sb.w, sb.h); ctx.globalAlpha = 0.25 + 0.2 * pulse; ctx.fillStyle = "#ffe38a"; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = "#ffe38a"; ctx.lineWidth = 2 * dpr; ctx.stroke();
+      var ss = buildingSprite(sb.def, sb.broken), so = spriteOrigin(ss, sb.x, sb.y);
+      ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = 0.18 + 0.17 * pulse; blit(ss.img, so.x, so.y);
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+      drawArrow(so.x + ss.img.width / 2, so.y - 6 - 3 * Math.abs(Math.sin(t * 4)));
+    }
 
     // 擺放預覽
     var gh = R.ghost;
@@ -402,13 +410,47 @@ window.Render = (function () {
       var ax0 = Math.max(0, Math.floor(Math.min(tl.x, bl.x) / T)), ax1 = Math.min(CFG.W - 1, Math.ceil(Math.max(tr.x, br.x) / T));
       var ay0 = Math.max(0, Math.floor(Math.min(tl.y, tr.y) / T)), ay1 = Math.min(CFG.H - 1, Math.ceil(Math.max(bl.y, br.y) / T));
       for (var yy = ay0; yy <= ay1; yy++) for (var xx = ax0; xx <= ax1; xx++) if (MapGen.canBuildTile(xx, yy, gh.def.cat === "road")) { var dp = ISO.g(xx + 0.5, yy + 0.5); px(dp.x - 1, dp.y - 1, 2, 2, "rgba(255,255,255,.55)"); }
-      footPath(gh.x, gh.y, w, h); ctx.globalAlpha = 0.5; ctx.fillStyle = ok ? "#7fe05a" : "#ff5a4a"; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.strokeStyle = ok ? "#e8ffd8" : "#ffd0c8"; ctx.lineWidth = 2 * dpr; ctx.stroke();
-      if (gh.def.cat !== "road") { var spr = buildingSprite(gh.def), o = spriteOrigin(spr, gh.x, gh.y); ctx.globalAlpha = 0.7; blit(spr.img, o.x, o.y); ctx.globalAlpha = 1; }
+      // 拖曳中的建築：佔地閃爍、建築半透明浮起來、四周有箭頭，一看就知道可以拖
+      var gp = 0.5 + 0.5 * Math.sin(t * 6), lift = Math.round(3 + 3 * Math.sin(t * 4));
+      footPath(gh.x, gh.y, w, h); ctx.globalAlpha = 0.35 + 0.3 * gp; ctx.fillStyle = ok ? "#7fe05a" : "#ff5a4a"; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.setLineDash([4 * dpr, 3 * dpr]); ctx.lineDashOffset = -t * 20 * dpr;
+      ctx.strokeStyle = ok ? "#ffffff" : "#ffd0c8"; ctx.lineWidth = 2 * dpr; ctx.stroke(); ctx.setLineDash([]);
+      var top = 0;
+      if (gh.def.cat !== "road") {
+        var spr = buildingSprite(gh.def), o = spriteOrigin(spr, gh.x, gh.y);
+        ctx.globalAlpha = 0.55 + 0.25 * gp; blit(spr.img, o.x, o.y - lift); ctx.globalAlpha = 1;
+        top = o.y - lift;
+        // 佔地框再描一次在建築上面，才看得到底下的格子
+        footPath(gh.x, gh.y, w, h); ctx.setLineDash([4 * dpr, 3 * dpr]); ctx.lineDashOffset = -t * 20 * dpr;
+        ctx.strokeStyle = ok ? "#7fe05a" : "#ff5a4a"; ctx.lineWidth = 3 * dpr; ctx.stroke(); ctx.setLineDash([]);
+      } else top = ISO.gy(gh.x, gh.y) - 8;
+      // 四個方向的箭頭（沿格子的兩條斜軸）
+      var cx = ISO.g(gh.x + w / 2, gh.y + h / 2), push = 6 + 2 * gp;
+      [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(function (d) {
+        var e = ISO.g(gh.x + w / 2 + d[0] * (w / 2 + 0.55), gh.y + h / 2 + d[1] * (h / 2 + 0.55));
+        var vx = e.x - cx.x, vy = e.y - cx.y, L = Math.hypot(vx, vy) || 1; vx /= L; vy /= L;
+        drawChevron(e.x + vx * push * 0.3, e.y + vy * push * 0.3, vx, vy, ok);
+      });
       var lp = ISO.g(gh.x + w / 2, gh.y);
-      text(gh.def.name, lp.x, lp.y - 30, 10, ok ? "#e8ffd8" : "#ffd0c8");
+      text(gh.def.name + (ok ? "" : "（這裡不能蓋）"), (o ? o.x + spr.img.width / 2 : lp.x), top - 10, 10, ok ? "#ffffff" : "#ffd0c8");
     }
   };
+
+  function drawArrow(x, y) {
+    var c = "#ffe38a";
+    px(x - 5, y - 9, 10, 2, "#3a2418"); px(x - 4, y - 8, 8, 2, c); px(x - 3, y - 6, 6, 2, c); px(x - 2, y - 4, 4, 2, c); px(x - 1, y - 2, 2, 2, c);
+  }
+  function drawChevron(x, y, vx, vy, ok) {
+    // 小三角形箭頭，指向 (vx, vy)
+    var s = 9, nx = -vy, ny = vx;
+    ctx.beginPath();
+    ctx.moveTo(SX(x + vx * s), SY(y + vy * s));
+    ctx.lineTo(SX(x + nx * s * 0.8), SY(y + ny * s * 0.8));
+    ctx.lineTo(SX(x - nx * s * 0.8), SY(y - ny * s * 0.8));
+    ctx.closePath();
+    ctx.fillStyle = ok ? "#ffe38a" : "#ffd0c8"; ctx.fill();
+    ctx.strokeStyle = "#3a2418"; ctx.lineWidth = 2 * dpr; ctx.stroke();
+  }
 
   // 點畫面：先找人物、建築的圖（由前往後，透明的地方不算），沒有就回傳 null
   var hitCv = null;

@@ -155,6 +155,28 @@ window.Sim = (function () {
     Story.onBuilt(b);
     return "";
   };
+  // 街坊自己蓋小屋（開羅：住下來的人有自己的家）：找離 near 最近、門口接著道路的空地，免費
+  S.autoHouse = function (near, quiet) {
+    var def = D.bById.house; if (!def) return null;
+    var c = [], x, y, ROAD = {};
+    ROAD[K.PATH] = ROAD[K.STONE] = ROAD[K.RED] = 1;
+    for (y = 2; y < CFG.H; y++) for (x = 0; x < CFG.W; x++) {
+      if (!MapGen.canPlace(def, x, y)) continue;
+      var d = MapGen.doorFor({ x: x, y: y, w: 1, h: 1 });
+      if (!d || !ROAD[MapGen.kind[MapGen.idx(d.x, d.y)]]) continue;
+      c.push({ x: x, y: y, k: Math.abs(x - near.x) + Math.abs(y - near.y) + Math.random() * 2 });
+    }
+    c.sort(function (a, b) { return a.k - b.k; });
+    for (var i = 0; i < Math.min(12, c.length); i++) {
+      var b = makeB({ id: def.id, x: c[i].x, y: c[i].y });
+      var blocked = G.buildings.some(function (o) { return o !== b && o.door && (o.def.cat !== "deco" || o.def.serves.length) && !MapGen.doorFor(o); });
+      if (blocked || !MapGen.doorFor(b)) { MapGen.setOcc(b, 0); G.buildings.pop(); continue; }
+      S.refreshDoors();
+      if (!quiet) { FX.spark((b.x + 0.5) * T, (b.y + 0.5) * T + 14, "#cfe3c4", 20); Story.onBuilt(b); }
+      return b;
+    }
+    return null;
+  };
   S.remove = function (b) {
     if (b.def.fixed) return;
     MapGen.setOcc(b, 0);
@@ -203,6 +225,9 @@ window.Sim = (function () {
       // 開局送一間茶館，讓第一班亡魂有地方坐
       var tea = D.bById.teahouse || D.buildings.find(function (b) { return b.cat === "food" && !b.fixed; });
       if (tea) makeB({ id: tea.id, x: 10, y: 6 });
+      S.refreshDoors();
+      // 開局就有兩間街坊小屋（語彤和月老之外的空房）
+      for (var hh = 0; hh < 2; hh++) S.autoHouse({ x: 8 + hh * 3, y: 12 }, true);
     } else {
       s.buildings.forEach(function (o) { if (D.bById[o.id]) makeB(o); });
       D.buildings.filter(function (d) { return d.fixed && !G.buildings.some(function (b) { return b.id === d.id; }); }).forEach(placeFixed);

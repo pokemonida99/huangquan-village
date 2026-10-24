@@ -248,7 +248,7 @@ HQ.buildings = [
 
   /* ───────────── 住宅 ───────────── */
   { id: "house", name: "街坊小屋", cat: "home", size: [1, 1],
-    cost: 1000, upkeep: 50, merit: 0, price: 0, quality: 0, appeal: 2, maxLv: 1,
+    cost: 400, upkeep: 0, merit: 0, price: 0, quality: 0, appeal: 2, maxLv: 1,
     traits: { 安心: 1 }, serves: [],
     unlock: { start: true }, work: 0,
     extra: { capacity: 1, taxPerYear: 300 },
@@ -256,7 +256,7 @@ HQ.buildings = [
     sprite: "art/buildings/house.png" },
 
   { id: "tower", name: "靈骨塔公寓", cat: "home", size: [2, 2],
-    cost: 3200, upkeep: 140, merit: 0, price: 0, quality: 0, appeal: 4, maxLv: 1,
+    cost: 1600, upkeep: 20, merit: 0, price: 0, quality: 0, appeal: 4, maxLv: 1,
     traits: { 安心: 3, 秩序: 2 }, serves: [],
     unlock: { rank: 2 }, work: 0,
     extra: { capacity: 4, taxPerYear: 300 },

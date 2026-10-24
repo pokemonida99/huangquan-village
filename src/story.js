@@ -84,6 +84,7 @@ window.Story = (function () {
     if (c.brings && D.bById[c.brings]) note += "「建設」裡可以免費蓋一間「" + D.bById[c.brings].name + "」。";
     else if (c.perk) note += c.perk;
     lines.push(L("", "（" + note + "）"));
+    SFX.play("jingle");
     UI.dialog({ title: (guest ? "外賓來訪：" : "新街坊：") + c.name, lines: lines }, function () {
       G.state.visiting = null; S.addCharResident(c);
       if (c.brings && D.bById[c.brings]) UI.highlight("build");
@@ -289,6 +290,15 @@ window.Story = (function () {
     S.tutorialTick();
   };
 
+  // 舊存檔第一次進新版：語彤打招呼＋重講一次規則
+  S.welcomeBack = function () {
+    UI.dialog({ title: "歡迎回到三途川", lines: [
+      L("語彤", "歡迎回來！三途川最近整修過，看起來不太一樣了吧？", "yutong"),
+      L("語彤", "提醒你一下：亡魂頭上的泡泡是心願，蓋對的店，他們就會進去付冥紙、越來越安心。", "yutong"),
+      L("語彤", "冥紙蓋店、付月底維持費；功德蓋名店、擴建。安心的亡魂可以留下當街坊，他們會自己蓋小屋。", "yutong"),
+      L("語彤", "我們的目標是幫助更多人。看不懂的時候，打開「選單 → 情報」！", "yutong")
+    ] });
+  };
   // ---------- 教學（C 線 HQ.tutorial：依序播，達成 goal 才進下一段） ----------
   S.tutorialTick = function () {
     var s = G.state;
