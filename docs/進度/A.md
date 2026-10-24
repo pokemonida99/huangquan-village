@@ -35,6 +35,9 @@
 - 評定配樂 `art/audio/review.mp3`＝使用者用 Suno 做的〈A Bright Achievement〉（28 秒，原檔 `art/_raw/audio/review-source.m4a`，降 2 dB）。iPhone 要在第一次點擊時靜音預播解鎖（`sfx.js` 的 `rvMake`）。
 - 按鍵回饋：按下時加 `.pressed`（下沉、縮小、變暗，至少 140ms），Android 震 8ms；點地圖有白色小漣漪（`G.fx` 的 `ring`）。
 
+### 主畫面圖示
+- 使用者選第 2 款（語彤＋月老），人物要大、側身：GPT 照遊戲頭像畫 3/4 側身版（`art/_raw/icons/*-34.png`），`tools/make_icons.py` 合成金框。輸出 `icon-180.png`（apple-touch-icon，四角補滿，iPhone 會自己切圓角）、`icon-192/512.png`、`favicon.png`、`manifest.webmanifest`；從主畫面開會全螢幕。
+
 ## 怎麼跑
 
 preview 工具的伺服器讀不到 `~/Documents`，所以 `launch.json` 的 `huangquan-village`（port 4210）是「接上已經在跑的伺服器」。先在終端機起伺服器，再用 preview 開：
