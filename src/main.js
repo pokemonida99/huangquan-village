@@ -13,6 +13,7 @@ window.HQGame = (function () {
     }
     FX.update(real);
     Render.draw();
+    ExpStrip.update(real);
     requestAnimationFrame(frame);
   }
 
@@ -25,6 +26,7 @@ window.HQGame = (function () {
     Sim.setup(!!saved);
     Input.init();
     UI.init();
+    ExpStrip.init();
     if (HQ.artIndex && HQ.artIndex.worldmap) UI.setWorldmap(HQ.artIndex.worldmap);
     Render.cam.z = Render.defaultZoom();
     Render.centerOn(16 * CFG.TILE, 7 * CFG.TILE);

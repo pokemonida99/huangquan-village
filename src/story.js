@@ -5,9 +5,10 @@ window.Story = (function () {
   function L(who, text, id) { return { who: who, text: text, id: id || S.charIdByName(who) || "", ep: "" }; }
   // C：說話者是「還沒入住的街坊」的句子可以跳過
   // 對話一律過濾：還沒搬來的街坊、沒來訪的外賓不會突然開口（正在入住的那位除外）
-  S.filterLines = function (lines) {
+  S.filterLines = function (lines, present) {
     var s = G.state;
     return lines.filter(function (l) {
+      if (present && l.id && present.indexOf(l.id) >= 0) return true;
       if (l.cond && l.cond.resident && !s.charsIn[l.cond.resident]) return false;
       if (l.cond && l.cond.absent && s.charsIn[l.cond.absent]) return false;
       var c = l.id && D.charById[l.id];

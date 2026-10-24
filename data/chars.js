@@ -70,7 +70,7 @@ HQ.chars = [
 
   { id: "mimi", name: "咪咪", kind: "resident", draw: 1, job: "引渡貓",
     desc: "小雨生前養的貓，917 號引渡貓，人形是水手服少女。一天只上早晚兩班車，其他時間都在睡覺。",
-    movein: { order: 2, popularity: 30 }, brings: "catstop",
+    movein: { order: 3, popularity: 30 }, brings: "catstop",
     perk: "列車來客 +1",
     sprite: "art/chars/mimi.png", face: "art/chars/mimi-face.png",
     arrive: [
@@ -91,7 +91,7 @@ HQ.chars = [
 
   { id: "heitang", name: "黑糖", kind: "resident", draw: 1, job: "慰靈犬",
     desc: "誤食老鼠藥死去的黑白狗，以少年模樣出現，在地府當慰靈犬安慰悲傷的靈魂。",
-    movein: { order: 3, traits: { 安心: 10 } }, brings: "dogpark",
+    movein: { order: 4, traits: { 安心: 10 } }, brings: "dogpark",
     perk: "悲傷亡魂安心度上升加快",
     sprite: "art/chars/heitang.png", face: "art/chars/heitang-face.png",
     arrive: [
@@ -111,7 +111,7 @@ HQ.chars = [
 
   { id: "lee", name: "業鏡羅漢", kind: "resident", draw: 1, job: "燒肉店店長",
     desc: "生前是白李米店的李國志，偷賣米給窮人而被槍斃；當過刀鋸地獄的刀鋸使，後來奉觀音之命掌管黃泉燒肉店。穿清朝官服、戴禮帽。",
-    movein: { order: 4, popularity: 120, traits: { 美味: 15 } }, brings: "yakiniku",
+    movein: { order: 2, helped: 2, weeks: 1 }, brings: "yakiniku",   // 2026-10-24：提早到第一組文印之後（出征劇情、投胎都需要他）
     perk: "解鎖遺願馬卡龍（投胎）",
     cutin: "異界降臨・閉島繩束",
     sprite: "art/chars/lee.png", face: "art/chars/lee-face.png",

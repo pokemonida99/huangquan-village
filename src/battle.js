@@ -61,6 +61,14 @@ window.Battle = (function () {
     return { win: enemies.every(function (e) { return e.hp <= 0; }), log: log, rounds: round };
   };
 
+  // 出征地圖劇情裡算「在場」的人：打完會搬來的、在地援手
+  function scenePeople(m) {
+    if (!m) return [];
+    var r = m.reward && m.reward.movein ? [].concat(m.reward.movein) : [];
+    (m.helpers || []).forEach(function (h) { r.push(h.id); });
+    D.chars.forEach(function (c) { if (c.movein && c.movein.map === m.id) r.push(c.id); });
+    return r;
+  }
   B.depart = function (m, members) {
     var s = G.state, cost = B.travelCost(m, members.length);
     if (s.expedition) return "已經有隊伍在外面了";
@@ -76,8 +84,8 @@ window.Battle = (function () {
     State.addMods({ trainMul: (D.balance && D.balance.expeditionIncomeMul) || 0.8 }, B.WEEKS);
     UI.toast("🏮 出征「" + m.name + "」：" + members.map(function (r) { return r.name; }).join("、") + "　" + B.WEEKS + " 週後回來");
     Story.trigger("expedition", { party: members.map(function (r) { return r.charId; }).filter(Boolean) });
-    var intro = Story.filterLines(m.lines || []);
-    if (intro.length) UI.dialog({ title: "出征：" + m.name, lines: intro });
+    var intro = Story.filterLines(m.lines || [], scenePeople(m));
+    if (intro.length) UI.dialog({ title: "出征：" + m.name, lines: intro, present: scenePeople(m) });
     return "";
   };
 
@@ -131,8 +139,8 @@ window.Battle = (function () {
       if (first && m.scenes) after = (m.scenes.boss || []).concat(m.scenes.clear || []);
     } else log.push("😣 撤退了……下次再來（建議 Lv" + (m ? m.lv : "?") + "）");
     UI.battleResult({ title: (win ? "出征勝利：" : "出征失敗：") + (m ? m.name : ""), win: win, log: log, reward: rw.join("、") }, function () {
-      after = Story.filterLines(after);
-      if (after.length) UI.dialog({ title: m.boss ? m.boss.name : m.name, lines: after });
+      after = Story.filterLines(after, scenePeople(m));
+      if (after.length) UI.dialog({ title: m.boss ? m.boss.name : m.name, lines: after, present: scenePeople(m) });
     });
   };
 

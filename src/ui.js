@@ -522,7 +522,7 @@ window.UI = (function () {
   }
 
   // ---------- 對話框（開羅式：頭像＋名字＋逐字） ----------
-  UI.dialog = function (d, cb) { d = Object.assign({}, d, { lines: Story.filterLines(d.lines || []) }); dlgQ.push({ d: d, cb: cb }); if (!dlgCur) nextDialog(); };
+  UI.dialog = function (d, cb) { d = Object.assign({}, d, { lines: Story.filterLines(d.lines || [], d.present) }); dlgQ.push({ d: d, cb: cb }); if (!dlgCur) nextDialog(); };
   UI.dialogOpen = function () { return !!dlgCur; };
   function nextDialog() {
     dlgCur = dlgQ.shift() || null;
