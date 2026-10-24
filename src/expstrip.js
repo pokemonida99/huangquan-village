@@ -124,7 +124,7 @@ window.ExpStrip = (function () {
         } else { phase = "won"; phaseT = 0; }
       }
     }
-    else if (phase === "won") { if (phaseT > 0.8) { phase = "walk"; phaseT = 0; foes = []; } }
+    else if (phase === "won") { if (phaseT > 1.2) { phase = "walk"; phaseT = 0; foes = []; } }
     foes.forEach(function (f) { f.flash = Math.max(0, f.flash - dt); if (f.dead) f.dead += dt; });
     Object.keys(lunge).forEach(function (u) { lunge[u] -= dt; if (lunge[u] <= 0) delete lunge[u]; });
     party.forEach(function (r) { r._flash = Math.max(0, (r._flash || 0) - dt); });
@@ -140,6 +140,9 @@ window.ExpStrip = (function () {
       var x = AW / 2 - 16 - i * gap + (lunge[r.uid] ? 4 : 0), y = 46 - (i % 2) * 2;
       pos[r.uid] = x;
       rect(x - 6, y - 1, 12, 2, "rgba(0,0,0,.25)");
+      // 走路一步一顛；打贏了大家開心跳兩下
+      if (moving) y -= Math.round(Math.abs(Math.sin((t * 6 + i) * Math.PI)));
+      else if (phase === "won" && phaseT < 0.8) y -= Math.round(Math.abs(Math.sin((phaseT + i * 0.06) / 0.4 * Math.PI)) * 7);
       sprite(sheetOf(r), 2, moving ? Math.floor(t * 6 + i) % 2 : 0, x, y, r._flash > 0);
     });
     foes.forEach(function (f, i) {

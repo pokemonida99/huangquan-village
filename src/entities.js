@@ -41,6 +41,27 @@
     }
     return false;
   };
+  // ---- 動作：開心跳、出手前衝、被打閃白（用真實時間，畫面那邊依時間算位移） ----
+  var HOP = 0.34;
+  function now() { return performance.now() / 1000; }
+  // 開心跳 n 下：心願完成、入住、升級、街上蓋了新店……
+  Walker.prototype.hopAt = 0; Walker.prototype.hopUntil = 0;
+  Walker.prototype.cheer = function (n, note) {
+    if (this.hidden || this.away) return;
+    var t = now(); if (this.hopUntil > t) return;
+    this.hopAt = t; this.hopUntil = t + (n || 2) * HOP;
+    if (note) FX.float(this.px, this.py, note, "#ffe38a", 34);
+  };
+  // 回傳跳的高度（世界座標 px）與落地壓扁量
+  Walker.prototype.hop = function (t) {
+    if (!(this.hopUntil > t)) return null;
+    var k = (t - this.hopAt) / HOP, ph = k - Math.floor(k);
+    return { h: Math.sin(ph * Math.PI) * 9, sq: ph < 0.14 || ph > 0.9 ? 0.16 : ph > 0.4 && ph < 0.6 ? -0.06 : 0 };
+  };
+  Walker.prototype.lunge = function () { this.lungeAt = now(); };
+  Walker.prototype.hurt = function () { this.hurtAt = now(); };
+  // 站著時偶爾東張西望
+  Walker.prototype.fidget = function (dt) { if (Math.random() < dt * 0.3) this.dir = (Math.random() * 4) | 0; };
   Walker.prototype.near = function (o, r) { return Math.abs(o.tx - this.tx) + Math.abs(o.ty - this.ty) <= (r || 1); };
 
   // =====================================================================
@@ -118,6 +139,7 @@
   };
 
   Soul.prototype.exit = function (b) {
+    if (this.pairJoy) { this.pairJoy = false; var me = this; setTimeout(function () { me.cheer(3, "❤"); }, 30); }
     this.hidden = false; this.inB = null; this.lastB = b.uid; this.visits++;
     var def = b.def, price = Math.round(Sim.priceOf(b));
     var paid = Math.min(price, this.money);
@@ -128,7 +150,7 @@
     var w = this.wish(), qf = Sim.qf(b);
     if (w && def.serves.indexOf(w) >= 0 && w !== "tattoo") {
       this.peace += CFG.PEACE_WISH * qf;
-      State.act(w);
+      State.act(w); this.cheer(1);
       if (w === "dream") this.dream(b);
       this.wishes.shift(); this.fulfilled++;
     } else if (w === "tattoo" && def.serves.indexOf("tattoo") >= 0) {
@@ -147,6 +169,7 @@
     State.addHelped(d.helped || 1);
     FX.spark(this.px, this.py, "#9fe0d8", 16);
     FX.float(this.px, this.py, "托夢成功", "#9fe0d8", 30);
+    this.cheer(3);
   };
 
   // 離開前判定（B 的模型）：心願全滿足，且 亂數 < 安心度 → 安心了；否則帶著遺憾離開
@@ -213,9 +236,10 @@
       case "pairwait":
         if (this.timer <= 0) { var b = this.inB; if (b.queue) { var qi = b.queue.indexOf(this); if (qi >= 0) b.queue.splice(qi, 1); } this.exit(b); }
         break;
-      case "idle": if (this.timer <= 0) this.think(); break;
+      case "idle": this.fidget(dt); if (this.timer <= 0) this.think(); break;
       case "decide":
-        this.anim += dt;
+        this.anim += dt; this.dir = 0;
+        if (Math.random() < dt * 0.9) this.cheer(1);
         if (this.timer <= 0) { UI.dropNotice(this); this.toReincarnate(); }
         break;
       case "macaron":
@@ -225,7 +249,7 @@
           var y = this.target; if (y) { var yd = Sim.doorOf(y); y.visits++; FX.float(yd.x * T + 16, yd.y * T, "遺願馬卡龍", "#f6c6b0", 8); }
         }
         break;
-      case "eating": if (this.timer <= 0) { this.hidden = false; this.st = "reinc"; if (!this.go(MapGen.exit.x, MapGen.exit.y)) this.reincarnateNow(); } break;
+      case "eating": if (this.timer <= 0) { this.hidden = false; this.cheer(2, "♪"); this.st = "reinc"; if (!this.go(MapGen.exit.x, MapGen.exit.y)) this.reincarnateNow(); } break;
       case "reinc": if (this.step(dt) || !this.path) this.reincarnateNow(); break;
       case "leave": if (this.step(dt) || !this.path) this.dead = true; break;
     }
@@ -272,7 +296,7 @@
   Resident.prototype.expNeed = function () { return Math.round(D.expCurve.base * Math.pow(this.lv, D.expCurve.pow)); };
   Resident.prototype.gainExp = function (n) {
     this.exp += n;
-    while (this.exp >= this.expNeed() && this.lv < 99) { this.exp -= this.expNeed(); this.lv++; this.calc(); this.hp = this.maxhp; if (!this.away) { FX.float(this.px, this.py, "Lv UP!", "#9fe0d8", 30); SFX.play("levelup", 1); } }
+    while (this.exp >= this.expNeed() && this.lv < 99) { this.exp -= this.expNeed(); this.lv++; this.calc(); this.hp = this.maxhp; if (!this.away) { FX.float(this.px, this.py, "Lv UP!", "#9fe0d8", 30); SFX.play("levelup", 1); this.cheer(3); } }
   };
   Resident.prototype.ownBuilding = function () {
     var c = this.charId && D.charById[this.charId];
@@ -319,7 +343,7 @@
     if (this.away) return;
     this.timer -= dt;
     switch (this.st) {
-      case "idle": if (this.timer <= 0) this.think(); break;
+      case "idle": this.fidget(dt); if (this.timer <= 0) this.think(); break;
       case "wander": if (this.step(dt) || !this.path) { this.st = "idle"; this.timer = U.rand(1, 3); } break;
       case "toshop":
         if (this.step(dt) || !this.path) {
@@ -352,14 +376,15 @@
         this.dir = f.tx < this.tx ? 1 : f.tx > this.tx ? 2 : f.ty < this.ty ? 3 : 0;
         this.atkT -= dt;
         if (this.atkT <= 0) {
-          this.atkT = 0.8;
+          this.atkT = 0.8; this.lunge(); f.hurt();
+          f.dir = this.tx < f.tx ? 1 : this.tx > f.tx ? 2 : this.ty < f.ty ? 3 : 0;
           for (var h = 0; h < this.hits; h++) {
             var dmg = Math.max(1, Math.round(this.atk * U.rand(0.9, 1.1) - f.def / (this.magic ? 4 : 2)));
             f.hp -= dmg; FX.float(f.px + U.rand(-6, 6), f.py, "-" + dmg, "#ffffff", 26);
           }
           if (f.hp <= 0) { Sim.mobKilled(f, this); break; }
           var back = Math.max(1, Math.round(f.atk * U.rand(0.9, 1.1) - this.defn / 2));
-          this.hp -= back; FX.float(this.px + U.rand(-6, 6), this.py, "-" + back, "#e0423a", 26);
+          this.hp -= back; this.hurt(); f.lunge(); FX.float(this.px + U.rand(-6, 6), this.py, "-" + back, "#e0423a", 26);
           if (this.hp <= 0) { this.hp = 1; f.engaged = null; FX.float(this.px, this.py, "撤退！", "#f08a6a", 36); this.goRest(); }
         }
         break;

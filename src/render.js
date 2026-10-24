@@ -183,24 +183,44 @@ window.Render = (function () {
     px(x - 4, y - 11 + s, 2, 2, "#e0423a"); px(x + 2, y - 11 + s, 2, 2, "#e0423a");
   }
   // 走路圖：64×128，2 欄 × 4 列（下、左、右、上）。格子方向剛好對上等角的四個斜向
-  function drawSheet(img, x, y, dir, frame) {
-    var z = R.cam.z;
-    ctx.drawImage(img, frame * 32, dir * 32, 32, 32, SX(x - 16), SY(y - 30), 32 * z, 32 * z);
+  // sq：壓扁量（落地時 >0 變矮變寬、跳到最高 <0 拉長），腳底位置不變；flash：被打閃白
+  function drawSheet(img, x, y, dir, frame, sq, flash) {
+    var z = R.cam.z, w = 32 * (1 + (sq || 0) * 0.6), h = 32 * (1 - (sq || 0));
+    var dx = SX(x - w / 2), dy = SY(y + 2 - h);
+    ctx.drawImage(img, frame * 32, dir * 32, 32, 32, dx, dy, w * z, h * z);
+    if (flash) { ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = 0.75; ctx.drawImage(img, frame * 32, dir * 32, 32, 32, dx, dy, w * z, h * z); ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; }
   }
-  function shadow(x, y) { ctx.globalAlpha = 0.22; px(x - 7, y - 1, 14, 3, "#1a1020"); px(x - 5, y - 2, 10, 5, "#1a1020"); ctx.globalAlpha = 1; }
+  function shadow(x, y, k) { k = k == null ? 1 : k; ctx.globalAlpha = 0.22 * (0.5 + k / 2); px(x - 7 * k, y - 1, 14 * k, 3, "#1a1020"); px(x - 5 * k, y - 2, 10 * k, 5, "#1a1020"); ctx.globalAlpha = 1; }
+  // 每個人在路上錯開一點（同一格的人不會完全疊在一起）
+  function lane(e) { var u = e.uid || 0; return { x: ((u * 7) % 5 - 2) * 2, y: ((u * 13) % 5 - 2) * 1.5 }; }
+  var LUNGE = [[0, 4], [-4, 0], [4, 0], [0, -4]];   // dir → 往前衝的方向（平面座標）
   function drawWalker(e, t) {
     if (e.hidden) return;
-    var p = ISO.ent(e.px, e.py), x = p.x, y = p.y + 3;
+    var ln = e.kind === "mob" ? { x: 0, y: 0 } : lane(e), ox = ln.x, oy = ln.y;
+    // 出手：往面對的方向衝 0.16 秒；被打：左右抖
+    var lg = e.lungeAt && t - e.lungeAt < 0.16 ? Math.sin((t - e.lungeAt) / 0.16 * Math.PI) : 0;
+    if (lg) { ox += LUNGE[e.dir][0] * lg; oy += LUNGE[e.dir][1] * lg; }
+    var hurt = e.hurtAt && t - e.hurtAt < 0.18;
+    if (hurt) ox += Math.sin(t * 90) * 1.5;
+    var p = ISO.ent(e.px + ox, e.py + oy), x = p.x, y = p.y + 3;
     var moving = !!e.path, frame = moving ? Math.floor(e.anim) % 2 : 0;
-    hits.push({ e: e, x0: x - 11, y0: y - 30, x1: x + 11, y1: y + 3 });
-    shadow(x, y);
+    // 走路一步一顛；站著輕輕呼吸；顧店時忙碌地小跳
+    var lift = 0, sq = 0;
+    if (moving) lift = Math.abs(Math.sin(e.anim * Math.PI)) * 1.5;
+    else if (e.st === "work") { lift = Math.abs(Math.sin(t * 6 + e.uid)) * 1.5; frame = Math.floor(t * 3 + e.uid) % 2; }
+    else if (e.kind !== "mob") sq = Math.sin(t * 2.2 + e.uid) > 0.55 ? 0.03 : 0;
+    var hp = e.hop && e.hop(t);
+    if (hp) { lift = hp.h; sq = hp.sq; }
+    hits.push({ e: e, x0: x - 11, y0: y - 30 - lift, x1: x + 11, y1: y + 3 });
+    shadow(x, y, 1 - lift / 18);
+    y -= lift;
     if (e.kind === "mob") {
       var mi = Assets.get("art/chars/mob-" + e.type.id + ".png");
-      if (mi) drawSheet(mi, x, y, e.dir, frame); else drawMobBlob(e, x, y, t);
+      if (mi) drawSheet(mi, x, y, e.dir, frame, sq, hurt); else drawMobBlob(e, x, y, t);
       return;
     }
     var spr = e.charId ? Assets.get(D.charById[e.charId] ? D.charById[e.charId].sprite : "") : Assets.get("art/chars/soul-" + e.skin + ".png");
-    if (spr) { ctx.globalAlpha = e.kind === "soul" ? 0.92 : 1; drawSheet(spr, x, y, e.dir, frame); ctx.globalAlpha = 1; return; }
+    if (spr) { ctx.globalAlpha = e.kind === "soul" ? 0.92 : 1; drawSheet(spr, x, y, e.dir, frame, sq, hurt); ctx.globalAlpha = 1; return; }
     if (e.kind === "soul") drawGhost(x, y, "#f3ebdd", "#ffffff", 0.88, t + e.uid);
     else drawGhost(x, y, "#f3ebdd", hashCol(e.charId || e.job || "x"), 1, t + e.uid);
   }
@@ -234,7 +254,7 @@ window.Render = (function () {
     else if (e.st === "reinc" || e.st === "macaron") { key = "lotus"; icon = "🌸"; }
     else if (e.st === "leave") return;
     else { var w = e.wish(); if (!w) return; key = { tattoo: "heart", fun: "lantern", gear: "sword" }[w] || w; icon = (D.wishById[w] || {}).icon || "💭"; }
-    var p = ISO.ent(e.px, e.py), bx = p.x, by = p.y - 34 + Math.sin(t * 2 + e.uid);
+    var ln = lane(e), hp = e.hop && e.hop(t), p = ISO.ent(e.px + ln.x, e.py + ln.y), bx = p.x, by = p.y - 34 + Math.sin(t * 2 + e.uid) - (hp ? hp.h : 0);
     var r = e.st === "decide" ? 1 + 0.15 * Math.sin(t * 6) : 1;
     px(bx - 8 * r - 1, by - 7 * r - 1, 16 * r + 2, 13 * r + 2, "#3a2a2e");
     px(bx - 8 * r, by - 7 * r, 16 * r, 13 * r, col); px(bx - 1, by + 6 * r, 3, 2, col);

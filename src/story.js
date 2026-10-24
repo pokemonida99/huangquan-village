@@ -17,7 +17,20 @@ window.Story = (function () {
       return true;   // 外賓、委託人、陽間的人：出現在他們自己的事件裡
     });
   };
-  S.charIdByName = function (n) { var c = D.charById[n]; return c ? c.id : null; };
+  // 不是街坊的說話者：頭目、敵人用戰鬥圖的頭像；配角和系統聲音用 art/chars/npc-*-face.png
+  var NAME_FACE = {
+    白蛛會角頭: "boss-bailaoda", 古神: "boss-eye", 冤魂: "boss-tide",
+    術士: "npc-shushi", 廟公: "npc-miaogong", 梁安恆的媽媽: "npc-liangmom", 西裝男子: "npc-suit", 惡魔士兵: "npc-demonsoldier",
+    阿姨: "npc-auntie", 小樂的男友: "npc-xiaolebf", 茉蒂的同學: "npc-motimate", 阿斌: "npc-abin", 年輕人: "npc-youngman",
+    髮廊女店員: "npc-salongirl", 救援的女子: "npc-rescuer", 橘子: "npc-juzi", 壽司師傅: "npc-sushichef", 機車騎士: "npc-rider",
+    警察: "npc-police", 民眾: "npc-crowd", 觀眾: "npc-crowd", 魔族觀眾: "npc-democrowd", 天界通知: "npc-heaven", 車站廣播: "npc-station"
+  };
+  S.charIdByName = function (n) {
+    var c = D.charById[n]; if (c) return c.id;
+    if (NAME_FACE[n]) return NAME_FACE[n];
+    for (var k in D.enemyById) if (D.enemyById[k].name === n) return k;
+    return null;
+  };
 
   // ---------- 效果（C 線 effect 鍵） ----------
   S.applyEffect = function (eff, ctx) {
@@ -69,6 +82,7 @@ window.Story = (function () {
     var d = MapGen.stationDoor;
     var r = new Resident(d.x, d.y, { name: c.name, charId: c.id, job: c.job || "新魂", lv: c.lv || (c.start ? 3 : 5) });
     G.residents.push(r);
+    if (!silent) setTimeout(function () { r.cheer(4); }, 300);
     if (c.brings && D.bById[c.brings]) { s.gifts[c.brings] = 1; s.unlocked[c.brings] = 1; }
     if (!silent) {
       UI.toast("🏠 " + c.name + " 入住了！" + (c.brings && D.bById[c.brings] ? "　帶來「" + D.bById[c.brings].name + "」（首間免費）" : ""));

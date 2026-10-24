@@ -122,7 +122,8 @@ window.Battle = (function () {
       var d = MapGen.stationDoor; r.tx = d.x; r.ty = d.y; r.px = d.x * CFG.TILE + 16; r.py = d.y * CFG.TILE + 30;
       r.hp = Math.max(1, Math.min(r.maxhp, u.hp));
       r.gainExp(Math.round(loot.exp / Math.max(1, members.length)) + (m ? m.lv : 3) * 3);
-      r.st = "idle"; r.timer = 0.5;
+      r.st = "idle"; r.timer = 1.2;
+      if (win) r.cheer(3);
     });
     if (loot.gold) { s.money += loot.gold; rw.push("冥紙 +" + loot.gold); }
     if (loot.merit) { s.merit += loot.merit; rw.push("功德 +" + loot.merit); }

@@ -434,7 +434,7 @@ button.pressed, .card.pressed, .slot.pressed, button:active { transform: transla
 .dlg-box, .mbox { background: var(--rice) 0 0 / 64px 64px; border-color: var(--edge); box-shadow: 0 0 0 2px var(--gold), inset 0 0 0 2px #c9a35a, 0 5px 0 rgba(0,0,0,.45); color: var(--ink); image-rendering: pixelated; }
 .dlg-name { color: var(--vred); font-family: var(--serif); }
 .dlg-text { font-family: var(--serif); }
-.dlg-face .face { background: #2a2030; border-color: var(--gold); }
+.dlg-face .face { background: #f6ecd2 var(--rice) 0 0 / 64px 64px; border-color: var(--gold); box-shadow: inset 0 0 0 2px #c9a35a; color: var(--ink); }
 .dlg-title { background: var(--verm) 0 0 / 96px 48px; border-color: var(--edge); box-shadow: inset 0 0 0 2px var(--gold), 0 4px 0 rgba(0,0,0,.45); color: var(--gold2); font-family: var(--serif); letter-spacing: 4px; }
 .scene-tag { background: var(--lac) 0 0 / 96px 48px; border-color: var(--gold); color: var(--gold2); font-family: var(--serif); }
 .mbox h3 { color: var(--vred); font-family: var(--serif); }

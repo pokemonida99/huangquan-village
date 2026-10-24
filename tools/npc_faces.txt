@@ -1,0 +1,20 @@
+shushi|../huangquan-puzzle/art/shushi.webp|術士 (the sorcerer): an old man wearing a red eye mask / red blindfold band over his eyes, thin grey hair, sly grin, dark robe. Match the reference character.
+miaogong|../huangquan-puzzle/art/miaogong.webp|廟公 (the temple keeper): match the reference character's face, hair and clothes.
+liangmom|../huangquan-puzzle/art/liangmom.webp|梁安恆的媽媽 (Liang Anheng's mother), a middle-aged Taiwanese mom. Match the reference character's face, hair and clothes.
+suit|../huangquan-puzzle/art/enemy-suit.webp|西裝男子: an arrogant young man in a sharp grey suit and loosened tie, slicked hair, annoyed pouting face.
+demonsoldier|../huangquan-puzzle/art/enemy-reaper.webp|惡魔士兵: a young demon foot soldier of the demon kingdom, small curved horns, dark iron helmet and simple dark armor, nervous loyal face. Use attachment 2 only for the demon-army costume feel.
+auntie||阿姨: a kind Taiwanese auntie in her fifties, short permed dark hair, apron over a flower-print blouse, warm teary smile.
+xiaolebf||小樂的男友: a gentle young man in his twenties, short neat black hair, soft knit sweater, caring smile.
+motimate||茉蒂的同學: a cool confident high-school girl, long straight black hair, white school shirt with navy tie, playful grin.
+abin||阿斌: a shy Taiwanese boy about 10 years old, buzz-cut hair, white school T-shirt, slightly sad hopeful eyes.
+youngman||年輕人: a friendly young man about 20, casual hoodie, short black hair, earphones around neck, warm smile.
+salongirl||髮廊女店員: a cheerful young hair-salon assistant, high ponytail, black apron with comb and scissors in the pocket, offering a drink.
+rescuer||救援的女子: a brave young woman rescuer from an animal rescue team, short hair, orange rescue vest, determined kind face.
+juzi||橘子: a gentle young woman, the former owner of a black-and-white dog, shoulder-length brown hair, orange cardigan, kind teary eyes.
+sushichef||壽司師傅: a sushi chef with a white hachimaki headband and white chef coat, friendly grin, holding a little capsule-toy ball.
+rider||機車騎士: an angry Taiwanese scooter rider, open-face helmet, face mask pulled down, windbreaker jacket, frowning and shouting.
+police||警察: a Taiwanese police officer, navy blue uniform and cap with badge, serious but polite face.
+crowd||民眾 / 觀眾 (a crowd): THREE ordinary townspeople squeezed together in one portrait, front one waving, varied hair, simple clothes, cheerful.
+democrowd||魔族觀眾 (demon audience): TWO or three demon townsfolk with small horns and pointed ears, simple dark clothes, moved and amazed faces.
+heaven||天界通知 (a heavenly notice): NOT a person. A glowing golden imperial scroll edict unrolled, with a pink lotus and small clouds, centered.
+station||車站廣播 (station announcement): NOT a person. An old-fashioned brass station loudspeaker horn mounted on a lantern post with a small red paper lantern, centered.

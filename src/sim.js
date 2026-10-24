@@ -153,6 +153,8 @@ window.Sim = (function () {
     S.refreshDoors();
     FX.spark((x + b.w / 2) * T, (y + b.h / 2) * T + 14, "#f3d58c", 20);
     Story.onBuilt(b);
+    // 附近的人看到新店開張，跳一下
+    G.residents.concat(G.souls).forEach(function (w) { if (Math.abs(w.tx - x) + Math.abs(w.ty - y) <= 6) w.cheer(1); });
     return "";
   };
   // 街坊自己蓋小屋（開羅：住下來的人有自己的家）：找離 near 最近、門口接著道路的空地，免費
@@ -364,6 +366,7 @@ window.Sim = (function () {
       var dd = S.doorOf(b), X = dd.x * T + T / 2, Y = dd.y * T - 10;
       State.addMerit(Math.round((w.meritPerSet || CFG.PAIR_MERIT) * State.mod("wenyinMul", 1)), X, Y - 10);
       FX.spark(X, Y, "#e0423a"); FX.float(X, Y, "❤ 緣分 UP", "#e0423a", 26);
+      a.pairJoy = c.pairJoy = true;   // 出店門時一起開心跳
       State.addHelped(w.helpedPerSet || 2, "愛戀文印：" + a.name + " ✕ " + c.name);
       Story.onPair(a, c);
     }
