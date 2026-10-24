@@ -240,7 +240,7 @@ small.ok { color: var(--jade) !important; }
 /* ---- 標題畫面 ---- */
 #title { position: absolute; inset: 0; z-index: 20; overflow: hidden; background: #1d1830; transition: opacity .35s; }
 #title.out { opacity: 0; pointer-events: none; }
-.title-art { position: absolute; inset: 0; background: #1d1830 url("art/title.png") center bottom / cover no-repeat; image-rendering: pixelated; }
+.title-art { position: absolute; inset: 0; background: #1d1830 url("art/title.png?v=2") center bottom / cover no-repeat; image-rendering: pixelated; }
 .title-logo { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top, 0px) + 9vh); text-align: center; pointer-events: none; }
 .title-logo h1 {
   margin: 0; font-size: clamp(44px, 13vw, 76px); font-weight: 900; letter-spacing: 4px; color: #ffe38a; line-height: 1.1;
@@ -271,3 +271,62 @@ small.ok { color: var(--jade) !important; }
 /* 場景標示：回想、托夢、換地點 */
 .scene-tag { display: inline-block; margin-bottom: 4px; padding: 3px 12px; font-size: 15px; font-weight: 900; font-style: normal; color: #fff3cc; background: #a8242e; border: 2px solid #3a1810; border-radius: 3px; box-shadow: 0 2px 0 #3a1810; letter-spacing: 1px; }
 #dialog.scene .dlg-text { font-style: normal; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+/* 台詞裡的換行（\n） */
+#dlg-line, blockquote, .notice, .rb span { white-space: pre-line; }
+
+/* ---- 觀音評定（照企劃概念圖） ---- */
+#modal.rv-mode { padding: 0; background: #120f22; align-items: stretch; justify-content: stretch; }
+.rv { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.rv-art { position: absolute; inset: 0; background: #1d1830 url("art/review.png?v=1") center / cover no-repeat; image-rendering: pixelated; }
+.rv-halo { position: absolute; left: 50%; top: calc(14% - 20vmin); width: 40vmin; height: 40vmin; margin-left: -20vmin; border-radius: 50%; pointer-events: none;
+  box-shadow: 0 0 40px 12px rgba(255, 227, 138, .35); animation: rvglow 2.4s ease-in-out infinite; }
+@keyframes rvglow { 50% { box-shadow: 0 0 70px 26px rgba(255, 227, 138, .55); } }
+.rv-scroll { position: absolute; left: 50%; top: 29%; transform: translateX(-50%); width: min(92vw, 440px); max-height: 49%; display: flex; flex-direction: column;
+  border: 4px solid #e2b65a; border-radius: 8px; background: #a8242e; box-shadow: 0 0 0 3px #5a1418, 0 8px 0 rgba(0, 0, 0, .45); animation: rvin .45s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes rvin { from { transform: translateX(-50%) scale(.6); opacity: 0; } }
+.rv-title { padding: 8px 10px 6px; text-align: center; }
+.rv-title span { font-size: clamp(16px, 4.6vw, 20px); font-weight: 900; letter-spacing: 2px; color: #ffe38a; text-shadow: 2px 2px 0 #5a1418; }
+.rv-paper { margin: 0 8px 8px; padding: 10px 14px 12px; overflow-y: auto; color: var(--ink); background: #f7eed6; border: 2px solid #c99a5e; border-radius: 4px; }
+.rv-row, .rv-trait, .rv-grade, .rv-banner, .rv-reward { opacity: 0; animation: rvrow .35s ease-out forwards; }
+@keyframes rvrow { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+.rv-rows { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
+.rv-row { display: flex; align-items: center; gap: 6px; padding: 5px 2px; border-bottom: 1px dashed #d9b77a; font-size: 14px; }
+.rv-row:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.rv-row .ic { font-size: 18px; }
+.rv-k { flex: 1; font-weight: 700; }
+.rv-v b { font-size: 18px; font-weight: 900; color: #3a1810; margin-right: 2px; }
+.rv-trait { margin: 8px 0 4px; font-size: 14px; }
+.rv-trait b { color: #a8242e; }
+.rv-grade { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 4px 0; font-size: 15px; }
+.rv-grade b { font-size: 30px; font-weight: 900; color: #a8242e; }
+.rv-grade b.g-S, .rv-grade b.g-A { color: #d08a10; text-shadow: 0 0 10px rgba(255, 210, 90, .8); }
+.rv-grade small { font-size: 11px; color: #8a7a6a; }
+.rv-banner { margin: 8px 0; padding: 8px; text-align: center; font-size: clamp(20px, 6vw, 26px); font-weight: 900; color: #ffe38a; letter-spacing: 2px;
+  background: #a8242e; border: 3px solid #e2b65a; border-radius: 4px; box-shadow: 0 0 0 2px #5a1418; text-shadow: 2px 2px 0 #5a1418; animation-name: rvstamp; animation-duration: .5s; }
+@keyframes rvstamp { 0% { opacity: 0; transform: scale(2.2) rotate(-6deg); } 70% { opacity: 1; transform: scale(.92) rotate(1deg); } 100% { opacity: 1; transform: none; } }
+.rv-reward { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; font-weight: 700; }
+.rv-reward .ic { font-size: 22px; }
+.rv-note { margin: 4px 0; font-size: 12.5px; color: #7a2a6a; }
+.rv-quote { margin: 8px 0 4px; font-size: 13.5px; color: #5a3a26; }
+.rv .btns { justify-content: center; margin-bottom: 0; }
+.rv-petals i { position: absolute; top: -20px; width: 9px; height: 7px; background: #e0423a; border-radius: 60% 0 60% 0; opacity: .85; animation: rvfall 5s linear infinite; pointer-events: none; }
+.rv-petals i:nth-child(3n) { background: #ff9ab0; }
+.rv-petals i:nth-child(4n) { background: #ffe38a; border-radius: 50%; width: 6px; height: 6px; }
+.rv-petals i:nth-child(1) { left: 81%; animation-delay: 1.3s; animation-duration: 5.3s; }
+.rv-petals i:nth-child(2) { left: 90%; animation-delay: 4.7s; animation-duration: 6.6s; }
+.rv-petals i:nth-child(3) { left: 69%; animation-delay: 0.1s; animation-duration: 5.6s; }
+.rv-petals i:nth-child(4) { left: 33%; animation-delay: 3.2s; animation-duration: 7.2s; }
+.rv-petals i:nth-child(5) { left: 16%; animation-delay: 1.9s; animation-duration: 7.0s; }
+.rv-petals i:nth-child(6) { left: 50%; animation-delay: 2.7s; animation-duration: 6.0s; }
+.rv-petals i:nth-child(7) { left: 3%; animation-delay: 3.7s; animation-duration: 5.4s; }
+.rv-petals i:nth-child(8) { left: 25%; animation-delay: 4.6s; animation-duration: 6.7s; }
+.rv-petals i:nth-child(9) { left: 22%; animation-delay: 3.8s; animation-duration: 4.3s; }
+.rv-petals i:nth-child(10) { left: 81%; animation-delay: 3.1s; animation-duration: 4.4s; }
+.rv-petals i:nth-child(11) { left: 2%; animation-delay: 4.9s; animation-duration: 4.0s; }
+.rv-petals i:nth-child(12) { left: 29%; animation-delay: 4.8s; animation-duration: 4.6s; }
+.rv-petals i:nth-child(13) { left: 23%; animation-delay: 1.4s; animation-duration: 7.4s; }
+.rv-petals i:nth-child(14) { left: 71%; animation-delay: 4.4s; animation-duration: 6.2s; }
+.rv-petals i:nth-child(15) { left: 25%; animation-delay: 4.7s; animation-duration: 6.4s; }
+.rv-petals i:nth-child(16) { left: 51%; animation-delay: 1.5s; animation-duration: 5.3s; }
+.rv-petals i:nth-child(17) { left: 23%; animation-delay: 4.7s; animation-duration: 4.9s; }
+@keyframes rvfall { to { transform: translate(30px, 105vh) rotate(540deg); } }

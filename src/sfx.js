@@ -80,7 +80,19 @@ window.SFX = (function () {
     last[name] = now;
     SOUNDS[name](now + 0.01);
   }
+  // 觀音評定的配樂：art/audio/review.mp3（之後放進來就會自動用），播的時候背景音樂暫停
+  var rv = null, rvOk = null;
+  function reviewMusic(good) {
+    if (musicOff) { if (good) play("fanfare"); return; }
+    if (rvOk === false) { play("fanfare"); return; }
+    if (!rv) { rv = new Audio("art/audio/review.mp3"); rv.preload = "auto"; rv.onerror = function () { rvOk = false; }; rv.oncanplay = function () { rvOk = true; }; }
+    if (bgm) bgm.pause();
+    rv.currentTime = 0; rv.volume = BGM_VOL;
+    var p = rv.play(); if (p && p.catch) p.catch(function () { rvOk = false; play("fanfare"); });
+  }
+  function reviewMusicEnd() { if (rv) rv.pause(); if (unlocked) startMusic(); }
   return {
+    reviewMusic: reviewMusic, reviewMusicEnd: reviewMusicEnd,
     play: play,
     isOff: function () { return off; },
     musicOff: function () { return musicOff; },

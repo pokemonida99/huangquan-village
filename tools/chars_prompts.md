@@ -19,7 +19,8 @@ desc: 月老 (Yue Lao, the matchmaker god), a handsome young man with fluffy lay
 ## lee
 refs: ../huangquan-puzzle/art/vn/lee-normal.webp
 px: --ban #e2b65a,#f3d58c --gamma 0.75
-desc: 業鏡羅漢 (Karma-Mirror Arhat), a stern middle-aged East Asian man with short grey-black hair, stern frowning face, wearing a tall black top hat, black three-piece suit, white shirt, black tie, white pocket square, black shoes. Match the photo reference.
+facedesc: 業鏡羅漢, a slender middle-aged East Asian man with a long thin face, short black hair with a little grey at the temples, calm gentle kind expression, relaxed eyebrows, soft eyes, small polite smile (NOT frowning, NOT stern), tall black top hat, black three-piece suit, white shirt, black tie, white pocket square. 2026-10-24 使用者說原本的臉太兇，頭像改用 tools/chars_src/lee-face-v1.png。
+desc: 業鏡羅漢 (Karma-Mirror Arhat), a calm composed middle-aged East Asian man with short grey-black hair, gentle face, wearing a tall black top hat, black three-piece suit, white shirt, black tie, white pocket square, black shoes. Match the photo reference.
 
 ## guanyin
 refs: ../huangquan-puzzle/art/vn/guanyin-normal.webp

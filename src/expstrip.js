@@ -81,7 +81,7 @@ window.ExpStrip = (function () {
       var n = 1 + ((cycle * 7) % 3);
       for (var i = 0; i < n; i++) list.push({ e: m.enemies.length ? m.enemies[(cycle + i) % m.enemies.length] : null });
     }
-    return list.map(function (f, i) { return { e: f.e, boss: f.boss, x: AW + 20 + i * 18, tx: AW - 22 - i * 17, hp: f.boss ? 6 : 3, flash: 0, dead: 0 }; });
+    return list.map(function (f, i) { return { e: f.e, boss: f.boss, x: AW + 16 + i * 16, tx: AW / 2 + 16 + i * 16, hp: f.boss ? 6 : 3, flash: 0, dead: 0 }; });
   }
 
   E.update = function (real) {
@@ -100,8 +100,14 @@ window.ExpStrip = (function () {
     t += dt; phaseT += dt;
     var party = G.residents.filter(function (r) { return ex.party.indexOf(r.uid) >= 0; });
     // 階段：走路 → 怪物出現 → 開打 → 打完繼續走（最後一段遇到王）
-    if (phase === "walk") { scroll += dt * 26; if (phaseT > 3.2) { cycle++; foes = newFoes(m, p > 0.82 && !E._bossDone); phase = "meet"; phaseT = 0; } }
-    else if (phase === "meet") { foes.forEach(function (f) { f.x += (f.tx - f.x) * Math.min(1, dt * 5); }); if (phaseT > 0.9) { phase = "fight"; phaseT = 0; hitT = 0; } }
+    var WALK = 26, FOE = 12;   // 背景捲動（隊伍往前走）、怪物自己往左走的速度
+    if (phase === "walk") { scroll += dt * WALK; if (phaseT > 2.4) { cycle++; foes = newFoes(m, p > 0.82 && !E._bossDone); phase = "meet"; phaseT = 0; } }
+    else if (phase === "meet") {
+      scroll += dt * WALK;
+      var met = false;
+      foes.forEach(function (f) { f.x = Math.max(f.tx, f.x - dt * (WALK + FOE)); if (f.x <= f.tx) met = true; });   // 停在隊伍前面，不會穿過去
+      if (met) { foes.forEach(function (f) { f.x = f.tx; }); phase = "fight"; phaseT = 0; hitT = 0.15; }
+    }
     else if (phase === "fight") {
       hitT -= dt;
       if (hitT <= 0 && party.length) {
@@ -127,11 +133,11 @@ window.ExpStrip = (function () {
     // ---- 畫 ----
     g.imageSmoothingEnabled = false;
     background(THEME[m.id] || DEF_THEME);
-    var moving = phase === "walk";
+    var moving = phase === "walk" || phase === "meet";
     var n = party.length, gap = Math.min(18, Math.max(12, 70 / Math.max(1, n)));
     var pos = {};
     party.forEach(function (r, i) {
-      var x = 24 + (n - 1 - i) * gap + (lunge[r.uid] ? 5 : 0), y = 46 - (i % 2) * 2;
+      var x = AW / 2 - 16 - i * gap + (lunge[r.uid] ? 4 : 0), y = 46 - (i % 2) * 2;
       pos[r.uid] = x;
       rect(x - 6, y - 1, 12, 2, "rgba(0,0,0,.25)");
       sprite(sheetOf(r), 2, moving ? Math.floor(t * 6 + i) % 2 : 0, x, y, r._flash > 0);
@@ -140,7 +146,7 @@ window.ExpStrip = (function () {
       if (f.dead > 0.45) return;
       var y = 46 - (i % 2) * 2, a = f.dead ? (Math.floor(f.dead * 20) % 2 ? 0.2 : 0.8) : 1;
       rect(f.x - 6, y - 1, 12, 2, "rgba(0,0,0,.25)");
-      sprite(enemyImg(f.e), 1, Math.floor(t * 4 + i) % 2, f.x, y, f.flash > 0, a);
+      sprite(enemyImg(f.e), 1, phase === "meet" ? Math.floor(t * 6 + i) % 2 : Math.floor(t * 3 + i) % 2, f.x, y, f.flash > 0, a);
       if (f.boss) text("王", f.x + 12, y - 30, "#ff7a6a");
     });
     fx.forEach(function (f) { var x = f.who ? (pos[f.who] || 20) : f.x; text(f.s, x, f.y - f.t * 10, f.c); });

@@ -26,6 +26,11 @@
 - 三格存檔：第 1 格沿用舊 key `hq-village-save-v1`（舊存檔自動變存檔 1），2、3 格加 `-2`、`-3`。存檔記 `savedAt`，標題畫面顯示年月、幫助人數、街坊、星數、上次存檔時間，可刪除。
 - 設定：「回標題畫面」；「重新開始」只清目前這格，重整後直接進同一格（sessionStorage `hq-autoslot`）。
 
+### 觀音評定畫面、業鏡羅漢新頭像
+- 評定畫面照企劃概念圖（設計 canvas「入住順序與觀音評定」）：背景 `art/review.png`（GPT，原圖 `art/_raw/review/`），觀音坐蓮花雲、下方語彤／業鏡羅漢／月老行禮；中間紅金卷軸由 UI 畫，數字逐行跳出、升級蓋章、好成績撒花瓣。
+- 評定配樂：放 `art/audio/review.mp3` 就會自動在評定時播（背景音樂暫停，關掉評定再接回）；沒有檔案就用合成號角。
+- 業鏡羅漢頭像換成溫和版（`tools/chars_src/lee-face-v1.png`，舊的 `lee-face-old.png`）；標題主視覺同步換臉（`art/_raw/title/title-v2.png`）。
+
 ## 怎麼跑
 
 preview 工具的伺服器讀不到 `~/Documents`，所以 `launch.json` 的 `huangquan-village`（port 4210）是「接上已經在跑的伺服器」。先在終端機起伺服器，再用 preview 開：

@@ -585,19 +585,40 @@ window.UI = (function () {
   };
   UI.blocking = function () { return !!dlgCur || !$("modal").hidden; };
 
+  // 觀音評定：照企劃概念圖——觀音坐在蓮花雲上、中間紅金卷軸、下方三人行禮。數字一行一行跳出來，升級時蓋章、撒花瓣
+  var RV_ICON = { 人氣: "star", 街坊: "house", 投胎送行: "lantern", 文印: "scroll", 已幫助: "heart" };
   UI.review = function (r, cb) {
-    SFX.play("fanfare");
-    var gface = Assets.face("guanyin");
-    var h = "<div class='review'><div class='gy'>" + (gface ? "<img src='" + gface + "'>" : "<span>🪷</span>") + "</div><div class='scroll'><h2>" + U.esc(r.title) + "</h2><table>" +
-      r.rows.map(function (x) { return "<tr><td>" + x[0] + "</td><td>" + x[1] + "</td><td>" + x[2] + "</td></tr>"; }).join("") + "</table>" +
-      "<p class='tr'>街區特徵：" + U.esc(r.traits) + "</p>" +
-      (r.grade ? "<div class='grade'>評等 <b>" + U.esc(r.grade) + "</b><small>" + U.esc(r.score) + "</small></div>" : "") +
-      (r.starUp ? "<div class='up'>評價 " + "★".repeat(r.starUp) + " 升級！</div>" : "") +
-      (r.titleUp ? "<div class='up'>升階：" + U.esc(r.titleUp) + "！</div>" : "") +
-      "<p class='rw'>🎁 獎勵：" + U.esc(r.reward) + "</p>" +
-      r.notes.map(function (n) { return "<p class='note'>" + U.esc(n) + "</p>"; }).join("") +
-      "<p class='gq'>觀音：「" + U.esc(r.comment) + "」</p><div class='btns'><button class='go' data-close>謝謝觀音</button></div></div></div>";
-    UI.modal(h, function (m) { m.querySelector("[data-close]").onclick = function () { UI.closeModal(); if (cb) cb(); }; });
+    var good = r.starUp || r.titleUp || /^[SA]$/.test(r.grade || "");
+    SFX.reviewMusic(good);
+    var rows = r.rows.map(function (x, i) {
+      var m = /^([\d,]+)(.*)$/.exec(String(x[2])) || [null, "", String(x[2])];
+      return "<div class='rv-row' style='animation-delay:" + (0.35 + i * 0.28).toFixed(2) + "s'>" + Icons.html(RV_ICON[x[1]] || "star") +
+        "<span class='rv-k'>" + U.esc(x[1]) + "</span><span class='rv-v'><b data-to='" + String(m[1]).replace(/,/g, "") + "'>0</b>" + U.esc(m[2]) + "</span></div>";
+    }).join("");
+    var t0 = 0.35 + r.rows.length * 0.28;
+    var h = "<div class='rv'><div class='rv-art'></div><div class='rv-halo'></div>" + (good ? "<div class='rv-petals'>" + new Array(18).join("<i></i>") + "</div>" : "") +
+      "<div class='rv-scroll'><div class='rv-title'><span>" + U.esc(r.title) + "</span></div><div class='rv-paper'><div class='rv-rows'>" + rows + "</div>" +
+      "<div class='rv-trait' style='animation-delay:" + t0.toFixed(2) + "s'>街區特徵：<b>" + U.esc(r.traits) + "</b></div>" +
+      (r.grade ? "<div class='rv-grade' style='animation-delay:" + (t0 + 0.3).toFixed(2) + "s'>評等 <b class='g-" + U.esc(r.grade) + "'>" + U.esc(r.grade) + "</b><small>" + U.esc(r.score) + "</small></div>" : "") +
+      (r.starUp ? "<div class='rv-banner' style='animation-delay:" + (t0 + 0.7).toFixed(2) + "s'>評價 " + "★".repeat(r.starUp) + " 升級！</div>" : "") +
+      (r.titleUp ? "<div class='rv-banner' style='animation-delay:" + (t0 + 0.9).toFixed(2) + "s'>升階：" + U.esc(r.titleUp) + "！</div>" : "") +
+      "<div class='rv-reward' style='animation-delay:" + (t0 + 1.1).toFixed(2) + "s'>" + Icons.html("coin") + "<span>獎勵：" + U.esc(r.reward) + "</span></div>" +
+      r.notes.map(function (n) { return "<p class='rv-note'>" + U.esc(n) + "</p>"; }).join("") +
+      "<p class='rv-quote'>觀音：「" + U.esc(r.comment) + "」</p><div class='btns'><button class='go' data-close>謝謝觀音</button></div></div></div></div>";
+    UI.modal(h, function (m) {
+      m.classList.add("rv-mode");
+      // 數字從 0 跳到目標，每行出現時「叮」一聲；蓋章時放號角
+      m.querySelectorAll(".rv-v b").forEach(function (el, i) {
+        var to = +el.dataset.to || 0, start = (0.35 + i * 0.28) * 1000;
+        setTimeout(function () {
+          SFX.play("tick");
+          var t = 0, dur = 450, iv = setInterval(function () { t += 30; el.textContent = U.fmt(Math.round(to * Math.min(1, t / dur))); if (t >= dur) clearInterval(iv); }, 30);
+        }, start);
+      });
+      if (r.starUp || r.titleUp) setTimeout(function () { SFX.play("fanfare"); }, (t0 + 0.7) * 1000);
+      setTimeout(function () { var pp = m.querySelector(".rv-paper"); if (pp) pp.scrollTo({ top: pp.scrollHeight, behavior: "smooth" }); }, (t0 + 0.9) * 1000);
+      m.querySelector("[data-close]").onclick = function () { m.classList.remove("rv-mode"); SFX.reviewMusicEnd(); UI.closeModal(); if (cb) cb(); };
+    });
   };
   UI.battleResult = function (r, cb) {
     UI.modal("<div class='mbox battle'><h3>" + U.esc(r.title) + "</h3><div class='log'>" + r.log.map(function (l) { return "<div>" + U.esc(l) + "</div>"; }).join("") + "</div>" + (r.reward ? "<p class='rw'>🎁 " + U.esc(r.reward) + "</p>" : "") + "<div class='btns'><button class='go' data-close>好</button></div></div>", function (m) { m.querySelector("[data-close]").onclick = function () { UI.closeModal(); if (cb) cb(); }; });
