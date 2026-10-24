@@ -122,3 +122,4 @@ cd /Users/sh/Documents/CLAUDE/0702/huangquan-village && python3 -m http.server 4
 - 人物動作（`src/entities.js`、`src/render.js`）：走路一步一顛、站著呼吸並偶爾東張西望、顧店忙碌小跳、出手往前衝、被打閃白抖動、同一格的人錯開一點不疊在一起。
 - 開心跳（`Walker.cheer(n)`）：心願完成、托夢成功、文印成對（兩人一起跳＋❤）、決定去留時、吃完馬卡龍、升級、新角色入住、新店開張附近的人、出征打贏回來；出征小動畫打贏時隊伍也會跳。
 - 沒有頭像的配角與系統聲音補上原創頭像 `art/chars/npc-*-face.png`（`tools/npc_faces.sh` 讀 `tools/npc_faces.txt`；有原作圖的附參考）；頭目和敵人說話時用戰鬥圖頭像。說話者名稱對應在 `src/story.js` 的 `NAME_FACE`。
+- 情報頁的緣分組合可以點開：列出要哪幾間（已蓋／還沒蓋／未解鎖條件）、擺法距離、加成內容；縮圖有蓋才是彩色。同一種店蓋好幾間時，任何一組夠近就發動（原本只看第一間）。

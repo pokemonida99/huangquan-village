@@ -214,6 +214,29 @@ window.UI = (function () {
   // 情報：開羅式的資料頁——位階卡、數字方塊、特徵長條圖、下一顆星進度、緣分組合卡
   var TRAIT_COL = { 美味: "#e8833a", 思念: "#4f8fd6", 緣分: "#e2557a", 儀容: "#a065c8", 藝術: "#2fa79a", 娛樂: "#e2b33a", 安心: "#5ea84a", 香火: "#c8423a", 秩序: "#7d7890", 魔氣: "#5a2a6a" };
   function bar(pct, col) { return "<span class='ib'><i style='width:" + Math.max(0, Math.min(100, pct)).toFixed(1) + "%;background:" + col + "'></i></span>"; }
+  function comboEffText(e) {
+    var t = [];
+    if (e.qualityPct) t.push("品質 +" + e.qualityPct + "%");
+    if (e.appeal) t.push("魅力 +" + e.appeal);
+    Object.keys(e.traits || {}).forEach(function (k) { t.push(k + " +" + e.traits[k]); });
+    if (e.wenyinPerWeek) t.push("每週文印 +" + e.wenyinPerWeek + " 組");
+    if (e.macaronMeritPct) t.push("投胎送行功德 +" + e.macaronMeritPct + "%");
+    return t.join("、");
+  }
+  function comboDetail(c, on, got) {
+    var r = c.range || 1;
+    var h = "<div class='icb-detail'>" + (c.desc ? "<p class='icd-desc'>" + U.esc(c.desc) + "</p>" : "") + "<ul>";
+    c.need.forEach(function (id) {
+      var d = D.bById[id]; if (!d) return;
+      var n = Sim.count(id);
+      var st = n ? "✔ 已蓋" + (n > 1 ? " " + n + " 間" : "") : Sim.isUnlocked(d) ? "還沒蓋・💴" + U.fmt(Sim.costOf(d)) : "未解鎖：" + Sim.unlockText(d);
+      h += "<li class='" + (n ? "ok" : Sim.isUnlocked(d) ? "" : "lock") + "'>" + thumb(d) + "<div><b>" + U.esc(d.name) + "</b><small>" + U.esc(st) + "</small></div></li>";
+    });
+    h += "</ul><p class='icd-rule'><b>擺法</b>" + (r === 1 ? "這幾間要緊鄰（相距 1 格以內）" : "這幾間要彼此相距 " + r + " 格以內") + "</p>";
+    h += "<p class='icd-rule'><b>加成</b>" + U.esc(comboEffText(c.effect || {})) + "</p>";
+    if (!on && got === c.need.length) h += "<p class='icd-warn'>店都蓋好了，但離得太遠。把它們蓋近一點就會發動。</p>";
+    return h + "</div>";
+  }
   function infoHTML() {
     var s = G.state, st = s.stats, tr = State.traits(), h = "";
     // 位階卡
@@ -236,11 +259,16 @@ window.UI = (function () {
     var rp = Story.rankProgress();
     if (rp.length) h += "<h3 class='ic-h'>下一顆星 " + Icons.html("star") + "<small>每季觀音巡察時檢查</small></h3><div class='ic-goals'>" + rp.map(function (g) {
       var ok = g.cur >= g.need; return "<div class='ig" + (ok ? " ok" : "") + "'><span>" + (ok ? "✔ " : "") + g.label + "</span>" + bar(g.cur / g.need * 100, ok ? "#5ea84a" : "#e2b65a") + "<b>" + U.fmt(g.cur) + "<em>/" + U.fmt(g.need) + "</em></b></div>"; }).join("") + "</div>";
-    // 緣分組合
+    // 緣分組合：縮圖有蓋的是彩色、沒蓋的灰色；點一下展開看要哪幾間、怎麼擺、有什麼加成
     var cb = Sim.activeCombos();
-    if (D.combos.length) h += "<h3 class='ic-h'>緣分組合<small>相鄰的店有加成</small></h3><div class='ic-combos'>" + D.combos.map(function (c) {
-      var on = cb.indexOf(c) >= 0;
-      return "<div class='icb" + (on ? " on" : "") + "'><div class='icb-imgs'>" + c.need.map(function (id) { var d = D.bById[id]; return d ? thumb(d) : ""; }).join("<i>＋</i>") + "</div><b>" + U.esc(c.name) + (on ? "<em>發動中</em>" : "") + "</b><small>" + U.esc(c.desc || c.need.map(function (id) { return D.bById[id] ? D.bById[id].name : id; }).join("＋")) + "</small></div>"; }).join("") + "</div>";
+    if (D.combos.length) h += "<h3 class='ic-h'>緣分組合<small>點一下看要哪幾間店</small></h3><div class='ic-combos'>" + D.combos.map(function (c) {
+      var on = cb.indexOf(c) >= 0, open = UI._comboOpen === c.id;
+      var got = c.need.filter(function (id) { return Sim.count(id) > 0; }).length;
+      var card = "<button class='icb" + (on ? " on" : "") + (open ? " open" : "") + "' data-combo='" + c.id + "'><div class='icb-imgs'>" +
+        c.need.map(function (id) { var d = D.bById[id]; return d ? "<span class='icb-t" + (Sim.count(id) ? " has" : "") + "'>" + thumb(d) + "</span>" : ""; }).join("<i>＋</i>") +
+        "</div><b>" + U.esc(c.name) + (on ? "<em>發動中</em>" : "") + "</b><small>" + (on ? "加成中" : "已蓋 " + got + " / " + c.need.length + " 間") + "</small></button>";
+      return card + (open ? comboDetail(c, on, got) : "");
+    }).join("") + "</div>";
     h += UI.rulesHTML();
     return h;
   }
@@ -462,6 +490,7 @@ window.UI = (function () {
       };
     });
     body.querySelectorAll("[data-item]").forEach(function (b) { b.onclick = function () { UI.useItem(b.dataset.item); UI.renderSheet(); }; });
+    body.querySelectorAll("[data-combo]").forEach(function (b) { b.onclick = function () { SFX.play("open"); UI._comboOpen = UI._comboOpen === b.dataset.combo ? null : b.dataset.combo; UI.renderSheet(); }; });
     body.querySelectorAll("details.rules").forEach(function (d) { d.ontoggle = function () { UI._rulesOpen = d.open; }; });
     body.querySelectorAll("[data-speed]").forEach(function (b) { b.onclick = function () { G.state.speed = +b.dataset.speed; UI.renderSheet(); }; });
     body.querySelectorAll("[data-accept]").forEach(function (b) { b.onclick = function () { var r = D.requests.find(function (x) { return x.id === b.dataset.accept; }); UI.closeSheet(); Story.acceptRequest(r); UI.renderSheet(); }; });

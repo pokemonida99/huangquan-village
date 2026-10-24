@@ -111,9 +111,14 @@ window.Sim = (function () {
     D.combos.forEach(function (c) {
       var members = c.need.map(function (id) { return G.buildings.filter(function (b) { return b.id === id; }); });
       if (members.some(function (m) { return !m.length; })) return;
-      var pick = members.map(function (m) { return m[0]; });
-      var ok = pick.every(function (a) { return pick.every(function (b) { return a === b || dist(a, b) <= (c.range || 1); }); });
-      if (!ok) return;
+      // 同一種店有好幾間時，任何一組彼此夠近就算
+      var pick = null;
+      (function search(i, cur) {
+        if (pick) return;
+        if (i === members.length) { pick = cur.slice(); return; }
+        members[i].forEach(function (b) { if (!pick && cur.every(function (a) { return dist(a, b) <= (c.range || 1); })) { cur.push(b); search(i + 1, cur); cur.pop(); } });
+      })(0, []);
+      if (!pick) return;
       S._combos.push(c);
       var e = c.effect || {};
       pick.forEach(function (b) { b.comboPct += e.qualityPct || 0; b.comboAppeal += e.appeal || 0; b.combos.push(c.name); });

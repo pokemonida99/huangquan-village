@@ -481,3 +481,23 @@ button.pressed, .card.pressed, .slot.pressed, button:active { transform: transla
 @keyframes ld-dot { 0%, 60%, 100% { opacity: .2; } 30% { opacity: 1; } }
 #ld-tip { min-height: 3em; margin: 22px 0 0; padding: 8px 12px; font-size: 13px; line-height: 1.6; color: var(--ink); text-align: left;
   background: var(--rice) 0 0 / 64px 64px; border: 2px solid var(--edge); box-shadow: 0 0 0 2px var(--gold), 0 4px 0 rgba(0,0,0,.5); font-family: var(--font); }
+
+/* ---- 緣分組合：可以點開看要哪幾間 ---- */
+.ic-combos { grid-auto-flow: dense; }
+.icb { font: inherit; color: inherit; text-align: center; width: 100%; cursor: pointer; filter: none; opacity: 1; }
+.icb .icb-t .thumb { filter: grayscale(.9); opacity: .5; }
+.icb .icb-t.has .thumb { filter: none; opacity: 1; }
+.icb.open { border-color: var(--vred); box-shadow: 0 0 0 2px var(--gold2); }
+.icb-detail { grid-column: 1 / -1; padding: 8px 10px; background: #fff8e6; border: 2px solid var(--vred); box-shadow: inset 0 0 0 2px #f1dfb0; font-size: 12.5px; color: var(--ink); }
+.icb-detail ul { list-style: none; margin: 4px 0 6px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.icb-detail li { display: flex; align-items: center; gap: 8px; }
+.icb-detail li .thumb { width: 40px; height: 34px; filter: grayscale(.9); opacity: .55; }
+.icb-detail li.ok .thumb { filter: none; opacity: 1; }
+.icb-detail li div { display: flex; flex-direction: column; }
+.icb-detail li small { color: #8a6a4a; }
+.icb-detail li.ok small { color: #3f7a34; font-weight: 700; }
+.icb-detail li.lock small { color: #a8242e; }
+.icd-desc { margin: 0 0 2px; color: #6a5440; }
+.icd-rule { margin: 3px 0 0; }
+.icd-rule b { display: inline-block; margin-right: 6px; padding: 0 5px; font-size: 11px; color: var(--gold2); background: var(--vred); }
+.icd-warn { margin: 6px 0 0; padding: 4px 6px; color: #7a2a10; background: #fbe2c4; border-left: 3px solid var(--vred); }
