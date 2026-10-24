@@ -304,7 +304,7 @@ HQ.buildings = [
 ];
 
 /* 緣分組合：need 裡的建築彼此距離（佔地外框之間的切比雪夫距離）都 ≤ range 就成立。
-   range 1 ＝相鄰（含斜角）。效果套在組合內每一間：quality ×(1+qualityPct/100)、appeal +appeal，
+   range ＝兩間中間最多隔幾格（前後左右、斜角都算）；1 ＝貼著或隔一條路。效果套在組合內每一間：quality ×(1+qualityPct/100)、appeal +appeal，
    traits 是整個組合額外加一次的特徵點數。同一間可以屬於多個組合。 */
 HQ.combos = [
   { id: "touqi",    name: "頭七套餐",   need: ["salon", "photo"],              range: 1,

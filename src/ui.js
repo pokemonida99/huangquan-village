@@ -232,7 +232,7 @@ window.UI = (function () {
       var st = n ? "✔ 已蓋" + (n > 1 ? " " + n + " 間" : "") : Sim.isUnlocked(d) ? "還沒蓋・💴" + U.fmt(Sim.costOf(d)) : "未解鎖：" + Sim.unlockText(d);
       h += "<li class='" + (n ? "ok" : Sim.isUnlocked(d) ? "" : "lock") + "'>" + thumb(d) + "<div><b>" + U.esc(d.name) + "</b><small>" + U.esc(st) + "</small></div></li>";
     });
-    h += "</ul><p class='icd-rule'><b>擺法</b>" + (r === 1 ? "這幾間要緊鄰（相距 1 格以內）" : "這幾間要彼此相距 " + r + " 格以內") + "</p>";
+    h += "</ul><p class='icd-rule'><b>擺法</b>" + (r === 1 ? "這幾間要靠在一起，前後左右都算，中間隔一條路也可以" : "這幾間彼此之間隔 " + r + " 格以內，前後左右都算") + "</p>";
     h += "<p class='icd-rule'><b>加成</b>" + U.esc(comboEffText(c.effect || {})) + "</p>";
     if (!on && got === c.need.length) h += "<p class='icd-warn'>店都蓋好了，但離得太遠。把它們蓋近一點就會發動。</p>";
     return h + "</div>";

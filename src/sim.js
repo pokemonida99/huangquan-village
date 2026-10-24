@@ -103,8 +103,9 @@ window.Sim = (function () {
   // 組合、裝飾光環：蓋／拆／升級後重算
   S.recalc = function () {
     G.buildings.forEach(function (b) { b.comboPct = 0; b.comboAppeal = 0; b.aura = 0; b.combos = []; });
+    // 兩間店中間隔幾格（貼在一起＝0；前後左右、斜角都一樣算）。range 1＝貼著或中間隔一條路
     function dist(a, b) {
-      var dx = Math.max(0, a.x - (b.x + b.w - 1), b.x - (a.x + a.w - 1)), dy = Math.max(0, a.y - (b.y + b.h - 1), b.y - (a.y + a.h - 1));
+      var dx = Math.max(0, a.x - (b.x + b.w), b.x - (a.x + a.w)), dy = Math.max(0, a.y - (b.y + b.h), b.y - (a.y + a.h));
       return Math.max(dx, dy);
     }
     S._combos = [];

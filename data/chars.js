@@ -137,7 +137,7 @@ HQ.chars = [
     desc: "黃泉燒肉店店員，後來當上代理店長，制服是粉紅韓服。生前是大寶的女友、咪咪的主人。",
     movein: { order: 3, resident: "lee", popularity: 30 }, brings: null,   // 2026-10-24：業鏡羅漢之後就是小雨
     perk: "燒肉店可多接一桌客人",
-    sprite: "art/chars/xiaoyu.png", face: "art/chars/xiaoyu-face.png",
+    sprite: "art/chars/xiaoyu.png?v=2", face: "art/chars/xiaoyu-face.png",
     arrive: [
       [null, "【三途川・黃泉燒肉店】一位穿粉紅韓服的新店員來報到。", "字卡"],
       [null, "我是小雨，今天起在黃泉燒肉店幫忙。", "xiaoyu"],
@@ -238,7 +238,7 @@ HQ.chars = [
     desc: "秦王之女陽滋公主陰曼。找不到岳夏澤，喝下自己發明的孟婆湯忘了他，在三途川經營孟婆甜食屋。發明了孟婆湯和遺願馬卡龍。",
     movein: { resident: "no7", traits: { 思念: 40 } }, brings: null,
     perk: "甜點回復安心度",
-    sprite: "art/chars/yangzi.png", face: "art/chars/yangzi-face.png",
+    sprite: "art/chars/yangzi.png?v=2", face: "art/chars/yangzi-face.png",
     arrive: [
       [null, "【三途川・孟婆甜食屋】經營甜食屋的孟婆來了，店員七號正在向月老介紹她。", "字卡"],
       ["EP4-06", "孟婆是很偉大的神，她不止發明孟婆湯和遺願馬卡龍，還研究出各種可以讓靈魂快樂的甜點心。", "no7"],
@@ -295,7 +295,7 @@ HQ.chars = [
     movein: { rank: 3, helped: 150, traits: { 娛樂: 50 } }, brings: "clinic",
     perk: "治療受傷街坊、除咒",
     cutin: "醫者令・鎮魂",
-    sprite: "art/chars/huatuo.png", face: "art/chars/huatuo-face.png",
+    sprite: "art/chars/huatuo.png?v=2", face: "art/chars/huatuo-face.png",
     arrive: [
       [null, "【三途川・街上】月老的好友、醫神華佗，從東京的巡迴演出回來了。他也是三途川除咒協會的除咒師。", "字卡"],
       [null, "好久不見。聽說你收了個徒弟？", "huatuo"],
@@ -623,7 +623,7 @@ HQ.chars = [
     ] },
   { id: "daniu", name: "大牛", kind: "client", draw: 3,
     desc: "光頭，業鏡羅漢生前的兄弟。動盪年代裡出賣了白李米店，想求老大原諒。",
-    sprite: "art/chars/daniu.png", face: "art/chars/daniu-face.png",
+    sprite: "art/chars/daniu.png?v=2", face: "art/chars/daniu-face.png",
     lines: [
       ["EP1-04", "我想直接吃遺願馬卡龍。"],
       ["EP1-05", "謝謝你，老大。"]
@@ -664,7 +664,7 @@ HQ.chars = [
     ] },
   { id: "liangan", name: "梁安恆", kind: "client", draw: 3, map: "gengyin",
     desc: "庚寅地球藍泉高中高二生，因成績壓力上吊，月老的靈魂進了他的身體。喜歡林怡曼。",
-    sprite: "art/chars/liangan.png", face: "art/chars/liangan-face.png",
+    sprite: "art/chars/liangan.png?v=2", face: "art/chars/liangan-face.png",
     lines: [
       ["EP5-01", "像我們這種窮家庭，沒有犯錯的資格。"],
       ["EP5-03", "我配不上她。"],
