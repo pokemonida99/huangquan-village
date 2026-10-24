@@ -200,7 +200,9 @@ window.UI = (function () {
     return h;
   }
   UI.rulesHTML = function () {
-    return "<details class='rules'" + (G.state.helped < 20 ? " open" : "") + "><summary>遊戲說明</summary><ul>" +
+    // 面板每幾秒會重畫一次：記住玩家自己開／關的狀態，不然拉到一半會自己收起來
+    var open = UI._rulesOpen != null ? UI._rulesOpen : G.state.helped < 20;
+    return "<details class='rules'" + (open ? " open" : "") + "><summary>遊戲說明</summary><ul>" +
       "<li><b>目標</b>：幫助更多亡魂。文印、托夢、送行投胎、留下當街坊、完成委託都算「幫助」。年底觀音評定，人數夠就升階。</li>" +
       "<li><b>亡魂</b>：搭列車來，頭上的泡泡是心願。蓋對的店，他們就會進去，心願完成就更安心。</li>" +
       "<li><b>冥紙</b> 💴：亡魂在店裡付的錢。用來蓋店、升級，每月底扣維持費。</li>" +
@@ -225,7 +227,7 @@ window.UI = (function () {
     var tiles = [["heart", "已幫助", s.helped, "人"], ["star", "人氣", State.pop(), ""], ["lotus", "送行投胎", st.reincarnated, "位"], ["scroll", "文印", st.pairs, "組"],
       ["dream", "托夢", st.dreams, "次"], ["house", "街坊", G.residents.length, "人"], ["sword", "擊退", st.kills, "隻"], ["lantern", "街上亡魂", G.souls.length, "位"]];
     h += "<div class='ic-tiles'>" + tiles.map(function (t) { return "<div class='it'>" + Icons.html(t[0]) + "<small>" + t[1] + "</small><b>" + U.fmt(t[2]) + "<em>" + t[3] + "</em></b></div>"; }).join("") + "</div>";
-    h += "<p class='ic-foot'>每班列車約 " + Sim.soulsPerTrain().toFixed(1) + " 位亡魂・委託完成 " + st.requests + " 件・遺憾離開 " + st.leftUnhappy + " 位</p>";
+    h += "<p class='ic-foot'>委託完成 " + st.requests + " 件・遺憾離開 " + st.leftUnhappy + " 位</p>";
     // 街區特徵長條圖（以最高的那項為滿）
     var max = Math.max(20, Math.max.apply(null, D.traits.map(function (k) { return tr[k] || 0; })));
     h += "<h3 class='ic-h'>街區特徵</h3><div class='ic-traits'>" + D.traits.map(function (k) {
@@ -258,7 +260,7 @@ window.UI = (function () {
     h += "<div class='stat6'>" + Resident.STATS.map(function (k) { return "<span>" + k + " <b>" + r.st6[k] + "</b></span>"; }).join("") + "</div>";
     h += "<p class='stats'>HP " + Math.round(r.hp) + "/" + r.maxhp + "・攻擊 " + Math.round(r.atk) + " ×" + r.hits + "・防禦 " + Math.round(r.defn) + "・" + stateText(r) + "</p>";
     var c = r.charId && D.charById[r.charId];
-    if (c && c.lines.length) h += "<blockquote>「" + U.esc(c.lines[0].text) + "」<small>" + U.esc(c.lines[0].ep) + "</small></blockquote>";
+    if (c && c.lines.length) h += "<blockquote>「" + U.esc(c.lines[0].text) + "」</blockquote>";
     if (!r.charId) {
       var cur = r.jobDef();
       var opts = D.jobs.filter(function (j) { return j.name !== r.job && !j.guest && j.line !== "特殊" && j.from && j.from.length && (j.from.indexOf(cur.id) >= 0 || j.from.indexOf(cur.name) >= 0); });
@@ -360,12 +362,11 @@ window.UI = (function () {
 
   // --- 設定 ---
   function settingsHTML() {
-    var s = G.state, src = D.sources;
+    var s = G.state;
     var h = "<div class='btns'>" + SPEEDS.map(function (v) { return "<button data-speed='" + v + "' class='" + (s.speed === v ? "on" : "") + "'>" + (v ? "速度 ×" + v : "暫停") + "</button>"; }).join("") + "</div>";
     h += "<div class='btns'><button data-act='zin'>放大</button><button data-act='zout'>縮小</button><button data-act='home'>回車站</button></div>";
     h += "<div class='btns'><button data-act='names' class='" + (Render.showNames ? "on" : "") + "'>顯示建築名稱</button><button data-act='sfx' class='" + (SFX.isOff() ? "" : "on") + "'>音效 " + (SFX.isOff() ? "關" : "開") + "</button><button data-act='bgm' class='" + (SFX.musicOff() ? "" : "on") + "'>音樂 " + (SFX.musicOff() ? "關" : "開") + "</button></div>";
     h += "<div class='btns'><button data-act='save'>立即存檔（存檔 " + State.getSlot() + "）</button><button data-act='title'>回標題畫面</button><button data-act='reset' class='danger'>重新開始</button></div>";
-    h += "<h3>資料來源</h3><p class='stats'>" + Object.keys(src).map(function (k) { return k + "：" + (src[k] === "data" ? "✅ data" : "範例"); }).join("・") + "</p>";
     h += "<h3>說明</h3><p class='hint'>拖曳移動地圖、雙指或滾輪縮放。點亡魂看心願，點建築升級或拆除，點霧裡的牌子擴建。空白鍵暫停。</p>";
     h += "<p class='credit'>非官方粉絲作品。角色與故事出自 IG 劇《黃泉燒肉店》；玩法向開羅《冒險村物語 2》致敬。配樂〈Harpstring Lullaby〉。</p>";
     return h;
@@ -382,7 +383,7 @@ window.UI = (function () {
     if (!list.length) h += "<p class='hint'>目前沒有委託。</p>";
     list.forEach(function (r) {
       var rs = s.requests[r.id] || {}, done = rs.st === "done", fresh = rs.st === "new", ready = !done && !fresh && Story.requestReady(r);
-      h += "<div class='req" + (done ? " done" : "") + "'>" + faceHTML(r.char, r.name) + "<div class='ci'><b>" + U.esc(r.name) + "：" + U.esc(r.title) + "</b> <small>" + U.esc(r.ep || "") + "</small>";
+      h += "<div class='req" + (done ? " done" : "") + "'>" + faceHTML(r.char, r.name) + "<div class='ci'><b>" + U.esc(r.name) + "：" + U.esc(r.title) + "</b>";
       if (!done) h += "<ul>" + r.need.map(function (n) { return "<li class='" + (Story.needMet(r, n) ? "ok" : "") + "'>" + U.esc(Story.needText(n)) + "</li>"; }).join("") + "</ul>";
       var rw = r.reward || {};
       var mvc = typeof rw.movein === "string" ? D.charById[rw.movein] : null;
@@ -400,7 +401,7 @@ window.UI = (function () {
   function buildingHTML(b) {
     if (G.buildings.indexOf(b) < 0) return "<p>已經拆掉了。</p>";
     var d = b.def;
-    if (d.extra.arrivals) return "<p>" + U.esc(d.desc || "亡魂每天早晚搭列車到這裡。") + "</p><p class='stats'>Lv" + b.lv + "/" + d.maxLv + "・一週 " + Sim.trainsPerWeek() + " 班・每班約 " + Sim.soulsPerTrain().toFixed(2) + " 位・街上亡魂 " + G.souls.length + " 位</p>" + (b.lv < d.maxLv ? "<div class='btns'><button data-act='upgrade'>⬆️ 升級（💴" + U.fmt(Sim.upgradeCost(b)) + "）</button></div>" : "");
+    if (d.extra.arrivals) return "<p>" + U.esc(d.desc || "亡魂每天早晚搭列車到這裡。") + "</p><p class='stats'>Lv" + b.lv + "/" + d.maxLv + "・一週 " + Sim.trainsPerWeek() + " 班・街上亡魂 " + G.souls.length + " 位</p>" + (b.lv < d.maxLv ? "<div class='btns'><button data-act='upgrade'>⬆️ 升級（💴" + U.fmt(Sim.upgradeCost(b)) + "）</button></div>" : "");
     var h = "<div class='who'>" + thumb(d) + "<div><b>" + U.esc(d.name) + "</b> Lv" + b.lv + "/" + d.maxLv + "<br><small>" + ({ special: "名店", shop: "商店", food: "飲食", home: "住宿", deco: "裝飾" }[d.cat] || d.cat) + "　" + d.size[0] + "×" + d.size[1] + "</small></div></div>";
     if (d.desc) h += "<p class='hint'>" + U.esc(d.desc) + "</p>";
     h += "<p class='stats'>售價 " + Math.round(Sim.priceOf(b)) + "・月維持 " + Math.round(Sim.upkeepOf(b)) + "・品質 " + Math.round(Sim.qualityOf(b)) + "・魅力 " + Math.round(Sim.appealOf(b)) +
@@ -461,6 +462,7 @@ window.UI = (function () {
       };
     });
     body.querySelectorAll("[data-item]").forEach(function (b) { b.onclick = function () { UI.useItem(b.dataset.item); UI.renderSheet(); }; });
+    body.querySelectorAll("details.rules").forEach(function (d) { d.ontoggle = function () { UI._rulesOpen = d.open; }; });
     body.querySelectorAll("[data-speed]").forEach(function (b) { b.onclick = function () { G.state.speed = +b.dataset.speed; UI.renderSheet(); }; });
     body.querySelectorAll("[data-accept]").forEach(function (b) { b.onclick = function () { var r = D.requests.find(function (x) { return x.id === b.dataset.accept; }); UI.closeSheet(); Story.acceptRequest(r); UI.renderSheet(); }; });
     body.querySelectorAll("[data-act-id]").forEach(function (b) { b.onclick = function () { var a = D.activities.find(function (x) { return x.id === b.dataset.actId; }); var why = Story.doActivity(a); if (why) UI.toast(why); UI.renderSheet(); }; });

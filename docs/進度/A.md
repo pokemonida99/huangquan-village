@@ -115,3 +115,7 @@ cd /Users/sh/Documents/CLAUDE/0702/huangquan-village && python3 -m http.server 4
 - **C**：maps 的 id 跟 E 的 worldmap.json 不同（daoju／saw、gengyin／gaoxiong、xinkujiang／xinjue、relic／ruins），引擎有對照表，統一更好。`HQ.defense.skills` 要有即時保衛戰才用得到。
 - **D**：缺圖的角色見 404 清單（yiman、xiaoqing、xiaole、waipo、tiedan、shencha、rat、qianliyan、moti、mi、maoguai、lvyi、linbobo、liangan、laoren、hathor、guangtou、gongwan、gengyin、dulao、daniu…）與 `soul-1～8`、`mob-*`；建議出 `art/chars/index.json`。
 - **E**：都接上了。鐵軌是程式畫的（tileset 沒有軌道格），要的話可以補 `rail_*`。
+- 入住順序改成：業鏡羅漢 → 小雨 → 咪咪 → 黑糖 → 大寶（使用者：小雨先來才有咪咪；大寶要小雨、咪咪都來了才出現）。小雨要人氣 30，咪咪人氣 40。
+- 拿掉玩家不需要看的資訊：設定裡的「資料來源」、台詞引言與委託的集數、每班列車亡魂期望值。
+- 情報頁的「遊戲說明」會記住開關狀態（面板每幾秒重畫，以前拉到一半會自己收起來）。
+- 拿掉角色「綠衣女子」（lvyi）：使用者說她其實就是語彤；利維坦來襲改成字卡通報。

@@ -189,7 +189,7 @@ desc: 千里眼 (Qianliyan, the far-seeing guardian god), a tall young man weari
 
 # 外賓、援手（draw 2）
 
-## lvyi
+## lvyi（2026-10-24 已從遊戲拿掉：綠衣女子其實就是語彤）
 refs: ../huangquan-puzzle/art/lvyi.webp
 desc: 綠衣女子 (the Lady in Green), a city-office clerk woman with a black short bob with bangs and a small hair ornament, wearing a pale mint-green hanfu with wide sleeves and a light sash, a small white smiling ghost mask spirit (shikigami) floating beside her. Match the photo reference.
 

@@ -71,7 +71,7 @@ HQ.chars = [
 
   { id: "mimi", name: "咪咪", kind: "resident", draw: 1, job: "引渡貓",
     desc: "小雨生前養的貓，917 號引渡貓，人形是水手服少女。一天只上早晚兩班車，其他時間都在睡覺。",
-    movein: { order: 3, popularity: 30 }, brings: "catstop",
+    movein: { order: 4, popularity: 40 }, brings: "catstop",   // 2026-10-24：小雨先來才有咪咪
     perk: "列車來客 +1",
     sprite: "art/chars/mimi.png", face: "art/chars/mimi-face.png",
     arrive: [
@@ -92,7 +92,7 @@ HQ.chars = [
 
   { id: "heitang", name: "黑糖", kind: "resident", draw: 1, job: "慰靈犬",
     desc: "誤食老鼠藥死去的黑白狗，以少年模樣出現，在地府當慰靈犬安慰悲傷的靈魂。",
-    movein: { order: 4, traits: { 安心: 10 } }, brings: "dogpark",
+    movein: { order: 5, traits: { 安心: 10 } }, brings: "dogpark",
     perk: "悲傷亡魂安心度上升加快",
     sprite: "art/chars/heitang.png", face: "art/chars/heitang-face.png",
     arrive: [
@@ -135,7 +135,7 @@ HQ.chars = [
 
   { id: "xiaoyu", name: "小雨", kind: "resident", draw: 1, job: "代理店長",
     desc: "黃泉燒肉店店員，後來當上代理店長，制服是粉紅韓服。生前是大寶的女友、咪咪的主人。",
-    movein: { order: 5, resident: "lee", popularity: 180 }, brings: null,
+    movein: { order: 3, resident: "lee", popularity: 30 }, brings: null,   // 2026-10-24：業鏡羅漢之後就是小雨
     perk: "燒肉店可多接一桌客人",
     sprite: "art/chars/xiaoyu.png", face: "art/chars/xiaoyu-face.png",
     arrive: [
@@ -155,7 +155,7 @@ HQ.chars = [
 
   { id: "dabao", name: "大寶", kind: "resident", draw: 1, job: "攝影師",
     desc: "金髮消防員，在山火中殉職，頭七之後在返魂坂的托夢照相館工作。命格天煞孤星。",
-    movein: { order: 6, traits: { 思念: 15 } }, brings: "photo",
+    movein: { order: 6, resident: ["xiaoyu", "mimi"], traits: { 思念: 15 } }, brings: "photo",   // 小雨、咪咪都來了才出現
     perk: "托夢：頭七免費，其他要付功德",
     cutin: "給直升機元氣",
     sprite: "art/chars/dabao.png", face: "art/chars/dabao-face.png",
@@ -342,21 +342,6 @@ HQ.chars = [
       ["EP2-15", "你的情況還不能申請黑令旗。"],
       ["EP2-15", "你想幹嘛？"],
       ["EP2-15", "不用，小米可是對付奧客的專家喲。", "yuelao"]
-    ] },
-
-  { id: "lvyi", name: "綠衣女子", kind: "resident", draw: 2, job: "市役所職員",
-    desc: "市役所的職員，會召喚微笑式神。劇中沒有提到名字。",
-    movein: { resident: "xiaomi", traits: { 秩序: 30 } }, brings: null,
-    perk: "微笑式神：街區防衛",
-    cutin: "微笑式神",
-    sprite: "art/chars/lvyi.png", face: "art/chars/lvyi-face.png",
-    arrive: [
-      [null, "【三途川・市役所】一位穿綠衣的職員也來報到了，臉上一直掛著微笑。", "字卡"],
-      ["EP4-01?", "世間苦難，微笑面對。", "lvyi"]
-    ],
-    lines: [
-      ["EP4-01?", "世間苦難，微笑面對。"],
-      ["EP4-01?", "魔界第二王國的魔王，利維坦，闖入了三途川。"]
     ] },
 
   { id: "mi", name: "謎", kind: "resident", draw: 1, job: "守宮精靈",
