@@ -1,8 +1,10 @@
 // 音效：WebAudio 即時合成（不用音檔），音量小。火車不出聲（班次很密會吵）。
-// 設定裡可以關掉，記在 localStorage。
+// 配樂：art/audio/bgm.mp3（使用者提供的〈Harpstring Lullaby〉），循環播放、音量小。
+// 音效、音樂各自在設定裡可以關掉，記在 localStorage。
 window.SFX = (function () {
-  var ac = null, master = null, off = false, last = {};
-  try { off = localStorage.getItem("hq-sfx-off") === "1"; } catch (e) { /* 私密模式 */ }
+  var ac = null, master = null, off = false, musicOff = false, last = {};
+  var BGM_VOL = 0.28, bgm = null, bgmGain = null;
+  try { off = localStorage.getItem("hq-sfx-off") === "1"; musicOff = localStorage.getItem("hq-bgm-off") === "1"; } catch (e) { /* 私密模式 */ }
   function ctx() {
     if (ac) return ac;
     var AC = window.AudioContext || window.webkitAudioContext;
@@ -11,8 +13,22 @@ window.SFX = (function () {
     master = ac.createGain(); master.gain.value = 0.22; master.connect(ac.destination);
     return ac;
   }
+  // 配樂走 WebAudio 的音量節點（iPhone 的 audio.volume 不能調）
+  function startMusic() {
+    if (musicOff) return;
+    var a = ctx(); if (!a) return;
+    if (!bgm) {
+      bgm = new Audio("art/audio/bgm.mp3"); bgm.loop = true; bgm.preload = "auto";
+      try { var src = a.createMediaElementSource(bgm); bgmGain = a.createGain(); bgmGain.gain.value = BGM_VOL; src.connect(bgmGain); bgmGain.connect(a.destination); }
+      catch (e) { bgm.volume = BGM_VOL; }
+    }
+    var p = bgm.play(); if (p && p.catch) p.catch(function () { /* 還沒解鎖，下次觸碰再試 */ });
+  }
+  function stopMusic() { if (bgm) bgm.pause(); }
+  // 切到背景就停，回來再放
+  document.addEventListener("visibilitychange", function () { if (document.hidden) stopMusic(); else if (ac && ac.state === "running") startMusic(); });
   // 第一次觸碰才開聲音（瀏覽器規定）
-  function unlock() { var a = ctx(); if (a && a.state === "suspended") a.resume(); }
+  function unlock() { var a = ctx(); if (a && a.state === "suspended") a.resume(); if (!bgm || bgm.paused) startMusic(); }
   window.addEventListener("pointerdown", unlock, { passive: true });
 
   function tone(freq, t0, dur, type, vol, slide) {
@@ -58,6 +74,8 @@ window.SFX = (function () {
   return {
     play: play,
     isOff: function () { return off; },
+    musicOff: function () { return musicOff; },
+    toggleMusic: function () { musicOff = !musicOff; try { localStorage.setItem("hq-bgm-off", musicOff ? "1" : ""); } catch (e) { /* 私密模式 */ } if (musicOff) stopMusic(); else startMusic(); return musicOff; },
     toggle: function () { off = !off; try { localStorage.setItem("hq-sfx-off", off ? "1" : ""); } catch (e) { /* 私密模式 */ } if (!off) play("click"); return off; }
   };
 })();

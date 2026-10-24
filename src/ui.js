@@ -323,11 +323,11 @@ window.UI = (function () {
     var s = G.state, src = D.sources;
     var h = "<div class='btns'>" + SPEEDS.map(function (v) { return "<button data-speed='" + v + "' class='" + (s.speed === v ? "on" : "") + "'>" + (v ? "速度 ×" + v : "暫停") + "</button>"; }).join("") + "</div>";
     h += "<div class='btns'><button data-act='zin'>放大</button><button data-act='zout'>縮小</button><button data-act='home'>回車站</button></div>";
-    h += "<div class='btns'><button data-act='names' class='" + (Render.showNames ? "on" : "") + "'>顯示建築名稱</button><button data-act='sfx' class='" + (SFX.isOff() ? "" : "on") + "'>音效 " + (SFX.isOff() ? "關" : "開") + "</button></div>";
+    h += "<div class='btns'><button data-act='names' class='" + (Render.showNames ? "on" : "") + "'>顯示建築名稱</button><button data-act='sfx' class='" + (SFX.isOff() ? "" : "on") + "'>音效 " + (SFX.isOff() ? "關" : "開") + "</button><button data-act='bgm' class='" + (SFX.musicOff() ? "" : "on") + "'>音樂 " + (SFX.musicOff() ? "關" : "開") + "</button></div>";
     h += "<div class='btns'><button data-act='save'>立即存檔</button><button data-act='reset' class='danger'>重新開始</button></div>";
     h += "<h3>資料來源</h3><p class='stats'>" + Object.keys(src).map(function (k) { return k + "：" + (src[k] === "data" ? "✅ data" : "範例"); }).join("・") + "</p>";
     h += "<h3>說明</h3><p class='hint'>拖曳移動地圖、雙指或滾輪縮放。點亡魂看心願，點建築升級或拆除，點霧裡的牌子擴建。空白鍵暫停。</p>";
-    h += "<p class='credit'>非官方粉絲作品。角色與故事出自 IG 劇《黃泉燒肉店》；玩法向開羅《冒險村物語 2》致敬。</p>";
+    h += "<p class='credit'>非官方粉絲作品。角色與故事出自 IG 劇《黃泉燒肉店》；玩法向開羅《冒險村物語 2》致敬。配樂〈Harpstring Lullaby〉。</p>";
     return h;
   }
 
@@ -439,6 +439,7 @@ window.UI = (function () {
         else if (a === "zin") Render.zoomAt(Render.cam.z + 1, innerWidth / 2, innerHeight / 2);
         else if (a === "zout") Render.zoomAt(Render.cam.z - 1, innerWidth / 2, innerHeight / 2);
         else if (a === "sfx") { SFX.toggle(); }
+        else if (a === "bgm") { SFX.toggleMusic(); }
         else if (a === "names") { Render.showNames = !Render.showNames; try { localStorage.setItem("hq-village-names", Render.showNames ? "1" : ""); } catch (e) { /* 私密模式 */ } }
         else if (a === "home") { Render.centerOn(15 * T, 6 * T); UI.closeSheet(); return; }
         else if (a === "save") { UI.toast(State.save() ? "💾 已存檔" : "存檔失敗（瀏覽器不讓存）"); return; }
