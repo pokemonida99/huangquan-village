@@ -38,6 +38,10 @@
 ### 主畫面圖示
 - 使用者選第 2 款（語彤＋月老），人物要大、側身：GPT 照遊戲頭像畫 3/4 側身版（`art/_raw/icons/*-34.png`），`tools/make_icons.py` 合成金框。輸出 `icon-180.png`（apple-touch-icon，四角補滿，iPhone 會自己切圓角）、`icon-192/512.png`、`favicon.png`、`manifest.webmanifest`；從主畫面開會全螢幕。
 
+### 奈何橋蓋在河上
+- 奈何橋改 3×2、固定在 (22,15)，整個跨在三途川上（x22～24 都是水）；門口在下方 (23,17) 的小橋上，亡魂走到那裡投胎。舊存檔的固定建築一律放回 FIXED_POS。
+- `art/iso/index.json` 可寫 `v` 版本號（`Assets.isoPath`），換圖後手機不會吃舊快取。
+
 ## 怎麼跑
 
 preview 工具的伺服器讀不到 `~/Documents`，所以 `launch.json` 的 `huangquan-village`（port 4210）是「接上已經在跑的伺服器」。先在終端機起伺服器，再用 preview 開：

@@ -27,7 +27,7 @@ HQ.buildings = [
     desc: "轉職窗口、申請令旗、受理奧客抗議。小米入住後品質提升。",
     sprite: "art/buildings/cityhall.png" },
 
-  { id: "naihe", name: "奈何橋", cat: "special", size: [2, 3],
+  { id: "naihe", name: "奈何橋", cat: "special", size: [3, 2],   // 2026-10-24：橫跨在三途川上
     cost: 0, upkeep: 0, merit: 0, price: 0, quality: 0, appeal: 25, maxLv: 1,
     traits: { 思念: 4, 安心: 2 }, serves: [], unique: true, fixed: true,
     unlock: { start: true }, work: 0,

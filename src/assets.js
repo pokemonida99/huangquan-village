@@ -13,6 +13,8 @@ window.Assets = (function () {
     e.img.src = path;
     return e;
   }
+  // 等角建築圖的路徑（index.json 有 v 就加版本號，換圖後手機才不會用舊快取）
+  function isoPath(id) { var e = HQ.artIndex && HQ.artIndex.iso && HQ.artIndex.iso[id]; return "art/iso/" + id + ".png" + (e && e.v ? "?v=" + e.v : ""); }
   function get(path) { var e = imgs[path]; return e && e.ok ? e.img : null; }
 
   function mobSprite(id) { return "art/chars/" + (/^mob-/.test(id) ? id : "mob-" + id) + ".png"; }
@@ -21,7 +23,7 @@ window.Assets = (function () {
     PROPS.forEach(function (p) { load("art/props/" + p + ".png"); });
     // 等角建築圖（art/iso/index.json 列出的才有；沒有的建築由 Render 程式畫方塊屋）
     var iidx = (HQ.artIndex && HQ.artIndex.iso) || {};
-    Object.keys(iidx).forEach(function (id) { if (id[0] !== "_") { load("art/iso/" + id + ".png"); if (iidx[id].damaged) load("art/iso/" + id + "-damaged.png"); } });
+    Object.keys(iidx).forEach(function (id) { if (id[0] !== "_") { load(isoPath(id)); if (iidx[id].damaged) load("art/iso/" + id + "-damaged.png"); } });
     if (iidx._train) { load("art/iso/train-loco.png"); load("art/iso/train-car.png"); }
     var cidx = HQ.artIndex && HQ.artIndex.chars;
     function tryChar(path, id) { if (cidx && !cidx[id]) return; load(path); }
@@ -49,5 +51,5 @@ window.Assets = (function () {
     return null;
   }
 
-  return { load: load, get: get, init: init, face: face, mobSprite: mobSprite };
+  return { load: load, get: get, isoPath: isoPath, init: init, face: face, mobSprite: mobSprite };
 })();

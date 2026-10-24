@@ -229,7 +229,11 @@ window.Sim = (function () {
       // 開局就有兩間街坊小屋（語彤和月老之外的空房）
       for (var hh = 0; hh < 2; hh++) S.autoHouse({ x: 8 + hh * 3, y: 12 }, true);
     } else {
-      s.buildings.forEach(function (o) { if (D.bById[o.id]) makeB(o); });
+      s.buildings.forEach(function (o) {
+        if (!D.bById[o.id]) return;
+        var fp = D.bById[o.id].fixed && MapGen.FIXED_POS[o.id];
+        makeB(fp ? Object.assign({}, o, { x: fp[0], y: fp[1] }) : o);
+      });
       D.buildings.filter(function (d) { return d.fixed && !G.buildings.some(function (b) { return b.id === d.id; }); }).forEach(placeFixed);
     }
     var maxUid = 0;

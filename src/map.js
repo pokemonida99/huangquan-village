@@ -20,7 +20,7 @@ window.MapGen = (function () {
       { id: 4, name: "荒岸", y0: 45, y1: 47, wild: true }
     ],
     // 開局固定建築的位置（B 的 fixed: true）
-    FIXED_POS: { station: [13, 2], cityhall: [5, 8], naihe: [19, 14] }
+    FIXED_POS: { station: [13, 2], cityhall: [5, 8], naihe: [22, 15] }   // 奈何橋蓋在河上（x22～24 都是水）
   };
   M.W = W; M.H = H;
 

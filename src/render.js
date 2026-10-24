@@ -152,7 +152,7 @@ window.Render = (function () {
   function buildingSprite(def, broken) {
     var iso = HQ.artIndex && HQ.artIndex.iso && HQ.artIndex.iso[def.id];
     if (iso) {
-      var img = (broken && iso.damaged && Assets.get("art/iso/" + def.id + "-damaged.png")) || Assets.get("art/iso/" + def.id + ".png");
+      var img = (broken && iso.damaged && Assets.get("art/iso/" + def.id + "-damaged.png")) || Assets.get(Assets.isoPath(def.id));
       if (img) return { img: img, w: def.size[0], h: def.size[1], ox: 0, oy: 0, art: true };
     }
     return boxSprite(def);
