@@ -29,17 +29,34 @@ window.State = (function () {
 
   function absWeek(s) { s = s || G.state; return (s.year - 1) * 48 + (s.month - 1) * 4 + (s.week - 1); }
 
+  // 三個存檔格：第 1 格沿用舊的 key（舊存檔自動變成存檔 1）
+  var slot = 1;
+  function keyOf(n) { return n === 1 ? CFG.SAVE_KEY : CFG.SAVE_KEY + "-" + n; }
+  function setSlot(n) { slot = n; }
+  function getSlot() { return slot; }
+  // 標題畫面用：不載入整份，只讀摘要
+  function peek(n) {
+    try {
+      var raw = localStorage.getItem(keyOf(n)); if (!raw) return null;
+      var s = JSON.parse(raw); if (!s || s.ver !== 1) return null;
+      var people = (s.residents || []).length;
+      return { year: s.year, month: s.month, week: s.week, helped: s.helped || 0, star: s.star || 0, title: s.title || 0, residents: people, savedAt: s.savedAt || 0 };
+    } catch (e) { return null; }
+  }
+  function remove(n) { try { localStorage.removeItem(keyOf(n)); } catch (e) { /* 私密模式 */ } }
+
   function save() {
-    if (G.noSave) return false;
+    if (G.noSave || !G.state) return false;
     var s = G.state;
+    s.savedAt = Date.now();
     s.buildings = G.buildings.map(function (b) { return { uid: b.uid, id: b.id, x: b.x, y: b.y, w: b.w, h: b.h, lv: b.lv, visits: b.visits, income: b.income, broken: b.broken || 0, closedUntil: b.closedUntil || 0 }; });
     s.residents = G.residents.map(function (r) { return r.toSave(); });
-    try { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(s)); return true; } catch (e) { return false; }
+    try { localStorage.setItem(keyOf(slot), JSON.stringify(s)); return true; } catch (e) { return false; }
   }
   function load() {
-    try { var raw = localStorage.getItem(CFG.SAVE_KEY); if (!raw) return null; var s = JSON.parse(raw); if (!s || s.ver !== 1) return null; var f = fresh(); s = Object.assign(f, s); s.stats = Object.assign(fresh().stats, s.stats); s.visiting = null; return s; } catch (e) { return null; }
+    try { var raw = localStorage.getItem(keyOf(slot)); if (!raw) return null; var s = JSON.parse(raw); if (!s || s.ver !== 1) return null; var f = fresh(); s = Object.assign(f, s); s.stats = Object.assign(fresh().stats, s.stats); s.visiting = null; return s; } catch (e) { return null; }
   }
-  function wipe() { G.noSave = true; try { localStorage.removeItem(CFG.SAVE_KEY); } catch (e) { /* 私密模式 */ } }
+  function wipe() { G.noSave = true; remove(slot); }
 
   // ---- 資源 ----
   function addMoney(n, x, y) { if (n > 0 && x != null) SFX.play("coin", 0.25); G.state.money += n; if (n > 0) G.state.monthIncome = (G.state.monthIncome || 0) + n; if (x != null && n) FX.float(x, y, (n > 0 ? "+" : "") + Math.round(n), "#f3d58c"); }
@@ -98,7 +115,7 @@ window.State = (function () {
   }
   function addMods(mods, weeks) { G.state.mods.push({ until: absWeek() + (weeks || 1) - 1, mods: mods }); G.state.mods = G.state.mods.filter(function (m) { return m.until >= absWeek(); }); }
 
-  return { fresh: fresh, save: save, load: load, wipe: wipe, absWeek: absWeek, addMoney: addMoney, addMerit: addMerit, addHelped: addHelped, addPop: addPop, act: act, traits: traits, pop: pop, housing: housing, residentCap: residentCap, plainResidents: plainResidents, hasBuilding: hasBuilding, mod: mod, addMods: addMods };
+  return { fresh: fresh, save: save, load: load, wipe: wipe, setSlot: setSlot, getSlot: getSlot, peek: peek, remove: remove, absWeek: absWeek, addMoney: addMoney, addMerit: addMerit, addHelped: addHelped, addPop: addPop, act: act, traits: traits, pop: pop, housing: housing, residentCap: residentCap, plainResidents: plainResidents, hasBuilding: hasBuilding, mod: mod, addMods: addMods };
 })();
 
 // 飄字、粒子

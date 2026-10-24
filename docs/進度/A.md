@@ -21,6 +21,11 @@
 - 業鏡羅漢 movein 改 `{ order: 2, helped: 2, weeks: 1 }`，開局第一個月就來（刀鋸地獄劇情、投胎都需要他）；咪咪、黑糖順延。
 - 出征劇情裡「打完會搬來的人、在地援手」算在場（`Story.filterLines(lines, present)`，`UI.dialog({ present })`），泡芙的台詞不會被濾掉。各地圖開頭補一句旁白交代場景。
 
+### 標題畫面、三格存檔
+- `src/title.js`：開機先顯示標題（`art/title.png`，GPT 生成，原圖 `art/_raw/title/`，提示詞 `tools/title_prompt.txt`），點一下選存檔，選好才 `HQGame.begin(slot)`。
+- 三格存檔：第 1 格沿用舊 key `hq-village-save-v1`（舊存檔自動變存檔 1），2、3 格加 `-2`、`-3`。存檔記 `savedAt`，標題畫面顯示年月、幫助人數、街坊、星數、上次存檔時間，可刪除。
+- 設定：「回標題畫面」；「重新開始」只清目前這格，重整後直接進同一格（sessionStorage `hq-autoslot`）。
+
 ## 怎麼跑
 
 preview 工具的伺服器讀不到 `~/Documents`，所以 `launch.json` 的 `huangquan-village`（port 4210）是「接上已經在跑的伺服器」。先在終端機起伺服器，再用 preview 開：

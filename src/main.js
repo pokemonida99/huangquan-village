@@ -20,13 +20,24 @@ window.HQGame = (function () {
   function start() {
     D.init();
     Assets.init();
-    var saved = State.load();
-    G.state = saved || State.fresh();
     Render.init();
-    Sim.setup(!!saved);
     Input.init();
     UI.init();
     ExpStrip.init();
+    // 「重新開始」會直接回到同一格開新局，其他情況先顯示標題畫面
+    var auto = null;
+    try { auto = sessionStorage.getItem("hq-autoslot"); sessionStorage.removeItem("hq-autoslot"); } catch (e) { /* 私密模式 */ }
+    if (auto) begin(+auto); else Title.show(begin);
+  }
+
+  var begun = false;
+  function begin(slot) {
+    if (begun) return;
+    begun = true;
+    State.setSlot(slot);
+    var saved = State.load();
+    G.state = saved || State.fresh();
+    Sim.setup(!!saved);
     if (HQ.artIndex && HQ.artIndex.worldmap) UI.setWorldmap(HQ.artIndex.worldmap);
     Render.cam.z = Render.defaultZoom();
     Render.centerOn(16 * CFG.TILE, 7 * CFG.TILE);
@@ -51,5 +62,5 @@ window.HQGame = (function () {
     UI.skipAll();
   }
 
-  return { start: start, fastForward: fastForward };
+  return { start: start, begin: begin, fastForward: fastForward };
 })();
