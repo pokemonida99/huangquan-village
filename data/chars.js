@@ -115,7 +115,7 @@ HQ.chars = [
     movein: { order: 2, helped: 2, weeks: 1 }, brings: "yakiniku",   // 2026-10-24：提早到第一組文印之後（出征劇情、投胎都需要他）
     perk: "解鎖遺願馬卡龍（投胎）",
     cutin: "異界降臨・閉島繩束",
-    sprite: "art/chars/lee.png", face: "art/chars/lee-face.png?v=2",
+    sprite: "art/chars/lee.png", face: "art/chars/lee-face.png?v=4",
     arrive: [
       [null, "【三途川・河岸】觀音菩薩帶著李國志來了。他曾在刀鋸地獄當刀鋸使，如今將以業鏡羅漢的身分掌管黃泉燒肉店。", "字卡"],
       ["EP1-15", "刀鋸使李國志聽令！即日起命你掌管黃泉燒肉店。", "guanyin"],

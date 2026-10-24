@@ -209,15 +209,40 @@ window.UI = (function () {
       "<li><b>街區特徵</b>：每間店會加美味、思念、緣分……特徵夠高，劇中角色就會搬來，帶來自己的店。</li>" +
       "<li><b>評價 ☆</b>：人氣、店數、街坊夠了，觀音巡察時升星，解鎖新建築和擴建。</li></ul></details>";
   };
+  // 情報：開羅式的資料頁——位階卡、數字方塊、特徵長條圖、下一顆星進度、緣分組合卡
+  var TRAIT_COL = { 美味: "#e8833a", 思念: "#4f8fd6", 緣分: "#e2557a", 儀容: "#a065c8", 藝術: "#2fa79a", 娛樂: "#e2b33a", 安心: "#5ea84a", 香火: "#c8423a", 秩序: "#7d7890", 魔氣: "#5a2a6a" };
+  function bar(pct, col) { return "<span class='ib'><i style='width:" + Math.max(0, Math.min(100, pct)).toFixed(1) + "%;background:" + col + "'></i></span>"; }
   function infoHTML() {
-    var h = UI.rulesHTML(), tr = State.traits();
-    h += "<h3>街區特徵</h3><div class='traits'>" + D.traits.map(function (k) { return "<span>" + k + " <b>" + (tr[k] || 0) + "</b></span>"; }).join("") + "</div>";
-    var st = G.state.stats, miss = Story.rankMissing();
-    h += "<h3>統計</h3><p class='stats'>人氣 " + U.fmt(State.pop()) + "・送行投胎 " + st.reincarnated + "・文印 " + st.pairs + " 組・托夢 " + st.dreams + "・委託 " + st.requests + "・擊退 " + st.kills + "・遺憾離開 " + st.leftUnhappy + "<br>街上亡魂 " + G.souls.length + "・每班列車約 " + Sim.soulsPerTrain().toFixed(2) + " 位<br>位階：" + (D.titles[G.state.title] || {}).name + "（每週文印 " + Sim.wenyinPerWeek() + " 組，本週已做 " + G.state.pairsWeek + "）" + (G.state.medals ? "・勳章 " + G.state.medals : "") + "<br>下一顆星：" + (miss.length ? miss.join("、") : "條件都達成了，等觀音評定") + "</p>";
+    var s = G.state, st = s.stats, tr = State.traits(), h = "";
+    // 位階卡
+    var cur = D.titles[s.title] || {}, nxt = D.titles[s.title + 1];
+    var stars = ""; for (var i = 1; i <= 5; i++) stars += Icons.html(i <= s.star ? "star" : "starOff");
+    var tp = nxt ? (s.helped - (cur.helped || 0)) / Math.max(1, nxt.helped - (cur.helped || 0)) * 100 : 100;
+    h += "<div class='ic-rank'>" + faceHTML("yutong", "語彤") + "<div class='ir-main'><div class='ir-top'><b>" + U.esc(cur.name || "") + "</b><span class='ir-stars'>" + stars + "</span></div>" +
+      "<div class='ir-sub'>第 " + s.year + " 年 " + s.month + " 月・每週文印 " + Sim.wenyinPerWeek() + " 組（本週 " + s.pairsWeek + "）" + (s.medals ? "・勳章 " + s.medals : "") + "</div>" +
+      bar(tp, "#ff7aa0") + "<div class='ir-sub'>" + (nxt ? "升「" + U.esc(nxt.name) + "」：已幫助 " + U.fmt(s.helped) + " / " + U.fmt(nxt.helped) + " 人（年底觀音評定）" : "已經是正式月老了！") + "</div></div></div>";
+    // 數字方塊
+    var tiles = [["heart", "已幫助", s.helped, "人"], ["star", "人氣", State.pop(), ""], ["lotus", "送行投胎", st.reincarnated, "位"], ["scroll", "文印", st.pairs, "組"],
+      ["dream", "托夢", st.dreams, "次"], ["house", "街坊", G.residents.length, "人"], ["sword", "擊退", st.kills, "隻"], ["lantern", "街上亡魂", G.souls.length, "位"]];
+    h += "<div class='ic-tiles'>" + tiles.map(function (t) { return "<div class='it'>" + Icons.html(t[0]) + "<small>" + t[1] + "</small><b>" + U.fmt(t[2]) + "<em>" + t[3] + "</em></b></div>"; }).join("") + "</div>";
+    h += "<p class='ic-foot'>每班列車約 " + Sim.soulsPerTrain().toFixed(1) + " 位亡魂・委託完成 " + st.requests + " 件・遺憾離開 " + st.leftUnhappy + " 位</p>";
+    // 街區特徵長條圖（以最高的那項為滿）
+    var max = Math.max(20, Math.max.apply(null, D.traits.map(function (k) { return tr[k] || 0; })));
+    h += "<h3 class='ic-h'>街區特徵</h3><div class='ic-traits'>" + D.traits.map(function (k) {
+      var v = tr[k] || 0; return "<div class='itr'><span>" + k + "</span>" + bar(v / max * 100, TRAIT_COL[k] || "#888") + "<b>" + v + "</b></div>"; }).join("") + "</div>";
+    // 下一顆星
+    var rp = Story.rankProgress();
+    if (rp.length) h += "<h3 class='ic-h'>下一顆星 " + Icons.html("star") + "<small>每季觀音巡察時檢查</small></h3><div class='ic-goals'>" + rp.map(function (g) {
+      var ok = g.cur >= g.need; return "<div class='ig" + (ok ? " ok" : "") + "'><span>" + (ok ? "✔ " : "") + g.label + "</span>" + bar(g.cur / g.need * 100, ok ? "#5ea84a" : "#e2b65a") + "<b>" + U.fmt(g.cur) + "<em>/" + U.fmt(g.need) + "</em></b></div>"; }).join("") + "</div>";
+    // 緣分組合
     var cb = Sim.activeCombos();
-    if (D.combos.length) h += "<h3>緣分組合</h3><div class='traits'>" + D.combos.map(function (c) { var on = cb.indexOf(c) >= 0; return "<span class='" + (on ? "on" : "") + "' title='" + U.esc(c.desc || "") + "'>" + (on ? "✅ " : "") + U.esc(c.name) + "：" + c.need.map(function (id) { return D.bById[id] ? D.bById[id].name : id; }).join("＋") + "</span>"; }).join("") + "</div>";
+    if (D.combos.length) h += "<h3 class='ic-h'>緣分組合<small>相鄰的店有加成</small></h3><div class='ic-combos'>" + D.combos.map(function (c) {
+      var on = cb.indexOf(c) >= 0;
+      return "<div class='icb" + (on ? " on" : "") + "'><div class='icb-imgs'>" + c.need.map(function (id) { var d = D.bById[id]; return d ? thumb(d) : ""; }).join("<i>＋</i>") + "</div><b>" + U.esc(c.name) + (on ? "<em>發動中</em>" : "") + "</b><small>" + U.esc(c.desc || c.need.map(function (id) { return D.bById[id] ? D.bById[id].name : id; }).join("＋")) + "</small></div>"; }).join("") + "</div>";
+    h += UI.rulesHTML();
     return h;
   }
+
   function stateText(r) {
     if (r.away) return "🏮 出征中";
     return { idle: "閒晃", wander: "散步", toshop: "去逛街", inshop: "逛街中", towork: "去上工", work: "💼 顧店", hunt: "⚔️ 去巡守", fight: "⚔️ 戰鬥中", torest: "回客棧", resting: "💤 休息" }[r.st] || r.st;

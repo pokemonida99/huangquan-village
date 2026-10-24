@@ -468,6 +468,21 @@ window.Story = (function () {
     if (rk.bosses != null && s.stats.bosses < rk.bosses) m.push("打倒王 " + s.stats.bosses + "/" + rk.bosses);
     return m;
   }
+  // 下一顆星的條件，給情報面板畫進度條：[{ label, cur, need }]
+  S.rankProgress = function () {
+    var s = G.state, rk = D.ranks[s.star]; if (!rk) return [];
+    var shops = G.buildings.filter(function (b) { return (b.def.cat === "shop" || b.def.cat === "food" || b.def.cat === "special") && !b.def.fixed; }).length;
+    var homes = G.buildings.filter(function (b) { return b.def.cat === "home"; }).length;
+    var out = [];
+    if (rk.popularity != null) out.push({ label: "人氣", cur: State.pop(), need: rk.popularity });
+    if (rk.buildings != null) out.push({ label: "店家", cur: shops, need: rk.buildings });
+    if (rk.residents != null) out.push({ label: "街坊", cur: G.residents.length, need: rk.residents });
+    if (rk.helped != null) out.push({ label: "已幫助", cur: s.helped, need: rk.helped });
+    if (rk.monthlyIncome != null) out.push({ label: "月營業額", cur: (s.lastMonth && s.lastMonth.income) || 0, need: rk.monthlyIncome });
+    if (rk.homes != null) out.push({ label: "住宅", cur: homes, need: rk.homes });
+    if (rk.bosses != null) out.push({ label: "打倒王", cur: s.stats.bosses, need: rk.bosses });
+    return out;
+  };
   S.rankMissing = function () { var rk = D.ranks[G.state.star]; return rk ? rankMissing(rk) : []; };
 
   // ---------- 主動活動（B 的 HQ.activities，擴建另外走地圖牌子） ----------

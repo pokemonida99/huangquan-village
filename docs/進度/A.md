@@ -29,7 +29,8 @@
 ### 觀音評定畫面、業鏡羅漢新頭像
 - 評定畫面照企劃概念圖（設計 canvas「入住順序與觀音評定」）：背景 `art/review.png`（GPT，原圖 `art/_raw/review/`），觀音坐蓮花雲、下方語彤／業鏡羅漢／月老行禮；中間紅金卷軸由 UI 畫，數字逐行跳出、升級蓋章、好成績撒花瓣。
 - 評定配樂：放 `art/audio/review.mp3` 就會自動在評定時播（背景音樂暫停，關掉評定再接回）；沒有檔案就用合成號角。
-- 業鏡羅漢頭像換成溫和版（`tools/chars_src/lee-face-v1.png`，舊的 `lee-face-old.png`）；標題主視覺同步換臉（`art/_raw/title/title-v2.png`）。
+- 業鏡羅漢頭像換成溫和版，最後使用者挑 `tools/chars_src/lee-face-v2.png`（眼睛較大、年輕一點；v1 太老，動漫風 v3/c1–c4/y1–y4 沒選；舊的兇臉 `lee-face-old.png`）；標題主視覺同步換臉（`art/_raw/title/title-v4.png`，以 v2 標題圖為底只改他的臉）。
+- 讀取畫面（`src/loading.js`）：開遊戲時等資料和圖載完（真的進度，最多 12 秒），選好存檔後再跑一次約 1 秒才進街區。黑漆底＋河霧，語彤沿著紅線走，下方輪播遊戲小提示。
 
 ### 評定配樂、按鍵回饋
 - 評定配樂 `art/audio/review.mp3`＝使用者用 Suno 做的〈A Bright Achievement〉（28 秒，原檔 `art/_raw/audio/review-source.m4a`，降 2 dB）。iPhone 要在第一次點擊時靜音預播解鎖（`sfx.js` 的 `rvMake`）。

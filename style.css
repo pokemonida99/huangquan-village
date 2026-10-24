@@ -240,7 +240,7 @@ small.ok { color: var(--jade) !important; }
 /* ---- 標題畫面 ---- */
 #title { position: absolute; inset: 0; z-index: 20; overflow: hidden; background: #1d1830; transition: opacity .35s; }
 #title.out { opacity: 0; pointer-events: none; }
-.title-art { position: absolute; inset: 0; background: #1d1830 url("art/title.png?v=2") center bottom / cover no-repeat; image-rendering: pixelated; }
+.title-art { position: absolute; inset: 0; background: #1d1830 url("art/title.png?v=3") center bottom / cover no-repeat; image-rendering: pixelated; }
 .title-logo { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top, 0px) + 9vh); text-align: center; pointer-events: none; }
 .title-logo h1 {
   margin: 0; font-size: clamp(44px, 13vw, 76px); font-weight: 900; letter-spacing: 4px; color: #ffe38a; line-height: 1.1;
@@ -336,3 +336,148 @@ button, .card, .slot { transition: transform .06s ease-out, filter .06s ease-out
 button.pressed, .card.pressed, .slot.pressed, button:active { transform: translateY(2px) scale(.96); filter: brightness(.85); }
 #title-tap.pressed, #title-tap:active, #dialog.pressed { transform: none; filter: none; }
 #title-tap.pressed span { transform: translateX(-50%) translateY(2px) scale(.96); filter: brightness(.85); }
+
+/* ---- 情報面板 ---- */
+.ic-rank { display: flex; gap: 10px; align-items: center; padding: 10px; background: #a8242e; border: 3px solid #e2b65a; border-radius: 6px; box-shadow: 0 0 0 2px #5a1418, 0 3px 0 rgba(0, 0, 0, .3); color: #fff3cc; }
+.ic-rank .face { width: 58px; height: 58px; border: 2px solid #e2b65a; background: #fff3cc; }
+.ir-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ir-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.ir-top b { font-size: 19px; font-weight: 900; letter-spacing: 1px; text-shadow: 2px 2px 0 #5a1418; }
+.ir-stars { display: flex; gap: 1px; font-size: 15px; }
+.ir-sub { font-size: 11.5px; color: #ffe9c0; }
+.ib { display: block; height: 8px; background: rgba(26, 16, 24, .55); border-radius: 2px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(0, 0, 0, .3); }
+.ib i { display: block; height: 100%; border-radius: 2px; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .35); }
+.ic-rank .ib { height: 10px; }
+.ic-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0 4px; }
+.it { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px 5px; background: #fff; border: 2px solid #c99a5e; border-radius: 4px; box-shadow: inset 0 -3px 0 #f1e4c6; }
+.it .ic { font-size: 22px; }
+.it small { font-size: 10.5px; color: #8a5a32; font-weight: 700; }
+.it b { font-size: 18px; font-weight: 900; color: var(--ink); line-height: 1.1; }
+.it b em { font-style: normal; font-size: 10px; margin-left: 1px; color: #8a7a6a; }
+.ic-foot { margin: 2px 0 0; font-size: 11.5px; color: #8a7a6a; text-align: center; }
+.ic-h { display: flex; align-items: center; gap: 6px; margin: 14px 0 6px !important; padding: 4px 10px; font-size: 14px !important; color: #fff3cc !important; background: var(--woodtex) 0 0 / 32px 24px; border: 2px solid #3a2016; border-radius: 3px; text-shadow: 1px 1px 0 #3a2016; image-rendering: pixelated; }
+.ic-h small { margin-left: auto; font-size: 10.5px; font-weight: 400; color: #ffe9c0; }
+.ic-traits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 14px; padding: 8px 10px; background: #fff; border: 2px solid #c99a5e; border-radius: 4px; }
+.itr, .ig { display: grid; grid-template-columns: 3.2em 1fr auto; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; }
+.itr b, .ig b { font-size: 13px; min-width: 2em; text-align: right; color: var(--ink); }
+.ic-traits .ib, .ic-goals .ib { background: #ead7b0; }
+.ic-goals { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; background: #fff; border: 2px solid #c99a5e; border-radius: 4px; }
+.ig { grid-template-columns: 5.4em 1fr auto; }
+.ig.ok span { color: #3f7a34; }
+.ig b em { font-style: normal; font-size: 10.5px; color: #8a7a6a; font-weight: 400; }
+.ic-combos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.icb { min-width: 0; display: flex; flex-direction: column; gap: 3px; padding: 6px; background: #fff; border: 2px solid #d8cdb8; border-radius: 4px; filter: grayscale(.85); opacity: .7; }
+.icb.on { filter: none; opacity: 1; border-color: #e2b65a; box-shadow: 0 0 0 2px #fff3c4, 0 0 10px rgba(226, 182, 90, .7); }
+.icb-imgs { display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 44px; }
+.icb-imgs .thumb { width: 38px; height: 34px; flex: 0 1 38px; min-width: 0; }
+.icb-imgs i { font-style: normal; font-weight: 900; color: #a8242e; }
+.icb b { font-size: 13px; text-align: center; }
+.icb b em { font-style: normal; margin-left: 4px; padding: 0 4px; font-size: 10px; color: #fff; background: #a8242e; border-radius: 2px; vertical-align: 1px; }
+.icb small { font-size: 10.5px; color: #8a7a6a; text-align: center; line-height: 1.35; }
+.rules { margin-top: 14px; }
+
+
+/* =====================================================================
+   陰間三途川風格（2026-10-24）：黑漆木＋金邊、朱漆匾額、黃符紙、暗石、鬼火綠
+   覆蓋前面的開羅奶油色。材質用像素圖樣，不用漸層。
+   ===================================================================== */
+:root { --lac: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2748%27%20height%3D%2724%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20width%3D%2748%27%20height%3D%2724%27%20fill%3D%27%2321131a%27/%3E%3Crect%20x%3D%279%27%20y%3D%2710%27%20width%3D%2712%27%20height%3D%271%27%20fill%3D%27%23311b22%27/%3E%3Crect%20x%3D%274%27%20y%3D%271%27%20width%3D%2719%27%20height%3D%271%27%20fill%3D%27%23311b22%27/%3E%3Crect%20x%3D%2723%27%20y%3D%273%27%20width%3D%2715%27%20height%3D%271%27%20fill%3D%27%232c1820%27/%3E%3Crect%20x%3D%2713%27%20y%3D%2716%27%20width%3D%276%27%20height%3D%271%27%20fill%3D%27%232c1820%27/%3E%3Crect%20x%3D%2726%27%20y%3D%2713%27%20width%3D%277%27%20height%3D%271%27%20fill%3D%27%232c1820%27/%3E%3Crect%20x%3D%2735%27%20y%3D%272%27%20width%3D%2712%27%20height%3D%271%27%20fill%3D%27%232c1820%27/%3E%3Crect%20x%3D%277%27%20y%3D%2718%27%20width%3D%279%27%20height%3D%271%27%20fill%3D%27%23311b22%27/%3E%3Crect%20x%3D%2737%27%20y%3D%2720%27%20width%3D%276%27%20height%3D%271%27%20fill%3D%27%23311b22%27/%3E%3Crect%20x%3D%2725%27%20y%3D%2718%27%20width%3D%276%27%20height%3D%271%27%20fill%3D%27%232c1820%27/%3E%3C/svg%3E"); --verm: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2748%27%20height%3D%2724%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20width%3D%2748%27%20height%3D%2724%27%20fill%3D%27%238e1f1a%27/%3E%3Crect%20x%3D%2735%27%20y%3D%271%27%20width%3D%278%27%20height%3D%271%27%20fill%3D%27%237c1914%27/%3E%3Crect%20x%3D%279%27%20y%3D%2713%27%20width%3D%2714%27%20height%3D%271%27%20fill%3D%27%239e2a22%27/%3E%3Crect%20x%3D%2719%27%20y%3D%2718%27%20width%3D%2714%27%20height%3D%271%27%20fill%3D%27%23a8302a%27/%3E%3Crect%20x%3D%276%27%20y%3D%275%27%20width%3D%2715%27%20height%3D%271%27%20fill%3D%27%23a8302a%27/%3E%3Crect%20x%3D%2712%27%20y%3D%2720%27%20width%3D%2711%27%20height%3D%271%27%20fill%3D%27%239e2a22%27/%3E%3Crect%20x%3D%274%27%20y%3D%2717%27%20width%3D%2715%27%20height%3D%271%27%20fill%3D%27%239e2a22%27/%3E%3Crect%20x%3D%2713%27%20y%3D%2719%27%20width%3D%2713%27%20height%3D%271%27%20fill%3D%27%23a8302a%27/%3E%3Crect%20x%3D%2727%27%20y%3D%2717%27%20width%3D%2718%27%20height%3D%271%27%20fill%3D%27%237c1914%27/%3E%3C/svg%3E"); --rice: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2732%27%20height%3D%2732%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20fill%3D%27%23f1e5c8%27/%3E%3Crect%20x%3D%2729%27%20y%3D%2729%27%20width%3D%273%27%20height%3D%271%27%20fill%3D%27%23eadcbc%27/%3E%3Crect%20x%3D%2715%27%20y%3D%2711%27%20width%3D%272%27%20height%3D%271%27%20fill%3D%27%23e6d7b4%27/%3E%3Crect%20x%3D%2719%27%20y%3D%2731%27%20width%3D%273%27%20height%3D%271%27%20fill%3D%27%23dccba3%27/%3E%3Crect%20x%3D%2728%27%20y%3D%2718%27%20width%3D%271%27%20height%3D%271%27%20fill%3D%27%23e6d7b4%27/%3E%3Crect%20x%3D%2726%27%20y%3D%2710%27%20width%3D%273%27%20height%3D%271%27%20fill%3D%27%23e6d7b4%27/%3E%3Crect%20x%3D%2731%27%20y%3D%2726%27%20width%3D%271%27%20height%3D%271%27%20fill%3D%27%23dccba3%27/%3E%3Crect%20x%3D%274%27%20y%3D%2720%27%20width%3D%273%27%20height%3D%271%27%20fill%3D%27%23dccba3%27/%3E%3Crect%20x%3D%2722%27%20y%3D%2731%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23e6d7b4%27/%3E%3Crect%20x%3D%275%27%20y%3D%2717%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23dccba3%27/%3E%3Crect%20x%3D%274%27%20y%3D%273%27%20width%3D%273%27%20height%3D%271%27%20fill%3D%27%23dccba3%27/%3E%3Crect%20x%3D%2728%27%20y%3D%2718%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23dccba3%27/%3E%3Crect%20x%3D%2722%27%20y%3D%271%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23eadcbc%27/%3E%3Crect%20x%3D%2710%27%20y%3D%277%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23e6d7b4%27/%3E%3Crect%20x%3D%2713%27%20y%3D%2718%27%20width%3D%272%27%20height%3D%271%27%20fill%3D%27%23dccba3%27/%3E%3C/svg%3E"); --tali: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2732%27%20height%3D%2732%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20fill%3D%27%23ecc96a%27/%3E%3Crect%20x%3D%2715%27%20y%3D%2725%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23f2d27c%27/%3E%3Crect%20x%3D%275%27%20y%3D%2710%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23f2d27c%27/%3E%3Crect%20x%3D%2717%27%20y%3D%278%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23d9b050%27/%3E%3Crect%20x%3D%2717%27%20y%3D%2726%27%20width%3D%273%27%20height%3D%271%27%20fill%3D%27%23d9b050%27/%3E%3Crect%20x%3D%2724%27%20y%3D%2714%27%20width%3D%272%27%20height%3D%271%27%20fill%3D%27%23e2bb58%27/%3E%3Crect%20x%3D%2711%27%20y%3D%279%27%20width%3D%272%27%20height%3D%271%27%20fill%3D%27%23d9b050%27/%3E%3Crect%20x%3D%2714%27%20y%3D%270%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23d9b050%27/%3E%3Crect%20x%3D%2711%27%20y%3D%2716%27%20width%3D%273%27%20height%3D%271%27%20fill%3D%27%23e2bb58%27/%3E%3Crect%20x%3D%279%27%20y%3D%2726%27%20width%3D%273%27%20height%3D%271%27%20fill%3D%27%23d9b050%27/%3E%3Crect%20x%3D%2720%27%20y%3D%278%27%20width%3D%271%27%20height%3D%271%27%20fill%3D%27%23f2d27c%27/%3E%3Crect%20x%3D%2725%27%20y%3D%2725%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23f2d27c%27/%3E%3Crect%20x%3D%276%27%20y%3D%2730%27%20width%3D%274%27%20height%3D%271%27%20fill%3D%27%23e2bb58%27/%3E%3C/svg%3E"); --stone: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2732%27%20height%3D%2716%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20width%3D%2732%27%20height%3D%2716%27%20fill%3D%27%2314131b%27/%3E%3Crect%20x%3D%271%27%20y%3D%271%27%20width%3D%2714%27%20height%3D%276%27%20fill%3D%27%232a2936%27/%3E%3Crect%20x%3D%271%27%20y%3D%271%27%20width%3D%2714%27%20height%3D%271%27%20fill%3D%27%233a3848%27/%3E%3Crect%20x%3D%271%27%20y%3D%276%27%20width%3D%2714%27%20height%3D%271%27%20fill%3D%27%231f1e29%27/%3E%3Crect%20x%3D%2717%27%20y%3D%271%27%20width%3D%2714%27%20height%3D%276%27%20fill%3D%27%232a2936%27/%3E%3Crect%20x%3D%2717%27%20y%3D%271%27%20width%3D%2714%27%20height%3D%271%27%20fill%3D%27%233a3848%27/%3E%3Crect%20x%3D%2717%27%20y%3D%276%27%20width%3D%2714%27%20height%3D%271%27%20fill%3D%27%231f1e29%27/%3E%3Crect%20x%3D%270%27%20y%3D%279%27%20width%3D%276%27%20height%3D%276%27%20fill%3D%27%232a2936%27/%3E%3Crect%20x%3D%270%27%20y%3D%279%27%20width%3D%276%27%20height%3D%271%27%20fill%3D%27%233a3848%27/%3E%3Crect%20x%3D%270%27%20y%3D%2714%27%20width%3D%276%27%20height%3D%271%27%20fill%3D%27%231f1e29%27/%3E%3Crect%20x%3D%279%27%20y%3D%279%27%20width%3D%2714%27%20height%3D%276%27%20fill%3D%27%232a2936%27/%3E%3Crect%20x%3D%279%27%20y%3D%279%27%20width%3D%2714%27%20height%3D%271%27%20fill%3D%27%233a3848%27/%3E%3Crect%20x%3D%279%27%20y%3D%2714%27%20width%3D%2714%27%20height%3D%271%27%20fill%3D%27%231f1e29%27/%3E%3Crect%20x%3D%2725%27%20y%3D%279%27%20width%3D%277%27%20height%3D%276%27%20fill%3D%27%232a2936%27/%3E%3Crect%20x%3D%2725%27%20y%3D%279%27%20width%3D%277%27%20height%3D%271%27%20fill%3D%27%233a3848%27/%3E%3Crect%20x%3D%2725%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%271%27%20fill%3D%27%231f1e29%27/%3E%3C/svg%3E");
+  --gold: #d4a94e; --gold2: #f5d98a; --golddk: #6b4a1c; --ink: #2a1610; --vred: #b3261e; --ghost: #7fe0c8; --edge: #0d0709;
+  --serif: "Noto Serif TC", "Songti TC", "PMingLiU", serif; }
+/* 上方小牌：黑漆金邊 */
+.chip { background: var(--lac) 0 0 / 96px 48px; border-color: var(--edge); box-shadow: inset 0 0 0 2px var(--gold), inset 0 0 0 3px #3a2410, 0 2px 0 rgba(0,0,0,.45); image-rendering: pixelated; }
+.chip b { color: var(--gold2); }
+#weekbar i { background: var(--ghost); }
+/* 目標：黃符紙＋朱印 */
+#goal { background: var(--tali) 0 0 / 64px 64px; border: 2px solid #7a1e14; color: #5a160e; font-family: var(--serif); box-shadow: 0 2px 0 rgba(0,0,0,.4); image-rendering: pixelated; }
+#goal em { background: var(--vred); border: 1px solid #5a120c; }
+/* 下方：暗石＋金線，按鈕是朱漆匾額 */
+#bottombar { background: var(--stone) 0 0 / 64px 32px; border-top: 3px solid var(--gold); box-shadow: 0 -3px 0 var(--edge), inset 0 2px 0 #3a3848; }
+.bb { color: var(--gold2); font-family: var(--serif); letter-spacing: 2px; text-shadow: 1px 1px 0 #3a0c08;
+  background: var(--verm) 0 0 / 96px 48px; border: 2px solid var(--edge); box-shadow: inset 0 0 0 2px var(--gold), inset 0 -4px 0 rgba(0,0,0,.3), 0 3px 0 #000; image-rendering: pixelated; }
+.bb.on { background: var(--lac) 0 0 / 96px 48px; }
+#reqbtn em { background: var(--vred); border-color: var(--gold2); }
+/* 左側選單：黑漆令牌 */
+#menu button { background: var(--lac) 0 0 / 96px 48px; border: 2px solid var(--edge); box-shadow: inset 0 0 0 2px var(--gold), 2px 3px 0 rgba(0,0,0,.45); color: var(--gold2); font-family: var(--serif); text-shadow: 1px 1px 0 #000; image-rendering: pixelated; }
+#menu button img { background: var(--rice); box-shadow: 0 0 0 1px var(--gold); }
+/* 消息：黃符紙條 */
+.rb { background: var(--tali) 0 0 / 64px 64px; border: 2px solid #7a1e14; color: #4a140c; font-family: var(--serif); image-rendering: pixelated; }
+.rb .dot { background: var(--vred); }
+/* 評價牌、擺放列 */
+#gauge, #placebar { background: var(--lac) 0 0 / 96px 48px; border: 2px solid var(--edge); box-shadow: inset 0 0 0 2px var(--gold), 0 2px 0 rgba(0,0,0,.45); color: var(--gold2); image-rendering: pixelated; }
+#gauge .g-title { background: var(--vred); }
+#gauge .bar i { background: var(--ghost); }
+#placebar span small { color: #e8cf98; }
+#placebar button { background: var(--verm) 0 0 / 96px 48px; border: 2px solid var(--edge); box-shadow: inset 0 0 0 2px var(--gold); color: var(--gold2); text-shadow: 1px 1px 0 #3a0c08; font-family: var(--serif); }
+#place-cancel { background: var(--lac) 0 0 / 96px 48px !important; color: var(--gold2) !important; border-color: var(--edge) !important; box-shadow: inset 0 0 0 2px var(--golddk) !important; }
+.notice { background: var(--tali) 0 0 / 64px 64px; border: 2px solid #7a1e14; color: #4a140c; }
+.notice button { background: var(--rice); border-color: #5a2a1a; }
+.notice button.stay { background: #cfe8c4; }
+/* 面板：黑漆框、宣紙內頁、朱漆匾額標題 */
+#sheet { background: var(--rice) 0 0 / 64px 64px; border-color: var(--edge); box-shadow: 0 0 0 2px var(--gold), inset 0 0 0 2px #c9a35a; color: var(--ink); image-rendering: pixelated; }
+.sheet-head { background: var(--verm) 0 0 / 96px 48px; border-bottom: 3px solid var(--gold); box-shadow: 0 2px 0 var(--edge); }
+.sheet-head h2 { font-family: var(--serif); color: var(--gold2); text-shadow: 2px 2px 0 #3a0c08; letter-spacing: 3px; }
+.sheet-head button { background: var(--lac) 0 0 / 96px 48px; color: var(--gold2); border-color: var(--edge); box-shadow: inset 0 0 0 1px var(--gold); font-family: var(--serif); }
+#sheet-body h3 { color: var(--vred); font-family: var(--serif); }
+.tabs button, .btns button { background: #fbf4e2; border-color: #6a4a2a; color: var(--ink); box-shadow: inset 0 -3px 0 #e6d6b2; font-family: var(--serif); }
+.tabs button.on, .btns button.on { background: var(--vred); border-color: var(--edge); color: var(--gold2); box-shadow: inset 0 0 0 1px var(--gold); }
+.btns button.go, button.go { background: var(--verm) 0 0 / 96px 48px; border: 2px solid var(--edge); color: var(--gold2); box-shadow: inset 0 0 0 1px var(--gold); font-family: var(--serif); }
+.card, .row, .it, .ic-traits, .ic-goals, .icb, .req, .slot, .rules { background: #fbf4e2; border-color: #a8804e; }
+.card { box-shadow: inset 0 -3px 0 #ecdcb8; }
+.card.gift { border-color: var(--vred); }
+.thumb { background: #2e3a2e; box-shadow: inset 0 0 0 2px #1a2418; }
+.money-hint { background: var(--tali) 0 0 / 64px 64px; border-color: #7a1e14; color: #4a140c; }
+.ic-h { background: var(--lac) 0 0 / 96px 48px; border-color: var(--edge); box-shadow: inset 0 0 0 1px var(--gold); color: var(--gold2) !important; font-family: var(--serif); }
+.ic-rank { background: var(--verm) 0 0 / 96px 48px; image-rendering: pixelated; }
+.icb.on { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold2), 0 0 12px rgba(127, 224, 200, .6); }
+/* 對話框：黑漆金框＋宣紙 */
+.dlg-box, .mbox { background: var(--rice) 0 0 / 64px 64px; border-color: var(--edge); box-shadow: 0 0 0 2px var(--gold), inset 0 0 0 2px #c9a35a, 0 5px 0 rgba(0,0,0,.45); color: var(--ink); image-rendering: pixelated; }
+.dlg-name { color: var(--vred); font-family: var(--serif); }
+.dlg-text { font-family: var(--serif); }
+.dlg-face .face { background: #2a2030; border-color: var(--gold); }
+.dlg-title { background: var(--verm) 0 0 / 96px 48px; border-color: var(--edge); box-shadow: inset 0 0 0 2px var(--gold), 0 4px 0 rgba(0,0,0,.45); color: var(--gold2); font-family: var(--serif); letter-spacing: 4px; }
+.scene-tag { background: var(--lac) 0 0 / 96px 48px; border-color: var(--gold); color: var(--gold2); font-family: var(--serif); }
+.mbox h3 { color: var(--vred); font-family: var(--serif); }
+/* 標題畫面 */
+.title-logo h1 { font-family: var(--serif); }
+.tl-sub { background: var(--verm) 0 0 / 96px 48px; border-color: var(--edge); box-shadow: inset 0 0 0 1px var(--gold), 0 3px 0 #000; color: var(--gold2); font-family: var(--serif); }
+#title-tap span { background: var(--lac) 0 0 / 96px 48px; color: var(--gold2); border-color: var(--edge); box-shadow: inset 0 0 0 2px var(--gold), 0 4px 0 #000; font-family: var(--serif); }
+#title-slots { background: var(--rice) 0 0 / 64px 64px; border-color: var(--edge); box-shadow: 0 0 0 2px var(--gold), inset 0 0 0 2px #c9a35a; }
+#title-slots h2 { background: var(--verm) 0 0 / 96px 48px; border-color: var(--gold); color: var(--gold2); font-family: var(--serif); }
+.slot b { color: var(--vred); font-family: var(--serif); }
+.slot-back { background: var(--lac) 0 0 / 96px 48px; color: var(--gold2); border-color: var(--edge); box-shadow: inset 0 0 0 1px var(--gold); }
+/* 出征橫條 */
+#expstrip { border-top-color: var(--gold); border-bottom-color: var(--edge); box-shadow: inset 0 2px 0 #3a2410; }
+.es-bar i { background: var(--ghost); }
+
+/* ---- 讀取畫面：黑漆底、河霧、語彤沿著月老的紅線走 ---- */
+#loading { position: absolute; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background: #120a10 var(--lac) 0 0 / 96px 48px; image-rendering: pixelated; transition: opacity .45s; }
+#loading[hidden] { display: none; }
+#loading.out { opacity: 0; pointer-events: none; }
+.ld-fog { position: absolute; left: -20%; right: -20%; bottom: 0; height: 38%; opacity: .5;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 14px, rgba(127,224,200,.10) 14px 30px, transparent 30px 52px) 0 70% / 260px 3px repeat-x,
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(127,224,200,.08) 22px 44px, transparent 44px 70px) 0 85% / 340px 3px repeat-x,
+    linear-gradient(transparent, rgba(40,90,90,.28));
+  animation: ld-drift 9s linear infinite; }
+@keyframes ld-drift { to { background-position: 260px 70%, -340px 85%, 0 0; } }
+.ld-box { position: relative; width: min(84vw, 360px); text-align: center; color: var(--gold2); font-family: var(--serif); }
+.ld-sub { display: inline-block; padding: 2px 12px; font-size: 13px; letter-spacing: 6px; color: var(--gold2);
+  background: var(--verm) 0 0 / 96px 48px; border: 2px solid var(--edge); box-shadow: inset 0 0 0 1px var(--gold); }
+.ld-name { margin: 8px 0 30px; font-size: clamp(34px, 10vw, 48px); font-weight: 900; letter-spacing: 6px; color: var(--gold2);
+  text-shadow: 0 3px 0 var(--vred), 2px 2px 0 var(--edge), -2px -2px 0 var(--edge), 2px -2px 0 var(--edge), -2px 2px 0 var(--edge), 0 6px 0 var(--edge); }
+.ld-track { position: relative; height: 72px; }
+.ld-bar { position: absolute; left: 0; right: 0; bottom: 4px; height: 10px; background: #0b0608; border: 2px solid var(--edge); box-shadow: 0 0 0 2px var(--golddk), inset 0 2px 0 #000; }
+#ld-fill { display: block; height: 100%; width: 0; background: var(--vred); box-shadow: inset 0 2px 0 #e0574a, inset 0 -2px 0 #6b1414; transition: width .15s linear; }
+#ld-walker { position: absolute; bottom: 12px; left: calc(var(--p, 0) * (100% - 56px) - 4px); width: 64px; height: 64px; transition: left .15s linear;
+  background: url("art/chars/yutong.png") 0 -128px / 128px 256px no-repeat; image-rendering: pixelated; animation: ld-walk .36s steps(2) infinite; }
+@keyframes ld-walk { to { background-position-x: -128px; } }
+.ld-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; font-size: 14px; letter-spacing: 2px; color: #d9c6a0; }
+.ld-row b { font-family: var(--font); color: var(--gold2); }
+.ld-dots { margin-right: auto; margin-left: 2px; }
+.ld-dots i { display: inline-block; width: 4px; height: 4px; margin-left: 3px; background: var(--gold); animation: ld-dot 1.2s infinite; }
+.ld-dots i:nth-child(2) { animation-delay: .2s; } .ld-dots i:nth-child(3) { animation-delay: .4s; }
+@keyframes ld-dot { 0%, 60%, 100% { opacity: .2; } 30% { opacity: 1; } }
+#ld-tip { min-height: 3em; margin: 22px 0 0; padding: 8px 12px; font-size: 13px; line-height: 1.6; color: var(--ink); text-align: left;
+  background: var(--rice) 0 0 / 64px 64px; border: 2px solid var(--edge); box-shadow: 0 0 0 2px var(--gold), 0 4px 0 rgba(0,0,0,.5); font-family: var(--font); }

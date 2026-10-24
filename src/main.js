@@ -27,7 +27,15 @@ window.HQGame = (function () {
     // 「重新開始」會直接回到同一格開新局，其他情況先顯示標題畫面
     var auto = null;
     try { auto = sessionStorage.getItem("hq-autoslot"); sessionStorage.removeItem("hq-autoslot"); } catch (e) { /* 私密模式 */ }
-    if (auto) begin(+auto); else Title.show(begin);
+    // 等圖載完（最多 12 秒，網路太慢就先進去，晚到的圖之後自己補上）
+    Loading.waitAssets(0.35, 1, 12000, function () {
+      Loading.hide(600, function () { if (auto) begin(+auto); else Title.show(enter); });
+    }, 1400);
+  }
+  // 從標題選好存檔：再跑一次讀取畫面才進街區
+  function enter(slot) {
+    Loading.show(State.peek(slot) ? "讀取存檔 " + slot : "前往三途川");
+    Loading.waitAssets(0, 1, 6000, function () { Loading.hide(0, function () { begin(slot); }); }, 1100);
   }
 
   var begun = false;

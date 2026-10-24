@@ -3,6 +3,7 @@ window.Assets = (function () {
   var imgs = {};   // path -> {img, ok, done}
   var PROPS = ["willow", "deadwillow", "graves", "rocks", "stump", "talismanpost", "brokentoro", "miasma", "brokenfence", "reeds", "brokenboat", "toro", "jizo", "noticeboard"];
 
+  var TITLE_ART = "art/title.png?v=3";   // 跟 style.css 的 .title-art 同一個網址，先載好標題畫面才不會空白
   function load(path, onload) {
     if (!path) return null;
     var e = imgs[path];
@@ -15,6 +16,8 @@ window.Assets = (function () {
   }
   // 等角建築圖的路徑（index.json 有 v 就加版本號，換圖後手機才不會用舊快取）
   function isoPath(id) { var e = HQ.artIndex && HQ.artIndex.iso && HQ.artIndex.iso[id]; return "art/iso/" + id + ".png" + (e && e.v ? "?v=" + e.v : ""); }
+  // 讀取畫面用：目前排隊的圖載完幾張（失敗也算完成）
+  function progress() { var t = 0, d = 0; for (var k in imgs) { t++; if (imgs[k].done) d++; } return { done: d, total: t }; }
   function get(path) { var e = imgs[path]; return e && e.ok ? e.img : null; }
 
   function mobSprite(id) { return "art/chars/" + (/^mob-/.test(id) ? id : "mob-" + id) + ".png"; }
@@ -34,6 +37,7 @@ window.Assets = (function () {
     for (var i = 1; i <= 8; i++) tryChar("art/chars/soul-" + i + ".png", "soul-" + i);
     D.mobs.forEach(function (m) { tryChar(mobSprite(m.id), /^mob-/.test(m.id) ? m.id : "mob-" + m.id); });
     load("art/tiles/worldmap.png");
+    load(TITLE_ART);
   }
 
   // 頭像：art/chars/<id>-face.png → refs/<id>-normal.webp（語彤用 yutongh）→ null
@@ -51,5 +55,5 @@ window.Assets = (function () {
     return null;
   }
 
-  return { load: load, get: get, isoPath: isoPath, init: init, face: face, mobSprite: mobSprite };
+  return { load: load, get: get, progress: progress, isoPath: isoPath, init: init, face: face, mobSprite: mobSprite };
 })();

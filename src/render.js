@@ -356,6 +356,28 @@ window.Render = (function () {
       ctx.globalAlpha = 1;
     });
 
+    // 三途川的氣氛：河面上飄著鬼火，畫面四角暗下來
+    for (var wy = 0; wy < CFG.H; wy++) {
+      var rx = MapGen.riverX(wy);
+      for (var wx = rx - 1; wx <= rx + 1; wx++) {
+        var hsh = ((wx * 73856093) ^ (wy * 19349663)) >>> 0;
+        if (hsh % 7 !== 0) continue;
+        var ph = (hsh % 100) / 100, gp = ISO.g(wx + 0.5, wy + 0.5);
+        if (gp.x < vx0 - 10 || gp.x > vx1 + 10 || gp.y < vy0 - 30 || gp.y > vy1 + 10) continue;
+        var fy = gp.y - 10 - 6 * Math.sin(t * 1.3 + ph * 6), fx = gp.x + 4 * Math.sin(t * 0.7 + ph * 9);
+        var fl = 0.55 + 0.45 * Math.sin(t * 4 + ph * 20);
+        ctx.globalAlpha = 0.22 * fl; px(fx - 5, fy - 6, 10, 10, "#7fe0c8");
+        ctx.globalAlpha = 0.9 * fl; px(fx - 2, fy - 2, 4, 5, "#7fe0c8"); px(fx - 1, fy - 4, 2, 3, "#bff7ea"); px(fx, fy - 6, 1, 2, "#e8fff8");
+        ctx.globalAlpha = 1;
+      }
+    }
+    if (!R._vig || R._vig.w !== VW || R._vig.h !== VH) {
+      var vg = ctx.createRadialGradient(VW / 2, VH / 2, Math.min(VW, VH) * 0.35, VW / 2, VH / 2, Math.max(VW, VH) * 0.75);
+      vg.addColorStop(0, "rgba(12,8,24,0)"); vg.addColorStop(1, "rgba(12,8,24,0.55)");
+      R._vig = { w: VW, h: VH, g: vg };
+    }
+    ctx.fillStyle = R._vig.g; ctx.fillRect(0, 0, VW, VH);
+
     // 標籤、泡泡
     G.buildings.forEach(drawBuildingLabel);
     G.souls.forEach(function (e) { drawBubble(e, t); });
