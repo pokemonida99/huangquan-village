@@ -3,7 +3,7 @@
 // 音效、音樂各自在設定裡可以關掉，記在 localStorage。
 window.SFX = (function () {
   var ac = null, master = null, off = false, musicOff = false, last = {};
-  var BGM_VOL = 0.28, bgm = null, bgmGain = null;
+  var BGM_VOL = 0.6, bgm = null;   // 檔案已壓到約 -24 dB 平均，這裡是桌機／Android 再乘的倍率
   try { off = localStorage.getItem("hq-sfx-off") === "1"; musicOff = localStorage.getItem("hq-bgm-off") === "1"; } catch (e) { /* 私密模式 */ }
   function ctx() {
     if (ac) return ac;
@@ -13,23 +13,31 @@ window.SFX = (function () {
     master = ac.createGain(); master.gain.value = 0.22; master.connect(ac.destination);
     return ac;
   }
-  // 配樂走 WebAudio 的音量節點（iPhone 的 audio.volume 不能調）
+  // 配樂用一般的 <audio> 直接播（不接 WebAudio）：iPhone 靜音模式下 WebAudio 會被消音，<audio> 不會，
+  // 而且有 <audio> 在播，WebAudio 的音效也跟著能出聲。iPhone 不能調 audio.volume，所以檔案本身已經壓小聲。
   function startMusic() {
     if (musicOff) return;
-    var a = ctx(); if (!a) return;
-    if (!bgm) {
-      bgm = new Audio("art/audio/bgm.mp3"); bgm.loop = true; bgm.preload = "auto";
-      try { var src = a.createMediaElementSource(bgm); bgmGain = a.createGain(); bgmGain.gain.value = BGM_VOL; src.connect(bgmGain); bgmGain.connect(a.destination); }
-      catch (e) { bgm.volume = BGM_VOL; }
-    }
-    var p = bgm.play(); if (p && p.catch) p.catch(function () { /* 還沒解鎖，下次觸碰再試 */ });
+    if (!bgm) { bgm = new Audio("art/audio/bgm.mp3?v=2"); bgm.loop = true; bgm.preload = "auto"; bgm.setAttribute("playsinline", ""); }
+    bgm.volume = BGM_VOL;
+    var p = bgm.play(); if (p && p.catch) p.catch(function () { /* 還沒解鎖，下次點擊再試 */ });
   }
   function stopMusic() { if (bgm) bgm.pause(); }
   // 切到背景就停，回來再放
-  document.addEventListener("visibilitychange", function () { if (document.hidden) stopMusic(); else if (ac && ac.state === "running") startMusic(); });
-  // 第一次觸碰才開聲音（瀏覽器規定）
-  function unlock() { var a = ctx(); if (a && a.state === "suspended") a.resume(); if (!bgm || bgm.paused) startMusic(); }
-  window.addEventListener("pointerdown", unlock, { passive: true });
+  document.addEventListener("visibilitychange", function () { if (document.hidden) stopMusic(); else if (unlocked) startMusic(); });
+  // 解鎖聲音：手機上只有「手指放開」（touchend／pointerup／click）才算使用者操作，pointerdown 不算
+  var unlocked = false;
+  function unlock() {
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) { /* 舊版瀏覽器 */ }
+    var a = ctx();
+    if (a) {
+      if (a.state !== "running") a.resume();
+      // iOS：在使用者操作裡播一個極短的空白音，WebAudio 才算真的開了
+      try { var b = a.createBuffer(1, 1, 22050), s = a.createBufferSource(); s.buffer = b; s.connect(a.destination); s.start(0); } catch (e) { /* 忽略 */ }
+    }
+    if (!bgm || bgm.paused) startMusic();
+    unlocked = true;
+  }
+  ["touchend", "pointerup", "click", "keydown"].forEach(function (ev) { window.addEventListener(ev, unlock, { capture: true, passive: true }); });
 
   function tone(freq, t0, dur, type, vol, slide) {
     var a = ac, o = a.createOscillator(), g = a.createGain();
@@ -65,7 +73,8 @@ window.SFX = (function () {
   // gap：同一種音效最短間隔（秒），避免高速時連發
   function play(name, gap) {
     if (off || !SOUNDS[name]) return;
-    var a = ctx(); if (!a || a.state !== "running") return;
+    var a = ctx(); if (!a) return;
+    if (a.state !== "running") { if (unlocked) a.resume(); return; }
     var now = a.currentTime;
     if (gap && last[name] && now - last[name] < gap) return;
     last[name] = now;
@@ -76,6 +85,7 @@ window.SFX = (function () {
     isOff: function () { return off; },
     musicOff: function () { return musicOff; },
     toggleMusic: function () { musicOff = !musicOff; try { localStorage.setItem("hq-bgm-off", musicOff ? "1" : ""); } catch (e) { /* 私密模式 */ } if (musicOff) stopMusic(); else startMusic(); return musicOff; },
+    debug: function () { return { ctx: ac && ac.state, unlocked: unlocked, bgm: bgm ? (bgm.paused ? "paused" : "playing") + " " + bgm.currentTime.toFixed(1) : "none" }; },
     toggle: function () { off = !off; try { localStorage.setItem("hq-sfx-off", off ? "1" : ""); } catch (e) { /* 私密模式 */ } if (!off) play("click"); return off; }
   };
 })();
