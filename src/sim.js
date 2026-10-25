@@ -481,7 +481,7 @@ window.Sim = (function () {
     var t = G.treasures.splice(i, 1)[0];
     S.addGift(t.gift, 1, t.x * T + T / 2, t.y * T + T - 2);
     FX.spark(t.x * T + T / 2, t.y * T + T - 2, "#ffe38a", 10);
-    SFX.play("coin");
+    SFX.play("pickup");
     return true;
   };
   S.mobKilled = function (m, r) {

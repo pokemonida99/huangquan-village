@@ -642,3 +642,24 @@ button.pressed, .card.pressed, .slot.pressed, button:active { transform: transla
 #follow[hidden] { display: none; }
 #follow b { color: #fff; }
 #follow button { width: 26px; height: 26px; padding: 0; font-size: 14px; color: var(--gold2); background: var(--verm) 0 0 / 96px 48px; border: 2px solid var(--edge); }
+
+/* 設定：音量滑桿 */
+.vols { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; padding: 8px 10px; background: #fbf4e2; border: 2px solid #a8804e; }
+.vols label { display: flex; align-items: center; gap: 8px; font: 700 13px var(--serif); color: var(--ink); }
+.vols label span { width: 64px; flex: none; }
+.vols input[type=range] { flex: 1; accent-color: var(--vred); }
+.vols label b { width: 30px; text-align: right; font: 700 13px var(--font); }
+.vols small { font-size: 11px; color: #8a6a4a; }
+
+/* 去留卡：留下來的能力預覽 */
+.sc-apt { margin: 0 0 10px; padding: 6px 8px; background: #fff8e6; border: 2px solid #d6b07a; }
+.sc-apt-top { display: flex; justify-content: space-between; font-size: 13px; }
+.sc-apt-top b { color: #c8282e; } .sc-apt-top i { font-style: normal; color: #d6c39a; }
+.sc-apt-st { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 5px 0 3px; }
+.sc-apt-st span { display: flex; flex-direction: column; align-items: center; padding: 2px 0; background: #fff; border: 1px solid #e0d0b0; }
+.sc-apt-st small { font-size: 10px; color: #8a6a4a; }
+.sc-apt-st b { font: 900 14px var(--font); color: #2a3aa8; }
+.sc-apt-st span.up { background: #fff1d6; border-color: #e2b65a; } .sc-apt-st span.up b { color: #c8282e; }
+.sc-apt-tip { display: block; font-size: 11px; color: #6a5440; }
+.rc-apt { margin: 6px 0 0; font-size: 12px; color: #6a5440; } .rc-apt b { color: #c8282e; }
+.sc-apt-st span.dn b { color: #6a7a9a; }

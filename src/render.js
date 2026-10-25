@@ -262,8 +262,9 @@ window.Render = (function () {
     if (!(HQ.artIndex.iso || {})[key]) key = "build-" + (w * h >= 6 ? "3x3" : w * h >= 4 ? "2x2" : w * h >= 2 ? "2x1" : "1x1");
     var img = Assets.get(Assets.isoPath(key));
     if (!img) return null;
-    var spr = { img: img, w: Math.max(w, h), h: Math.min(w, h), ox: 0, oy: 0, art: true };
-    return w < h ? flipped(spr) : spr;   // 直的佔地用鏡像
+    // GPT 畫的長方形工地，長邊是朝右下延伸的（＝佔地寬 < 高）；橫的佔地（寬 > 高）就用鏡像，方向才會跟建築一樣
+    var spr = { img: img, w: Math.min(w, h), h: Math.max(w, h), ox: 0, oy: 0, art: true };
+    return w > h ? flipped(spr) : spr;
   }
   function drawConstruction(b, spr, o, p) {
     var site = siteSprite(b.w, b.h), so = site && spriteOrigin(site, b.x, b.y);

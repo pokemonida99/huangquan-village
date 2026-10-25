@@ -25,6 +25,7 @@ window.UI = (function () {
       var b = e.target.closest && e.target.closest("button, .card, .slot");
       if (!b) return;
       pressedEl = b; pressedAt = performance.now(); b.classList.add("pressed");
+      SFX.play("click", 0.06);   // 每個按鈕都有按下去的聲音
       if (navigator.vibrate) try { navigator.vibrate(8); } catch (er) { /* 不支援 */ }
     }, true);
     function release() {
@@ -67,7 +68,7 @@ window.UI = (function () {
     $("g-bar").style.width = (nxt ? Math.min(100, (s.helped - (cur.helped || 0)) / Math.max(1, nxt.helped - (cur.helped || 0)) * 100) : 100).toFixed(1) + "%";
     var goal = Story.tutorialGoal();
     $("goal").hidden = !goal || UI.dialogOpen(); if (goal && $("goal")._v !== goal) { $("goal").innerHTML = "<em>目標</em>" + U.esc(goal); $("goal")._v = goal; }
-    if (sheetKind && sheetKind !== "build" && sheetKind !== "patrol-party" && UI._refreshT++ % 8 === 0) UI.renderSheet(true);
+    if (sheetKind && sheetKind !== "build" && sheetKind !== "patrol-party" && sheetKind !== "settings" && UI._refreshT++ % 8 === 0) UI.renderSheet(true);   // 設定不自動重畫，拖音量滑桿才不會被打斷
   };
   UI._refreshT = 0;
   UI.toggleSpeed = function () {
@@ -353,6 +354,8 @@ window.UI = (function () {
       "<tr><th class='def'>防禦</th><td>" + Math.round(r.defn) + "</td></tr>" +
       "<tr><th class='mag'>靈力</th><td>" + r.st6.靈力 + "</td></tr>" +
       "<tr><th class='luck'>福報</th><td>" + r.st6.福報 + "</td></tr></table></div></div>";
+    var ai = r.apt && Soul.aptInfo(r.apt);
+    if (ai) h += "<p class='rc-apt'>資質 <b>" + "★".repeat(ai.stars) + "</b>　特長「" + ai.tag + "」：" + ai.tip + "</p>";
     h += "<p class='rc-now'>" + U.esc(stateText(r)) + "　" + Icons.html("coin") + " " + U.fmt(r.money) + "　擊退 " + (r.kills || 0) + " 隻</p>";
     // 送禮物：點了才展開
     var open = UI._giftFor === r.uid;
@@ -492,6 +495,10 @@ window.UI = (function () {
     var h = "<div class='btns'>" + SPEEDS.map(function (v) { return "<button data-speed='" + v + "' class='" + (s.speed === v ? "on" : "") + "'>" + (v ? "速度 ×" + v : "暫停") + "</button>"; }).join("") + "</div>";
     h += "<div class='btns'><button data-act='zin'>放大</button><button data-act='zout'>縮小</button><button data-act='home'>回車站</button></div>";
     h += "<div class='btns'><button data-act='names' class='" + (Render.showNames ? "on" : "") + "'>顯示建築名稱</button><button data-act='sfx' class='" + (SFX.isOff() ? "" : "on") + "'>音效 " + (SFX.isOff() ? "關" : "開") + "</button><button data-act='bgm' class='" + (SFX.musicOff() ? "" : "on") + "'>音樂 " + (SFX.musicOff() ? "關" : "開") + "</button></div>";
+    var vol = SFX.volume(), mv = SFX.canSetMusicVolume();
+    h += "<div class='vols'><label><span>音效音量</span><input type='range' min='0' max='100' step='5' value='" + vol.sfx + "' data-vol='sfx'><b>" + vol.sfx + "</b></label>" +
+      "<label><span>音樂音量</span><input type='range' min='0' max='100' step='5' value='" + vol.bgm + "' data-vol='bgm'" + (mv ? "" : " disabled") + "><b>" + (mv ? vol.bgm : "—") + "</b></label>" +
+      (mv ? "" : "<small>iPhone、iPad 不能調音樂音量（系統限制），只能用上面的「音樂 開／關」。</small>") + "</div>";
     h += "<div class='btns'><button data-act='save'>立即存檔（存檔 " + State.getSlot() + "）</button><button data-act='title'>回標題畫面</button><button data-act='reset' class='danger'>重新開始</button></div>";
     h += "<h3>說明</h3><p class='hint'>拖曳移動地圖、雙指或滾輪縮放。點亡魂看心願，點建築升級或拆除，點霧裡的牌子擴建。空白鍵暫停。</p>";
     h += "<p class='credit'>非官方粉絲作品。角色與故事出自 IG 劇《黃泉燒肉店》；玩法向開羅《冒險村物語 2》致敬。配樂〈Harpstring Lullaby〉。</p>";
@@ -598,7 +605,11 @@ window.UI = (function () {
     body.querySelectorAll("[data-combo]").forEach(function (b) { b.onclick = function () { SFX.play("open"); UI._comboOpen = UI._comboOpen === b.dataset.combo ? null : b.dataset.combo; UI.renderSheet(); }; });
     body.querySelectorAll("details.rules:not(.cast)").forEach(function (d) { d.ontoggle = function () { UI._rulesOpen = d.open; }; });
     body.querySelectorAll("details.cast").forEach(function (d) { d.ontoggle = function () { UI._castOpen = d.open; }; });
-    body.querySelectorAll("[data-buy]").forEach(function (b) { b.onclick = function () { var w = Sim.buyGift(b.dataset.buy); if (w) { SFX.play("error"); UI.toast(w); } else { SFX.play("coin"); UI.toast("買了「" + Sim.giftById(b.dataset.buy).name + "」，放進禮物袋"); } UI.renderSheet(); }; });
+    body.querySelectorAll("[data-vol]").forEach(function (el) {
+      el.oninput = function () { SFX.setVolume(el.dataset.vol, el.value); el.nextElementSibling.textContent = el.value; };
+      el.onchange = function () { if (el.dataset.vol === "sfx") SFX.play("coin"); };
+    });
+    body.querySelectorAll("[data-buy]").forEach(function (b) { b.onclick = function () { var w = Sim.buyGift(b.dataset.buy); if (w) { SFX.play("error"); UI.toast(w); } else { SFX.play("buy"); UI.toast("買了「" + Sim.giftById(b.dataset.buy).name + "」，放進禮物袋"); } UI.renderSheet(); }; });
     body.querySelectorAll("[data-gift]").forEach(function (b) { b.onclick = function () { UI.giveGift(resById(+b.dataset.res), b.dataset.gift); UI.renderSheet(); }; });
     body.querySelectorAll("[data-speed]").forEach(function (b) { b.onclick = function () { G.state.speed = +b.dataset.speed; UI.renderSheet(); }; });
     body.querySelectorAll("[data-accept]").forEach(function (b) { b.onclick = function () { var r = D.requests.find(function (x) { return x.id === b.dataset.accept; }); UI.closeSheet(); Story.acceptRequest(r); UI.renderSheet(); }; });
@@ -720,6 +731,15 @@ window.UI = (function () {
     }
     UI.closeSheet();
   };
+  // 留下來會是什麼樣的街坊：Lv1 能力（跟一般亡魂比，高的標 ▲）、資質星等、特長
+  function aptPreview(soul) {
+    var info = Soul.aptInfo(soul.apt); if (!info) return "";
+    var me = new Resident(0, 0, { apt: soul.apt }), avg = new Resident(0, 0, { apt: { 魂力: 8, 膽量: 2, 手藝: 2, 定力: 2, 靈力: 2, 福報: 2 } });   // 平均的亡魂
+    var rows = [["HP", me.maxhp, avg.maxhp], ["攻擊", Math.round(me.atk), Math.round(avg.atk)], ["防禦", Math.round(me.defn), Math.round(avg.defn)], ["靈力", me.st6.靈力, avg.st6.靈力], ["福報", me.st6.福報, avg.st6.福報]];
+    return "<div class='sc-apt'><div class='sc-apt-top'><span>資質 <b>" + "★".repeat(info.stars) + "<i>" + "★".repeat(3 - info.stars) + "</i></b></span><span>特長「<b>" + info.tag + "</b>」</span></div>" +
+      "<div class='sc-apt-st'>" + rows.map(function (x) { var up = x[1] > x[2], dn = x[1] < x[2]; return "<span class='" + (up ? "up" : dn ? "dn" : "") + "'><small>" + x[0] + "</small><b>" + x[1] + (up ? "▲" : dn ? "▼" : "") + "</b></span>"; }).join("") + "</div>" +
+      "<small class='sc-apt-tip'>▲▼ 跟一般亡魂比。" + info.tip + (me.hits > 1 ? "・攻擊 ×" + me.hits : "") + "</small></div>";
+  }
   function soulChoice(soul) {
     if ($("modal").querySelector(".sc[data-uid='" + soul.uid + "']")) return;
     var gift = UI.stayGift(), merit = sendoffMerit();
@@ -732,7 +752,7 @@ window.UI = (function () {
       "<div class='sc-yt' style='background-image:url(" + yt + ")'></div>" +
       "<div class='sc-soul' style='background-image:url(" + spr + ")'></div>" +
       "<div class='sc-say sc-say-soul'>" + U.esc(SAY[soul.uid % SAY.length]) + "</div><div class='sc-say sc-say-yt'></div><div class='sc-fx'></div></div>" +
-      "<div class='sc-card'><div class='sc-name'>" + U.esc(soul.name) + "</div><p class='sc-q'>安心度滿了。要留在這條街，還是去投胎？</p>" +
+      "<div class='sc-card'><div class='sc-name'>" + U.esc(soul.name) + "</div><p class='sc-q'>安心度滿了。要留在這條街，還是去投胎？</p>" + aptPreview(soul) +
       "<div class='sc-btns'><button class='sc-stay' id='m-stay'><b>留下來當街坊</b><small>" + Icons.html("coin") + " 冥紙 +" + U.fmt(gift) + "・多一位幫手</small></button>" +
       "<button class='sc-go' id='m-go'><b>送去投胎</b><small>" + Icons.html("lotus") + " 功德 +" + merit + "・空出位置</small></button></div>" +
       "<p class='sc-note'>兩種都算幫助一人</p></div></div>";

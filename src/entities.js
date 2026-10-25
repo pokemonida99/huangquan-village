@@ -71,6 +71,26 @@
     return D.wishes.filter(function (w) { return !w.final && !w.residentOnly && w.weight > 0 && Sim.cond(w.unlock); })
       .map(function (w) { return { w: w, k: w.weight * (mul[w.id] || 1) }; });
   }
+  // 資質：每位亡魂天生不一樣，留下來當街坊時加在能力上（魂力的單位比較大）
+  var TALENT = {
+    魂力: { tag: "耐打", tip: "HP 高，巡守撐得久" }, 膽量: { tag: "膽子大", tip: "攻擊高，適合巡守打怪" },
+    手藝: { tag: "手巧", tip: "攻擊次數多" }, 定力: { tag: "沉穩", tip: "防禦高，不容易受傷" },
+    靈力: { tag: "靈感強", tip: "用法術攻擊" }, 福報: { tag: "好運", tip: "打怪更常掉寶箱和禮物" }
+  };
+  function rollApt() {
+    var a = {}, keys = ["魂力", "膽量", "手藝", "定力", "靈力", "福報"];
+    keys.forEach(function (k) { a[k] = U.randi(0, 3); });
+    var top = U.pick(keys); a[top] += U.randi(2, 4);
+    a.魂力 *= 4;
+    return a;
+  }
+  // 資質評分 1～3 星、特長（最高的那一項）
+  function aptInfo(a) {
+    if (!a) return null;
+    var sum = 0, best = null, bv = -1;
+    Object.keys(a).forEach(function (k) { var v = k === "魂力" ? a[k] / 4 : a[k]; sum += v; if (v > bv) { bv = v; best = k; } });
+    return { stars: sum >= 13 ? 3 : sum >= 9 ? 2 : 1, best: best, tag: TALENT[best].tag, tip: TALENT[best].tip };
+  }
   function Soul(x, y, opts) {
     Walker.call(this, x, y);
     opts = opts || {};
@@ -93,6 +113,7 @@
       if (p && this.wishes.indexOf(p.w.id) < 0) this.wishes.push(p.w.id);
     }
     this.wishTotal = this.wishes.length;
+    this.apt = rollApt();
     this.st = "arrive"; this.timer = 0;
     this.speed = CFG.SOUL_SPEED * U.rand(0.85, 1.15);
   }
@@ -212,7 +233,7 @@
     this.dead = true;
   };
   Soul.prototype.stayAsResident = function () {
-    var r = new Resident(this.tx, this.ty, { name: this.name, skin: this.skin });
+    var r = new Resident(this.tx, this.ty, { name: this.name, skin: this.skin, apt: this.apt });
     G.residents.push(r);
     State.addHelped(1, this.name + " 留下來當街坊");
     if (State.plainResidents() > State.housing()) {
@@ -272,6 +293,7 @@
     this.kills = o.kills || 0;
     // 滿足（送禮物會升、每週慢慢降，越高 EXP 越多）、勤奮度（每顧一次店 +1，越高店品質越好）
     this.joy = o.joy != null ? o.joy : 30; this.dili = o.dili || 0;
+    this.apt = o.apt || null;   // 從亡魂留下來的才有資質
     this.calc();
     this.hp = o.hp != null ? Math.min(o.hp, this.maxhp) : this.maxhp;
     this.away = !!o.away; this.awayUntil = o.awayUntil || 0;
@@ -285,7 +307,8 @@
     var j = this.jobDef(), s = {}, base = D.baseStats;
     var mul = this.charId ? 1.15 : 1;
     if (this.charId === "yutong") mul *= (D.titles[G.state ? G.state.title : 0] || {}).growthMul || 1;
-    STATS.forEach(function (k) { s[k] = Math.round((base[k] + j.growth[k] * (this.lv - 1)) * mul); }, this);
+    var apt = this.apt || {};
+    STATS.forEach(function (k) { s[k] = Math.round((base[k] + (apt[k] || 0) + j.growth[k] * (this.lv - 1)) * mul); }, this);
     this.st6 = s;
     this.maxhp = s.魂力;
     this.magic = s.靈力 > s.膽量;
@@ -294,7 +317,7 @@
     this.defn = s.定力;
     this.luck = s.福報;
   };
-  Resident.prototype.toSave = function () { return { uid: this.uid, name: this.name, charId: this.charId, skin: this.skin, job: this.job, lv: this.lv, exp: this.exp, money: this.money, kills: this.kills, hp: Math.round(this.hp), away: this.away, awayUntil: this.awayUntil, joy: Math.round(this.joy), dili: this.dili }; };
+  Resident.prototype.toSave = function () { return { uid: this.uid, name: this.name, charId: this.charId, skin: this.skin, job: this.job, lv: this.lv, exp: this.exp, money: this.money, kills: this.kills, hp: Math.round(this.hp), away: this.away, awayUntil: this.awayUntil, joy: Math.round(this.joy), dili: this.dili, apt: this.apt }; };
   Resident.prototype.expNeed = function () { return Math.round(D.expCurve.base * Math.pow(this.lv, D.expCurve.pow)); };
   Resident.prototype.gainExp = function (n) {
     this.exp += Math.round(n * (1 + (this.joy || 0) / 200));
@@ -434,5 +457,6 @@
     }
   };
 
+  Soul.aptInfo = aptInfo;
   window.Soul = Soul; window.Resident = Resident; window.Mob = Mob;
 })();

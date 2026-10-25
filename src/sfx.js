@@ -4,13 +4,18 @@
 window.SFX = (function () {
   var ac = null, master = null, off = false, musicOff = false, last = {};
   var BGM_VOL = 0.6;   // 檔案已壓到約 -24 dB 平均，這裡是桌機／Android 再乘的倍率
-  try { off = localStorage.getItem("hq-sfx-off") === "1"; musicOff = localStorage.getItem("hq-bgm-off") === "1"; } catch (e) { /* 私密模式 */ }
+  var sfxVol = 1, bgmVol = 1;   // 設定裡的音量滑桿（0～1）
+  try {
+    off = localStorage.getItem("hq-sfx-off") === "1"; musicOff = localStorage.getItem("hq-bgm-off") === "1";
+    var v1 = localStorage.getItem("hq-sfx-vol"), v2 = localStorage.getItem("hq-bgm-vol");
+    if (v1 != null && v1 !== "") sfxVol = +v1; if (v2 != null && v2 !== "") bgmVol = +v2;
+  } catch (e) { /* 私密模式 */ }
   function ctx() {
     if (ac) return ac;
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     ac = new AC();
-    master = ac.createGain(); master.gain.value = 0.22; master.connect(ac.destination);
+    master = ac.createGain(); master.gain.value = 0.22 * sfxVol; master.connect(ac.destination);
     return ac;
   }
   // 配樂用一般的 <audio> 直接播（不接 WebAudio）：iPhone 靜音模式下 WebAudio 會被消音，<audio> 不會，
@@ -29,7 +34,7 @@ window.SFX = (function () {
       mode = m; el.src = SRC[m]; el.loop = m === "bgm";
       if (m === "bgm" && bgmPos) el.addEventListener("loadedmetadata", function f() { el.removeEventListener("loadedmetadata", f); try { el.currentTime = bgmPos; } catch (e) { /* 忽略 */ } });
     }
-    el.volume = BGM_VOL;
+    try { el.volume = BGM_VOL * bgmVol; } catch (e) { /* iPhone 不能調 */ }
     return el;
   }
   function startMusic() {
@@ -82,6 +87,8 @@ window.SFX = (function () {
     tick: function (t) { tone(1800, t, 0.025, "triangle", 0.12); },
     place: function (t) { noise(t, 0.12, 0.5, 500); tone(N.C5, t + 0.06, 0.1, "square", 0.16); tone(N.E5, t + 0.13, 0.1, "square", 0.16); tone(N.G5, t + 0.2, 0.18, "square", 0.16); },
     error: function (t) { tone(180, t, 0.09, "sawtooth", 0.18); tone(140, t + 0.1, 0.14, "sawtooth", 0.18); },
+    pickup: function (t) { [N.E5, N.G5, N.C6, N.E6].forEach(function (f, i) { tone(f, t + i * 0.05, 0.09, "square", 0.12); }); tone(N.G6, t + 0.2, 0.18, "triangle", 0.12); },
+    buy: function (t) { noise(t, 0.05, 0.3, 3000); tone(N.A5, t + 0.03, 0.06, "square", 0.1); tone(N.E6, t + 0.09, 0.14, "square", 0.1); },
     coin: function (t) { tone(N.B5, t, 0.05, "square", 0.08); tone(N.E6, t + 0.05, 0.12, "square", 0.08); },
     bell: function (t) { tone(N.G5, t, 0.5, "triangle", 0.2); tone(N.C6, t, 0.6, "sine", 0.12); },
     love: function (t) { [N.C6, N.E6, N.G6, N.E6, N.G6].forEach(function (f, i) { tone(f, t + i * 0.07, 0.16, "triangle", 0.16); }); },
@@ -113,6 +120,16 @@ window.SFX = (function () {
     play: play,
     isOff: function () { return off; },
     musicOff: function () { return musicOff; },
+    // 音量（0～100）：音效改 WebAudio 主音量；音樂改 <audio>.volume（iPhone 不能調，只能開關）
+    volume: function () { return { sfx: Math.round(sfxVol * 100), bgm: Math.round(bgmVol * 100) }; },
+    setVolume: function (kind, v) {
+      v = Math.max(0, Math.min(100, +v || 0)) / 100;
+      if (kind === "sfx") { sfxVol = v; if (master) master.gain.value = 0.22 * v; }
+      else { bgmVol = v; if (el) try { el.volume = BGM_VOL * v; } catch (e) { /* 忽略 */ } }
+      try { localStorage.setItem(kind === "sfx" ? "hq-sfx-vol" : "hq-bgm-vol", String(v)); } catch (e) { /* 私密模式 */ }
+    },
+    // iPhone／iPad 的 <audio> 音量是唯讀的
+    canSetMusicVolume: function () { var a = document.createElement("audio"); try { a.volume = 0.5; } catch (e) { return false; } return a.volume === 0.5 && !/iP(hone|ad|od)/.test(navigator.userAgent) && !(navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); },
     toggleMusic: function () { musicOff = !musicOff; try { localStorage.setItem("hq-bgm-off", musicOff ? "1" : ""); } catch (e) { /* 私密模式 */ } if (musicOff) stopMusic(); else startMusic(); return musicOff; },
     debug: function () { return { ctx: ac && ac.state, unlocked: unlocked, mode: mode, music: el ? (el.paused ? "paused" : "playing") + " " + el.currentTime.toFixed(1) : "none", audios: document.querySelectorAll("audio").length }; },
     toggle: function () { off = !off; try { localStorage.setItem("hq-sfx-off", off ? "1" : ""); } catch (e) { /* 私密模式 */ } if (!off) play("click"); return off; }
