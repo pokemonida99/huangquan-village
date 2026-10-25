@@ -158,10 +158,8 @@ window.Sim = (function () {
       return blocked.length ? "會擋住「" + blocked[0].def.name + "」的門口" : "這裡不能蓋";
     }
     S.refreshDoors();
-    FX.spark((x + b.w / 2) * T, (y + b.h / 2) * T + 14, "#f3d58c", 20);
+    b.builtAt = performance.now() / 1000;   // 施工小動畫（Render.drawConstruction），完工效果在 S.tickBuild
     Story.onBuilt(b);
-    // 附近的人看到新店開張，跳一下
-    G.residents.concat(G.souls).forEach(function (w) { if (Math.abs(w.tx - x) + Math.abs(w.ty - y) <= 6) w.cheer(1); });
     return "";
   };
   // 街坊自己蓋小屋（開羅：住下來的人有自己的家）：找離 near 最近、門口接著道路的空地，免費
@@ -181,7 +179,7 @@ window.Sim = (function () {
       var blocked = G.buildings.some(function (o) { return o !== b && o.door && (o.def.cat !== "deco" || o.def.serves.length) && !MapGen.doorFor(o); });
       if (blocked || !MapGen.doorFor(b)) { MapGen.setOcc(b, 0); G.buildings.pop(); continue; }
       S.refreshDoors();
-      if (!quiet) { FX.spark((b.x + 0.5) * T, (b.y + 0.5) * T + 14, "#cfe3c4", 20); Story.onBuilt(b); }
+      if (!quiet) { b.builtAt = performance.now() / 1000; Story.onBuilt(b); }
       return b;
     }
     return null;
@@ -209,6 +207,25 @@ window.Sim = (function () {
     return "";
   };
   S.rotate = function (b) { return S.move(b, b.x, b.y, !b.flip); };
+  // 施工中：敲槌聲、揚塵；時間到就落成（閃光、附近的人開心跳）
+  S.tickBuild = function () {
+    var now = performance.now() / 1000, dur = Render.BUILD_SEC;
+    G.buildings.forEach(function (b) {
+      if (!b.builtAt) return;
+      var p = (now - b.builtAt) / dur, cx = (b.x + b.w / 2) * T, cy = (b.y + b.h / 2) * T + 14;
+      if (p >= 1) {
+        b.builtAt = 0;
+        FX.spark(cx, cy, "#f3d58c", 26); FX.float(cx, cy, "落成！", "#ffe38a", 40);
+        SFX.play("place");
+        G.residents.concat(G.souls).forEach(function (w) { if (Math.abs(w.tx - b.x) + Math.abs(w.ty - b.y) <= 6) w.cheer(2); });
+        return;
+      }
+      if (!b._hammer || now - b._hammer > 0.32) {
+        b._hammer = now; SFX.play("hit", 0.05);
+        if (Math.random() < 0.6) FX.spark(cx + U.rand(-10, 10), cy + U.rand(-6, 6), "#c8b89a", 4);
+      }
+    });
+  };
   S.remove = function (b) {
     if (b.def.fixed) return;
     MapGen.setOcc(b, 0);
@@ -351,6 +368,7 @@ window.Sim = (function () {
     if (s.week > 4) { s.week = 1; S.monthEnd(); s.month++; if (s.month > 12) { s.month = 1; s.year++; } }
     if (s.expedition && State.absWeek() >= s.expedition.back) Battle.finishExpedition();
     G.buildings.forEach(function (b) { if (b.queue && b.queue.length >= 2) S.tryPair(b); });
+    G.residents.forEach(function (r) { r.joy = Math.max(0, (r.joy || 0) - 2); });   // 滿足每週慢慢降
     Story.onWeek();
     State.save();
   };

@@ -270,6 +270,8 @@
     this.lv = o.lv || 1; this.exp = o.exp || 0;
     this.money = o.money || 50;
     this.kills = o.kills || 0;
+    // 滿足（送禮物會升、每週慢慢降，越高 EXP 越多）、勤奮度（每顧一次店 +1，越高店品質越好）
+    this.joy = o.joy != null ? o.joy : 30; this.dili = o.dili || 0;
     this.calc();
     this.hp = o.hp != null ? Math.min(o.hp, this.maxhp) : this.maxhp;
     this.away = !!o.away; this.awayUntil = o.awayUntil || 0;
@@ -292,10 +294,10 @@
     this.defn = s.定力;
     this.luck = s.福報;
   };
-  Resident.prototype.toSave = function () { return { uid: this.uid, name: this.name, charId: this.charId, skin: this.skin, job: this.job, lv: this.lv, exp: this.exp, money: this.money, kills: this.kills, hp: Math.round(this.hp), away: this.away, awayUntil: this.awayUntil }; };
+  Resident.prototype.toSave = function () { return { uid: this.uid, name: this.name, charId: this.charId, skin: this.skin, job: this.job, lv: this.lv, exp: this.exp, money: this.money, kills: this.kills, hp: Math.round(this.hp), away: this.away, awayUntil: this.awayUntil, joy: Math.round(this.joy), dili: this.dili }; };
   Resident.prototype.expNeed = function () { return Math.round(D.expCurve.base * Math.pow(this.lv, D.expCurve.pow)); };
   Resident.prototype.gainExp = function (n) {
-    this.exp += n;
+    this.exp += Math.round(n * (1 + (this.joy || 0) / 200));
     while (this.exp >= this.expNeed() && this.lv < 99) { this.exp -= this.expNeed(); this.lv++; this.calc(); this.hp = this.maxhp; if (!this.away) { FX.float(this.px, this.py, "Lv UP!", "#9fe0d8", 30); SFX.play("levelup", 1); this.cheer(3); } }
   };
   Resident.prototype.ownBuilding = function () {
@@ -359,7 +361,12 @@
       case "towork":
         if (this.step(dt) || !this.path) {
           var wb = this.target;
-          if (wb) { wb.walkingStaff = null; this.st = "work"; this.timer = U.rand(8, 14); wb.staffedUntil = G.time + this.timer; wb.staffBonus = this.jobDef().work || {}; wb.staffer = this; }
+          if (wb) {
+            wb.walkingStaff = null; this.st = "work"; this.timer = U.rand(8, 14); wb.staffedUntil = G.time + this.timer; wb.staffer = this;
+            this.dili = Math.min(99, (this.dili || 0) + 1);
+            var wk = this.jobDef().work || {};
+            wb.staffBonus = Object.assign({}, wk, { qualityPct: (wk.qualityPct || 0) + Math.floor(this.dili / 5) + (this.joy >= 70 ? 5 : 0) });
+          }
           else { this.st = "idle"; this.timer = 0.5; }
         }
         break;

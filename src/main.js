@@ -14,6 +14,7 @@ window.HQGame = (function () {
     // 評價、位階：條件一到就升（每秒檢查一次）
     promoT += real;
     if (promoT > 1) { promoT = 0; if (s.speed > 0) Story.checkPromotions(); }
+    Sim.tickBuild();
     FX.update(real);
     Render.draw();
     ExpStrip.update(real);

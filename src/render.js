@@ -249,9 +249,31 @@ window.Render = (function () {
     var spr = buildingSprite(b.def, b.broken, b.flip), o = spriteOrigin(spr, b.x, b.y);
     var dim = (b.broken && !(spr.art && HQ.artIndex.iso[b.def.id].damaged)) || b.closedUntil > State.absWeek();
     if (dim) ctx.filter = "brightness(55%) saturate(60%)";
-    blit(spr.img, o.x, o.y);
+    var bp = b.builtAt ? (performance.now() / 1000 - b.builtAt) / R.BUILD_SEC : 1;
+    if (bp < 1) drawConstruction(b, spr, o, bp);
+    else blit(spr.img, o.x, o.y);
     if (dim) ctx.filter = "none";
     hits.push({ b: b, spr: spr, x0: o.x, y0: o.y, x1: o.x + spr.img.width, y1: o.y + spr.img.height });
+  }
+  // 施工中：先是 GPT 畫的工地（鷹架、木料、瓦片），後半段建築從地面往上長出來、工地淡掉
+  R.BUILD_SEC = 2.6;
+  function siteSprite(w, h) {
+    var key = "build-" + Math.max(w, h) + "x" + Math.min(w, h);
+    if (!(HQ.artIndex.iso || {})[key]) key = "build-" + (w * h >= 6 ? "3x3" : w * h >= 4 ? "2x2" : w * h >= 2 ? "2x1" : "1x1");
+    var img = Assets.get(Assets.isoPath(key));
+    if (!img) return null;
+    var spr = { img: img, w: Math.max(w, h), h: Math.min(w, h), ox: 0, oy: 0, art: true };
+    return w < h ? flipped(spr) : spr;   // 直的佔地用鏡像
+  }
+  function drawConstruction(b, spr, o, p) {
+    var site = siteSprite(b.w, b.h), so = site && spriteOrigin(site, b.x, b.y);
+    var rise = Math.max(0, (p - 0.45) / 0.55), e = 1 - Math.pow(1 - rise, 2);
+    // 工地：前半段完整，後半段淡掉
+    if (site) { ctx.globalAlpha = rise > 0 ? Math.max(0, 1 - rise * 1.4) : 1; blit(site.img, so.x, so.y + (p < 0.12 ? Math.round((1 - p / 0.12) * 6) : 0)); ctx.globalAlpha = 1; }
+    if (rise <= 0) return;
+    // 建築從下往上露出來
+    var img = spr.img, H = img.height, W = img.width, sy = Math.max(0, Math.floor(H * (1 - e))), sh = H - sy;
+    if (sh > 0) ctx.drawImage(img, 0, sy, W, sh, SX(o.x), SY(o.y + sy), W * R.cam.z, sh * R.cam.z);
   }
   function drawStanding(s) {
     var img = Assets.get("art/props/" + s.name + ".png");

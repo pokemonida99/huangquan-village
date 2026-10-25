@@ -109,18 +109,18 @@ window.UI = (function () {
   // ---------- 亡魂抉擇提示 ----------
   var notices = [];
   UI.noticeCount = function () { return notices.length; };
+  // 亡魂安心了：畫面中央跳出抉擇小動畫（亡魂浮在光圈裡），選「留下」得冥紙、「投胎」得功德
   UI.notice = function (soul) {
-    var el = document.createElement("div");
-    el.className = "notice";
-    el.innerHTML = "<div><b>" + U.esc(soul.name) + "</b> 安心了，想留下來當街坊</div><div class='row'><button class='stay'>邀請留下</button><button class='go'>送去投胎</button></div>";
-    el.querySelector(".stay").onclick = function () { UI.dropNotice(soul); soul.stayAsResident(); };
-    el.querySelector(".go").onclick = function () { UI.dropNotice(soul); soul.toReincarnate(); };
-    $("notices").appendChild(el);
-    notices.push({ soul: soul, el: el });
+    if (notices.indexOf(soul) >= 0) return;
+    notices.push(soul);
+    soulChoice(soul);
   };
-  UI.dropNotice = function (soul) {
-    notices = notices.filter(function (n) { if (n.soul === soul) { n.el.remove(); return false; } return true; });
-  };
+  UI.dropNotice = function (soul) { notices = notices.filter(function (n) { return n !== soul; }); };
+  UI.stayGift = function () { return Math.round(120 * (1 + (G.state.star || 0) * 0.5)); };
+  function sendoffMerit() {
+    var yk = G.buildings.find(function (b) { return b.def.extra.macaron && b.door && Sim.isOpen(b); });
+    return yk ? yk.def.extra.macaron.meritPerSoul : CFG.SENDOFF_MERIT;
+  }
 
   // ---------- 面板 ----------
   UI.openSheet = function (kind, arg) {
@@ -334,12 +334,41 @@ window.UI = (function () {
     if (f) return "<img class='face' src='" + U.esc(f) + "'>";
     return "<span class='face ph'>" + U.esc((name || "?").slice(0, 1)) + "</span>";
   }
+  // ---- 街坊資訊：照開羅冒險者資訊卡——小場景、滿足／勤奮度、等級經驗、能力表、送禮物 ----
+  var GIFTS = [
+    { id: "candy", name: "金平糖", cost: 60, joy: 8, fav: ["yuelao"] },
+    { id: "chicken", name: "雞胸肉", cost: 80, joy: 10, fav: ["mimi", "cat918", "gongwan"] },
+    { id: "can", name: "罐罐", cost: 80, joy: 10, fav: ["heitang"] },
+    { id: "bento", name: "燒肉便當", cost: 150, joy: 15 },
+    { id: "flower", name: "彼岸花束", cost: 300, joy: 25, fav: ["baimei"] },
+    { id: "charm", name: "紅線御守", cost: 600, joy: 40 }
+  ];
+  function joyText(j) { return j >= 80 ? "超開心" : j >= 55 ? "開心" : j >= 30 ? "普通" : j >= 10 ? "有點悶" : "很低落"; }
+  function joyFace(j) { return "<q class='jf jf" + (j >= 55 ? 2 : j >= 30 ? 1 : 0) + "'><u></u><u></u><s></s></q>"; }
   function residentHTML(r) {
     if (!r || G.residents.indexOf(r) < 0) return "<p>這位街坊已經不在了。</p>";
-    var h = "<div class='who'>" + faceHTML(r.charId, r.name) + "<div><b>" + U.esc(r.name) + "</b><br><small>" + U.esc(r.job) + "　Lv" + r.lv + "　EXP " + r.exp + "/" + r.expNeed() + "　💴" + r.money + "</small></div></div>";
-    h += "<div class='stat6'>" + Resident.STATS.map(function (k) { return "<span>" + k + " <b>" + r.st6[k] + "</b></span>"; }).join("") + "</div>";
-    h += "<p class='stats'>HP " + Math.round(r.hp) + "/" + r.maxhp + "・攻擊 " + Math.round(r.atk) + " ×" + r.hits + "・防禦 " + Math.round(r.defn) + "・" + stateText(r) + "</p>";
     var c = r.charId && D.charById[r.charId];
+    var spr = c ? c.sprite : "art/chars/soul-" + r.skin + ".png";
+    var need = r.expNeed(), hpPct = Math.round(r.hp / r.maxhp * 100), joy = Math.round(r.joy || 0);
+    var h = "<div class='rc'><div class='rc-l'><div class='rc-scene'><span class='rc-hp'><i style='width:" + hpPct + "%'></i></span><span class='rc-spr' style='background-image:url(" + spr + ")'></span></div>" +
+      "<div class='rc-mood'><div><span>滿足</span>" + joyFace(joy) + "<b>" + joy + "</b></div><small>" + joyText(joy) + "・EXP +" + Math.round(joy / 2) + "%</small>" +
+      "<div><span>勤奮度</span><b>" + (r.dili || 0) + "</b></div><small>顧店品質 +" + Math.floor((r.dili || 0) / 5) + "%</small></div></div>" +
+      "<div class='rc-r'><div class='rc-name'>" + U.esc(r.name) + "</div><div class='rc-job'><span>" + U.esc(r.job) + "</span><b>Lv <em>" + r.lv + "</em></b></div>" +
+      "<div class='rc-exp'><span class='rc-bar'><i style='width:" + Math.min(100, r.exp / need * 100).toFixed(1) + "%'></i></span><small>EXP 還需 <b>" + U.fmt(Math.max(0, need - r.exp)) + "</b></small></div>" +
+      "<table class='rc-st'>" +
+      "<tr><th class='hp'>HP</th><td>" + Math.round(r.hp) + "<small>/" + r.maxhp + "</small></td></tr>" +
+      "<tr><th class='atk'>攻擊</th><td>" + Math.round(r.atk) + (r.hits > 1 ? "<small>×" + r.hits + "</small>" : "") + "</td></tr>" +
+      "<tr><th class='def'>防禦</th><td>" + Math.round(r.defn) + "</td></tr>" +
+      "<tr><th class='mag'>靈力</th><td>" + r.st6.靈力 + "</td></tr>" +
+      "<tr><th class='luck'>福報</th><td>" + r.st6.福報 + "</td></tr></table></div></div>";
+    h += "<p class='rc-now'>" + U.esc(stateText(r)) + "　" + Icons.html("coin") + " " + U.fmt(r.money) + "　擊退 " + (r.kills || 0) + " 隻</p>";
+    // 送禮物：點了才展開
+    var open = UI._giftFor === r.uid;
+    h += "<div class='btns'><button class='go rc-gift' data-act='gift' data-res='" + r.uid + "'>" + (open ? "收起禮物" : "贈送禮物") + "</button><button data-act='focus' data-res='" + r.uid + "'>追蹤</button></div>";
+    if (open) h += "<div class='gifts'>" + GIFTS.map(function (g) {
+      var fav = g.fav && r.charId && g.fav.indexOf(r.charId) >= 0, poor = G.state.money < g.cost;
+      return "<button class='gift" + (fav ? " fav" : "") + (poor ? " dis" : "") + "' data-gift='" + g.id + "' data-res='" + r.uid + "'><b>" + U.esc(g.name) + (fav ? "<em>最愛</em>" : "") + "</b><small>" + Icons.html("coin") + U.fmt(g.cost) + "　滿足 +" + (fav ? g.joy * 2 : g.joy) + "</small></button>";
+    }).join("") + "</div>";
     if (c && c.lines.length) h += "<blockquote>「" + U.esc(c.lines[0].text) + "」</blockquote>";
     if (!r.charId) {
       var cur = r.jobDef();
@@ -353,9 +382,20 @@ window.UI = (function () {
       });
       h += "</div>";
     }
-    h += "<div class='btns'><button data-act='focus' data-res='" + r.uid + "'>📍 看他在哪</button></div>";
     return h;
   }
+  UI.giveGift = function (r, id) {
+    var g = GIFTS.find(function (x) { return x.id === id; });
+    if (!g || !r) return;
+    if (G.state.money < g.cost) { SFX.play("error"); return UI.toast("冥紙不夠"); }
+    var fav = g.fav && r.charId && g.fav.indexOf(r.charId) >= 0, add = fav ? g.joy * 2 : g.joy;
+    G.state.money -= g.cost;
+    r.joy = Math.min(100, (r.joy || 0) + add);
+    r.cheer(fav ? 4 : 2);
+    FX.float(r.px, r.py, "❤ 滿足 +" + add, "#ff9ab0", 34);
+    SFX.play(fav ? "love" : "coin");
+    UI.toast(fav ? r.name + "：這是我最喜歡的「" + g.name + "」！謝謝！" : r.name + " 收下了「" + g.name + "」。");
+  };
 
   function jobWhy(r, j, hall) {
     var need = (j.req && j.req.lv) || 5;
@@ -545,6 +585,7 @@ window.UI = (function () {
     body.querySelectorAll("[data-combo]").forEach(function (b) { b.onclick = function () { SFX.play("open"); UI._comboOpen = UI._comboOpen === b.dataset.combo ? null : b.dataset.combo; UI.renderSheet(); }; });
     body.querySelectorAll("details.rules:not(.cast)").forEach(function (d) { d.ontoggle = function () { UI._rulesOpen = d.open; }; });
     body.querySelectorAll("details.cast").forEach(function (d) { d.ontoggle = function () { UI._castOpen = d.open; }; });
+    body.querySelectorAll("[data-gift]").forEach(function (b) { b.onclick = function () { UI.giveGift(resById(+b.dataset.res), b.dataset.gift); UI.renderSheet(); }; });
     body.querySelectorAll("[data-speed]").forEach(function (b) { b.onclick = function () { G.state.speed = +b.dataset.speed; UI.renderSheet(); }; });
     body.querySelectorAll("[data-accept]").forEach(function (b) { b.onclick = function () { var r = D.requests.find(function (x) { return x.id === b.dataset.accept; }); UI.closeSheet(); Story.acceptRequest(r); UI.renderSheet(); }; });
     body.querySelectorAll("[data-act-id]").forEach(function (b) { b.onclick = function () { var a = D.activities.find(function (x) { return x.id === b.dataset.actId; }); var why = Story.doActivity(a); if (why) UI.toast(why); UI.renderSheet(); }; });
@@ -556,6 +597,7 @@ window.UI = (function () {
         else if (a === "repair") why = Sim.repair(sheetArg);
         else if (a === "rotate") { var rw = Sim.rotate(sheetArg); if (rw) { SFX.play("error"); UI.toast(rw); } else { SFX.play("place"); UI.renderSheet(); } return; }
         else if (a === "move") { UI.startMove(sheetArg); return; }
+        else if (a === "gift") { var gr = +b.dataset.res; UI._giftFor = UI._giftFor === gr ? null : gr; SFX.play("tick"); UI.renderSheet(); return; }
         else if (a === "remove") { if (confirm("拆除「" + sheetArg.def.name + "」？不會退錢。")) { Sim.remove(sheetArg); UI.closeSheet(); return; } }
         else if (a === "expand") { why = Sim.expand(sheetArg); if (!why) { UI.closeSheet(); return; } }
         else if (a === "depart") { var m = D.maps.find(function (x) { return x.id === b.dataset.map; }); why = Battle.depart(m, G.residents.filter(function (r) { return party.indexOf(r.uid) >= 0; })); if (!why) { UI.closeSheet(); return; } }
@@ -664,9 +706,46 @@ window.UI = (function () {
     UI.closeSheet();
   };
   function soulChoice(soul) {
-    UI.modal("<div class='mbox'><h3>✨ " + U.esc(soul.name) + "</h3><p>安心度滿了。要邀請這位亡魂留下來當街坊，還是送去投胎？</p><p class='hint'>留下：多一位會工作、巡守的街坊（住處 " + State.plainResidents() + "/" + State.housing() + "）。投胎：得到功德。兩種都算幫助一人。</p><div class='btns'><button class='go' id='m-stay'>邀請留下</button><button id='m-go'>送去投胎</button></div></div>", function (m) {
-      m.querySelector("#m-stay").onclick = function () { UI.closeModal(); if (soul.st !== "decide") return; UI.dropNotice(soul); soul.stayAsResident(); };
-      m.querySelector("#m-go").onclick = function () { UI.closeModal(); if (soul.st !== "decide") return; UI.dropNotice(soul); soul.toReincarnate(); };
+    if ($("modal").querySelector(".sc[data-uid='" + soul.uid + "']")) return;
+    var gift = UI.stayGift(), merit = sendoffMerit();
+    var spr = "art/chars/soul-" + (soul.skin || 1) + ".png";
+    // 小場景：語彤站在左邊，亡魂從右邊走過來、停在她面前說話，接著才出現選項
+    var yt = (D.charById.yutong || {}).sprite || "art/chars/yutong.png";
+    var SAY = ["語彤，謝謝妳。我已經沒有遺憾了。", "心願都完成了……接下來，我該往哪裡走呢？", "這條街讓我好安心。我可以問妳一件事嗎？"];
+    var h = "<div class='sc' data-uid='" + soul.uid + "'>" +
+      "<div class='sc-scene'><div class='sc-motes'>" + new Array(9).join("<i></i>") + "</div>" +
+      "<div class='sc-yt' style='background-image:url(" + yt + ")'></div>" +
+      "<div class='sc-soul' style='background-image:url(" + spr + ")'></div>" +
+      "<div class='sc-say sc-say-soul'>" + U.esc(SAY[soul.uid % SAY.length]) + "</div><div class='sc-say sc-say-yt'></div><div class='sc-fx'></div></div>" +
+      "<div class='sc-card'><div class='sc-name'>" + U.esc(soul.name) + "</div><p class='sc-q'>安心度滿了。要留在這條街，還是去投胎？</p>" +
+      "<div class='sc-btns'><button class='sc-stay' id='m-stay'><b>留下來當街坊</b><small>" + Icons.html("coin") + " 冥紙 +" + U.fmt(gift) + "・多一位幫手</small></button>" +
+      "<button class='sc-go' id='m-go'><b>送去投胎</b><small>" + Icons.html("lotus") + " 功德 +" + merit + "・空出位置</small></button></div>" +
+      "<p class='sc-note'>兩種都算幫助一人</p></div></div>";
+    UI.modal(h, function (m) {
+      if (soul.st !== "decide" || soul.dead) { UI.dropNotice(soul); UI.closeModal(); return; }
+      SFX.play("bell");
+      var box = m.querySelector(".sc"), chosen = false;
+      function pick(stay) {
+        if (chosen) { UI.closeModal(); return; }   // 再點一下就不等動畫
+        chosen = true;
+        UI.dropNotice(soul);
+        if (soul.st === "decide") {
+          if (stay) {
+            soul.stayAsResident();
+            State.addMoney(gift, soul.px, soul.py - 24);
+            var r = G.residents[G.residents.length - 1]; if (r) setTimeout(function () { r.cheer(3); }, 400);
+          } else soul.toReincarnate();
+        }
+        box.classList.add(stay ? "stay" : "go");
+        var ys = box.querySelector(".sc-say-yt"); ys.textContent = stay ? "太好了！歡迎你加入這條街！" : "一路好走，下輩子要幸福喔。";
+        var fx = box.querySelector(".sc-fx");
+        fx.innerHTML = stay ? new Array(11).join("<i class='coin'></i>") + "<span>+" + U.fmt(gift) + "</span>" : new Array(13).join("<i class='petal'></i>");
+        SFX.play(stay ? "jingle" : "love");
+        if (stay) setTimeout(function () { SFX.play("coin"); }, 250);
+        setTimeout(function () { if ($("modal").contains(box)) UI.closeModal(); }, 1700);
+      }
+      m.querySelector("#m-stay").onclick = function () { pick(true); };
+      m.querySelector("#m-go").onclick = function () { pick(false); };
     });
   }
 

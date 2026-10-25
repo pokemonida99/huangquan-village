@@ -73,7 +73,8 @@ def main():
         crop = rgba[b[1]:b[3], b[0]:b[2]].copy()
         if i.startswith("train-"): w, size = TRAIN_W, None
         else:
-            size = S.get(re.sub(r"-(damaged|r)$", "", i), (1, 1)); w = (size[0] + size[1]) * 24
+            mb = re.match(r"build-(\d)x(\d)$", i)   # 施工中的工地圖：尺寸寫在名字裡
+            size = (int(mb.group(1)), int(mb.group(2))) if mb else S.get(re.sub(r"-(damaged|r)$", "", i), (1, 1)); w = (size[0] + size[1]) * 24
         img = shrink(crop, w)
         img.save(os.path.join(OUT, i + ".png"))
         if i.startswith("train-"): idx["_train"] = True
