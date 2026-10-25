@@ -401,13 +401,7 @@ window.Story = (function () {
       missing = rankMissing(rk);
       if (!missing.length) { s.star++; starUp = true; if (rk.reward) S.applyEffect(rk.reward); }
     }
-    var unlocks = [];
-    if (starUp) {
-      D.buildings.forEach(function (b) { var u = b.unlock || {}; if ((u.rank === s.star || u.star === s.star) && !b.fixed) unlocks.push(b.name); });
-      D.maps.forEach(function (m) { if (m.open && (m.open.rank === s.star || m.open.star === s.star)) unlocks.push("巡守地：" + m.name); });
-      var nz = Sim.nextZone(); if (nz && Sim.expandReq(nz).star <= s.star) unlocks.push("可擴建：" + nz.name);
-      if (rk.reward) unlocks.push(Object.keys(rk.reward).map(function (k) { return ({ merit: "功德", money: "冥紙", medals: "勳章" }[k] || k) + " +" + rk.reward[k]; }).join("、"));
-    }
+    var unlocks = starUp ? starUnlocks(rk) : [];
     var titleUp = false;
     if (annual) {
       var nt = D.titles[s.title + 1];
@@ -457,6 +451,53 @@ window.Story = (function () {
       UI.review(data, function () { if (post.length) UI.dialog({ lines: post }); });
     });
     State.save();
+  };
+  function rewardText(rw) { return Object.keys(rw || {}).map(function (k) { return ({ merit: "功德", money: "冥紙", medals: "勳章" }[k] || k) + " +" + rw[k]; }).join("、"); }
+  // 升到現在這顆星解鎖了什麼
+  function starUnlocks(rk) {
+    var s = G.state, out = [];
+    D.buildings.forEach(function (b) { var u = b.unlock || {}; if ((u.rank === s.star || u.star === s.star) && !b.fixed) out.push(b.name); });
+    D.maps.forEach(function (m) { if (m.open && (m.open.rank === s.star || m.open.star === s.star)) out.push("巡守地：" + m.name); });
+    var nz = Sim.nextZone(); if (nz && Sim.expandReq(nz).star <= s.star) out.push("可擴建：" + nz.name);
+    if (rk.reward) out.push(rewardText(rk.reward));
+    return out;
+  }
+  // 評價（星）和位階：條件一達成就升，不用等觀音季度／年度評定。一次升一級，觀音現身祝賀
+  S.checkPromotions = function () {
+    var s = G.state;
+    if (!s || UI.blocking()) return false;
+    var rk = D.ranks[s.star], nt = D.titles[s.title + 1];
+    var starUp = !!(rk && !rankMissing(rk).length), titleUp = !!(nt && s.helped >= nt.helped);
+    if (!starUp && !titleUp) return false;
+    var gains = [];
+    if (starUp) { s.star++; if (rk.reward) S.applyEffect(rk.reward); gains = gains.concat(starUnlocks(rk)); }
+    if (titleUp) {
+      s.title++; if (nt.reward) { S.applyEffect(nt.reward); gains.push(rewardText(nt.reward)); }
+      gains.push("每週文印 " + nt.wenyinPerWeek + " 組");
+      G.residents.forEach(function (r) { if (r.charId === "yutong") r.calc(); });
+    }
+    G.residents.forEach(function (r) { r.cheer(4); });
+    var tr = State.traits();
+    var top = Object.keys(tr).sort(function (a, b) { return tr[b] - tr[a]; }).filter(function (k) { return tr[k] > 0 && k !== "魔氣"; }).slice(0, 2);
+    var nrk = D.ranks[s.star], miss = nrk ? rankMissing(nrk) : [];
+    var data = {
+      title: (titleUp ? "升階" : "評價升級") + "　第" + s.year + "年 " + s.month + "月",
+      rows: [["", "人氣", U.fmt(State.pop())], ["", "街坊", G.residents.length + " 人"], ["", "已幫助", U.fmt(s.helped) + " 人"]],
+      traits: top.map(function (k) { return k + " " + tr[k]; }).join("・") || "還看不出特色",
+      grade: "", score: "",
+      starUp: starUp ? s.star : 0, titleUp: titleUp ? D.titles[s.title].name : "",
+      reward: gains.join("、") || "—",
+      notes: nrk && miss.length ? ["下一顆星還差：" + miss.join("、")] : [],
+      comment: titleUp ? "做得很好，小月老。這是妳應得的。" : "這條河岸越來越熱鬧了。",
+      button: "謝謝觀音"
+    };
+    var sc = D.reviewScenes, post = [];
+    if (starUp && sc && sc.rankUp) post = post.concat(D.normLines(sc.rankUp));
+    if (titleUp && sc && sc.promote && sc.promote[s.title]) post = post.concat(D.normLines(sc.promote[s.title]));
+    var pre = [L("", "【三途川】觀音菩薩看見了這條街的改變，現身祝賀。")];
+    UI.dialog({ lines: pre }, function () { UI.review(data, function () { if (post.length) UI.dialog({ lines: post }); }); });
+    State.save();
+    return true;
   };
   // 觀音交付的任務要街上做得到：需要的街坊已入住、需要的店已經有了
   function taskDoable(t) {

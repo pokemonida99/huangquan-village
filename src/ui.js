@@ -203,13 +203,13 @@ window.UI = (function () {
     // 面板每幾秒會重畫一次：記住玩家自己開／關的狀態，不然拉到一半會自己收起來
     var open = UI._rulesOpen != null ? UI._rulesOpen : G.state.helped < 20;
     return "<details class='rules'" + (open ? " open" : "") + "><summary>遊戲說明</summary><ul>" +
-      "<li><b>目標</b>：幫助更多亡魂。文印、托夢、送行投胎、留下當街坊、完成委託都算「幫助」。年底觀音評定，人數夠就升階。</li>" +
+      "<li><b>目標</b>：幫助更多亡魂。文印、托夢、送行投胎、留下當街坊、完成委託都算「幫助」。幫助的人數一到就升階。</li>" +
       "<li><b>亡魂</b>：搭列車來，頭上的泡泡是心願。蓋對的店，他們就會進去，心願完成就更安心。</li>" +
       "<li><b>冥紙</b> 💴：亡魂在店裡付的錢。用來蓋店、升級，每月底扣維持費。</li>" +
       "<li><b>功德</b> 🪷：做好事累積，蓋名店、擴建、托夢要用。文印一組 +30 最多；送行投胎每位 +1，先吃燒肉店的遺願馬卡龍 +6。</li>" +
       "<li><b>安心度滿</b>：兩種都算幫助一人。<b>留下當街坊</b>：多一個幫手（顧店讓店賺更多、巡守打怪），會自己蓋小屋、每年 4 月繳稅。<b>送去投胎</b>：拿功德、算進觀音評定的「投胎送行」，也空出位置給新的亡魂。</li>" +
       "<li><b>街區特徵</b>：每間店會加美味、思念、緣分……特徵夠高，劇中角色就會搬來，帶來自己的店。</li>" +
-      "<li><b>評價 ☆</b>：人氣、店數、街坊夠了，觀音巡察時升星，解鎖新建築和擴建。</li></ul></details>";
+      "<li><b>評價 ☆</b>：人氣、店數、街坊等條件全部達成就升星，解鎖新建築和擴建。觀音每季還會來巡察打分數、發功德。</li></ul></details>";
   };
   // 情報：開羅式的資料頁——位階卡、數字方塊、特徵長條圖、下一顆星進度、緣分組合卡
   var TRAIT_COL = { 美味: "#e8833a", 思念: "#4f8fd6", 緣分: "#e2557a", 儀容: "#a065c8", 藝術: "#2fa79a", 娛樂: "#e2b33a", 安心: "#5ea84a", 香火: "#c8423a", 秩序: "#7d7890", 魔氣: "#5a2a6a" };
@@ -245,7 +245,7 @@ window.UI = (function () {
     var tp = nxt ? (s.helped - (cur.helped || 0)) / Math.max(1, nxt.helped - (cur.helped || 0)) * 100 : 100;
     h += "<div class='ic-rank'>" + faceHTML("yutong", "語彤") + "<div class='ir-main'><div class='ir-top'><b>" + U.esc(cur.name || "") + "</b><span class='ir-stars'>" + stars + "</span></div>" +
       "<div class='ir-sub'>第 " + s.year + " 年 " + s.month + " 月・每週文印 " + Sim.wenyinPerWeek() + " 組（本週 " + s.pairsWeek + "）" + (s.medals ? "・勳章 " + s.medals : "") + "</div>" +
-      bar(tp, "#ff7aa0") + "<div class='ir-sub'>" + (nxt ? "升「" + U.esc(nxt.name) + "」：已幫助 " + U.fmt(s.helped) + " / " + U.fmt(nxt.helped) + " 人（年底觀音評定）" : "已經是正式月老了！") + "</div></div></div>";
+      bar(tp, "#ff7aa0") + "<div class='ir-sub'>" + (nxt ? "升「" + U.esc(nxt.name) + "」：已幫助 " + U.fmt(s.helped) + " / " + U.fmt(nxt.helped) + " 人（一到就升階）" : "已經是正式月老了！") + "</div></div></div>";
     // 數字方塊
     var tiles = [["heart", "已幫助", s.helped, "人"], ["star", "人氣", State.pop(), ""], ["lotus", "送行投胎", st.reincarnated, "位"], ["scroll", "文印", st.pairs, "組"],
       ["dream", "托夢", st.dreams, "次"], ["house", "街坊", G.residents.length, "人"], ["sword", "擊退", st.kills, "隻"], ["lantern", "街上亡魂", G.souls.length, "位"]];
@@ -257,7 +257,7 @@ window.UI = (function () {
       var v = tr[k] || 0; return "<div class='itr'><span>" + k + "</span>" + bar(v / max * 100, TRAIT_COL[k] || "#888") + "<b>" + v + "</b></div>"; }).join("") + "</div>";
     // 下一顆星
     var rp = Story.rankProgress();
-    if (rp.length) h += "<h3 class='ic-h'>下一顆星 " + Icons.html("star") + "<small>每季觀音巡察時檢查</small></h3><div class='ic-goals'>" + rp.map(function (g) {
+    if (rp.length) h += "<h3 class='ic-h'>下一顆星 " + Icons.html("star") + "<small>條件全部達成就升星</small></h3><div class='ic-goals'>" + rp.map(function (g) {
       var ok = g.cur >= g.need; return "<div class='ig" + (ok ? " ok" : "") + "'><span>" + (ok ? "✔ " : "") + g.label + "</span>" + bar(g.cur / g.need * 100, ok ? "#5ea84a" : "#e2b65a") + "<b>" + U.fmt(g.cur) + "<em>/" + U.fmt(g.need) + "</em></b></div>"; }).join("") + "</div>";
     // 緣分組合：縮圖有蓋的是彩色、沒蓋的灰色；點一下展開看要哪幾間、怎麼擺、有什麼加成
     var cb = Sim.activeCombos();
@@ -676,7 +676,7 @@ window.UI = (function () {
       (r.titleUp ? "<div class='rv-banner' style='animation-delay:" + (t0 + 0.9).toFixed(2) + "s'>升階：" + U.esc(r.titleUp) + "！</div>" : "") +
       "<div class='rv-reward' style='animation-delay:" + (t0 + 1.1).toFixed(2) + "s'>" + Icons.html("coin") + "<span>獎勵：" + U.esc(r.reward) + "</span></div>" +
       r.notes.map(function (n) { return "<p class='rv-note'>" + U.esc(n) + "</p>"; }).join("") +
-      "<p class='rv-quote'>觀音：「" + U.esc(r.comment) + "」</p><div class='btns'><button class='go' data-close>謝謝觀音</button></div></div></div></div>";
+      "<p class='rv-quote'>觀音：「" + U.esc(r.comment) + "」</p><div class='btns'><button class='go' data-close>" + U.esc(r.button || "謝謝觀音") + "</button></div></div></div></div>";
     UI.modal(h, function (m) {
       m.classList.add("rv-mode");
       // 數字從 0 跳到目標，每行出現時「叮」一聲；蓋章時放號角

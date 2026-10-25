@@ -1,6 +1,6 @@
 // 進入點：boot.js 載完資料後呼叫 HQGame.start()。
 window.HQGame = (function () {
-  var last = 0;
+  var last = 0, promoT = 0;
 
   function frame(now) {
     var real = Math.min(0.1, (now - last) / 1000 || 0);
@@ -11,6 +11,9 @@ window.HQGame = (function () {
       var dt = real * s.speed, n = Math.ceil(dt / 0.05);
       for (var i = 0; i < n; i++) Sim.update(dt / n);
     }
+    // 評價、位階：條件一到就升（每秒檢查一次）
+    promoT += real;
+    if (promoT > 1) { promoT = 0; if (s.speed > 0) Story.checkPromotions(); }
     FX.update(real);
     Render.draw();
     ExpStrip.update(real);

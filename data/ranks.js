@@ -4,7 +4,7 @@
 window.HQ = window.HQ || {};
 
 /* 街區評價 ☆1～5（DV2 草原地圖：人氣 300／1000／2200／3500／6000 ＋其他條件）
-   每季觀音評定時檢查，條件全部達成升 1 星（一次最多升 1 星）。
+   條件全部達成就升 1 星（引擎每秒檢查，Story.checkPromotions；一次升 1 星）。
    monthlyIncome＝上個月冥紙營業額（不扣維持費）；buildings＝店＋特殊建築數（不含道路、裝飾、住宅）；
    homes＝住宅棟數；residents＝街坊人數（含主要角色）；helped＝累計幫助人數；bosses＝打倒過的地圖王數。
    reward：升星當下給的東西；unlocks 只是方便顯示，真正的解鎖寫在各建築的 unlock。 */
@@ -26,7 +26,7 @@ HQ.ranks = [
     desc: "彼岸街。北境的船票寄來了。" }
 ];
 
-/* 位階：每年 12 月觀音年度評定看累計幫助人數，一次最多升一階。
+/* 位階：累計幫助人數一到就升（不用等 12 月年度評定），一次升一階。
    wenyinPerWeek＝語彤每週能做的文印組數（企劃書「一天 3 組」換算成週的節奏）。 */
 HQ.titles = [
   { name: "實習月老", helped: 0,   wenyinPerWeek: 1, growthMul: 1.0 },
