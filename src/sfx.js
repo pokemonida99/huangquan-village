@@ -3,7 +3,7 @@
 // 音效、音樂各自在設定裡可以關掉，記在 localStorage。
 window.SFX = (function () {
   var ac = null, master = null, off = false, musicOff = false, last = {};
-  var BGM_VOL = 0.6, bgm = null;   // 檔案已壓到約 -24 dB 平均，這裡是桌機／Android 再乘的倍率
+  var BGM_VOL = 0.6;   // 檔案已壓到約 -24 dB 平均，這裡是桌機／Android 再乘的倍率
   try { off = localStorage.getItem("hq-sfx-off") === "1"; musicOff = localStorage.getItem("hq-bgm-off") === "1"; } catch (e) { /* 私密模式 */ }
   function ctx() {
     if (ac) return ac;
@@ -15,15 +15,35 @@ window.SFX = (function () {
   }
   // 配樂用一般的 <audio> 直接播（不接 WebAudio）：iPhone 靜音模式下 WebAudio 會被消音，<audio> 不會，
   // 而且有 <audio> 在播，WebAudio 的音效也跟著能出聲。iPhone 不能調 audio.volume，所以檔案本身已經壓小聲。
+  // 背景音樂和評定配樂共用同一個 <audio>，換曲子時換 src：
+  // iPhone 一次只讓一個 <audio> 播，第二個一開始播第一個就會被暫停，音樂會斷斷續續
+  var SRC = { bgm: "art/audio/bgm.mp3?v=2", review: "art/audio/review.mp3" };
+  var el = null, mode = null, bgmPos = 0, rvOk = null;
+  function player(m) {
+    if (!el) {
+      el = new Audio(); el.preload = "auto"; el.setAttribute("playsinline", "");
+      el.addEventListener("error", function () { if (mode === "review") { rvOk = false; play("fanfare"); } });
+    }
+    if (mode !== m) {
+      if (mode === "bgm") bgmPos = el.currentTime || 0;   // 評定完接著原本的地方放
+      mode = m; el.src = SRC[m]; el.loop = m === "bgm";
+      if (m === "bgm" && bgmPos) el.addEventListener("loadedmetadata", function f() { el.removeEventListener("loadedmetadata", f); try { el.currentTime = bgmPos; } catch (e) { /* 忽略 */ } });
+    }
+    el.volume = BGM_VOL;
+    return el;
+  }
   function startMusic() {
     if (musicOff) return;
-    if (!bgm) { bgm = new Audio("art/audio/bgm.mp3?v=2"); bgm.loop = true; bgm.preload = "auto"; bgm.setAttribute("playsinline", ""); }
-    bgm.volume = BGM_VOL;
-    var p = bgm.play(); if (p && p.catch) p.catch(function () { /* 還沒解鎖，下次點擊再試 */ });
+    var a = player("bgm");
+    if (!a.paused) return;
+    var p = a.play(); if (p && p.catch) p.catch(function () { /* 還沒解鎖，下次點擊再試 */ });
   }
-  function stopMusic() { if (bgm) bgm.pause(); }
-  // 切到背景就停，回來再放
-  document.addEventListener("visibilitychange", function () { if (document.hidden) stopMusic(); else if (unlocked) startMusic(); });
+  function stopMusic() { if (el) el.pause(); }
+  // 切到背景就停，回來再放（評定中就接著放評定配樂）
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) stopMusic();
+    else if (unlocked && !musicOff) { if (mode === "review") { if (!el.ended) el.play().catch(function () {}); } else startMusic(); }
+  });
   // 解鎖聲音：手機上只有「手指放開」（touchend／pointerup／click）才算使用者操作，pointerdown 不算
   var unlocked = false;
   function unlock() {
@@ -34,13 +54,7 @@ window.SFX = (function () {
       // iOS：在使用者操作裡播一個極短的空白音，WebAudio 才算真的開了
       try { var b = a.createBuffer(1, 1, 22050), s = a.createBufferSource(); s.buffer = b; s.connect(a.destination); s.start(0); } catch (e) { /* 忽略 */ }
     }
-    if (!bgm || bgm.paused) startMusic();
-    // iPhone：評定配樂之後會自己開始放，要先在這次點擊裡靜音播一下再停，才算解鎖
-    if (!unlocked && !musicOff) {
-      rvMake(); rv.muted = true;
-      var pp = rv.play();
-      if (pp && pp.then) pp.then(function () { rv.pause(); rv.currentTime = 0; rv.muted = false; }).catch(function () { rv.muted = false; });
-    }
+    if (mode !== "review") startMusic();
     unlocked = true;
   }
   ["touchend", "pointerup", "click", "keydown"].forEach(function (ev) { window.addEventListener(ev, unlock, { capture: true, passive: true }); });
@@ -87,24 +101,20 @@ window.SFX = (function () {
     SOUNDS[name](now + 0.01);
   }
   // 觀音評定的配樂：art/audio/review.mp3（使用者用 Suno 做的〈A Bright Achievement〉），播的時候背景音樂暫停
-  var rv = null, rvOk = null;
-  function rvMake() { if (!rv) { rv = new Audio("art/audio/review.mp3"); rv.preload = "auto"; rv.setAttribute("playsinline", ""); rv.onerror = function () { rvOk = false; }; rv.oncanplay = function () { rvOk = true; }; } }
+  // 同一個 <audio> 換成評定配樂（這個元素已經在點擊時播過，之後換曲子不用再點）
   function reviewMusic(good) {
-    if (musicOff) { if (good) play("fanfare"); return; }
-    if (rvOk === false) { play("fanfare"); return; }
-    rvMake(); rv.muted = false;
-    if (bgm) bgm.pause();
-    rv.currentTime = 0; rv.volume = BGM_VOL;
-    var p = rv.play(); if (p && p.catch) p.catch(function () { rvOk = false; play("fanfare"); });
+    if (musicOff || rvOk === false) { if (good || rvOk === false) play("fanfare"); return; }
+    var a = player("review");
+    var p = a.play(); if (p && p.catch) p.catch(function () { rvOk = false; play("fanfare"); });
   }
-  function reviewMusicEnd() { if (rv) rv.pause(); if (unlocked) startMusic(); }
+  function reviewMusicEnd() { if (mode === "review") el.pause(); if (unlocked) startMusic(); }
   return {
     reviewMusic: reviewMusic, reviewMusicEnd: reviewMusicEnd,
     play: play,
     isOff: function () { return off; },
     musicOff: function () { return musicOff; },
     toggleMusic: function () { musicOff = !musicOff; try { localStorage.setItem("hq-bgm-off", musicOff ? "1" : ""); } catch (e) { /* 私密模式 */ } if (musicOff) stopMusic(); else startMusic(); return musicOff; },
-    debug: function () { return { ctx: ac && ac.state, unlocked: unlocked, bgm: bgm ? (bgm.paused ? "paused" : "playing") + " " + bgm.currentTime.toFixed(1) : "none", review: rv ? (rv.paused ? "paused" : "playing") + " " + rv.currentTime.toFixed(1) : "none" }; },
+    debug: function () { return { ctx: ac && ac.state, unlocked: unlocked, mode: mode, music: el ? (el.paused ? "paused" : "playing") + " " + el.currentTime.toFixed(1) : "none", audios: document.querySelectorAll("audio").length }; },
     toggle: function () { off = !off; try { localStorage.setItem("hq-sfx-off", off ? "1" : ""); } catch (e) { /* 私密模式 */ } if (!off) play("click"); return off; }
   };
 })();
