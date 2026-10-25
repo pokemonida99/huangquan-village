@@ -237,6 +237,56 @@ window.UI = (function () {
     if (!on && got === c.need.length) h += "<p class='icd-warn'>店都蓋好了，但離得太遠。把它們蓋近一點就會發動。</p>";
     return h + "</div>";
   }
+  // ---- 角色加入條件：每個條件一個小標籤，達成的打勾變綠，附目前進度 ----
+  var FLAG_TEXT = { "satan-done": "打倒撒旦" };
+  function reqItems(m, c) {
+    var s = G.state, tr = State.traits(), out = [];
+    function it(text, ok) { out.push({ t: text, ok: !!ok }); }
+    if (m.order != null && m.order > 0) {
+      var prev = D.chars.filter(function (o) { return o.movein && o.movein.order === m.order - 1 && !o.start; });
+      if (prev.length) it("排在" + prev.map(function (o) { return o.name; }).join("、") + "之後", prev.every(function (o) { return s.charsIn[o.id]; }));
+    }
+    if (m.rank != null || m.star != null) { var r = m.rank != null ? m.rank : m.star; it("評價 ☆" + r, s.star >= r); }
+    if (m.popularity != null) it("人氣 " + U.fmt(State.pop()) + "/" + U.fmt(m.popularity), State.pop() >= m.popularity);
+    if (m.helped != null) it("已幫助 " + U.fmt(s.helped) + "/" + U.fmt(m.helped), s.helped >= m.helped);
+    [].concat(m.resident || []).forEach(function (id) { var o = D.charById[id]; it((o ? o.name : id) + "入住", s.charsIn[id]); });
+    Object.keys(m.traits || {}).forEach(function (k) { it(k + " " + (tr[k] || 0) + "/" + m.traits[k], (tr[k] || 0) >= m.traits[k]); });
+    [].concat(m.building || []).forEach(function (id) { it("蓋「" + (D.bById[id] ? D.bById[id].name : id) + "」", State.hasBuilding(id)); });
+    [].concat(m.request || []).forEach(function (id) { var r = D.requests.find(function (x) { return x.id === id; }); it("完成委託「" + (r ? r.title : id) + "」", s.requests[id] && s.requests[id].st === "done"); });
+    [].concat(m.map || []).forEach(function (id) { var mp = D.maps.find(function (x) { return x.id === id; }); it("通關「" + (mp ? mp.name : id) + "」", Sim.cleared(id)); });
+    if (m.month != null) it([].concat(m.month).join("、") + " 月", [].concat(m.month).indexOf(s.month) >= 0);
+    if (m.guest) { var g = D.charById[m.guest]; it((g ? g.name : m.guest) + "來作客過", s.guests && s.guests[m.guest]); }
+    [].concat(m.flag || []).forEach(function (f) { it(FLAG_TEXT[f] || "劇情推進", s.flags && s.flags[f]); });
+    if (!out.length && c && c.movein && c.movein.order === 1) it("開場就會加入", true);
+    return out;
+  }
+  function chips(items) { return items.map(function (x) { return "<span class='cq" + (x.ok ? " ok" : "") + "'>" + (x.ok ? "✔ " : "") + U.esc(x.t) + "</span>"; }).join(""); }
+  function castRow(c, status, items, extra) {
+    return "<div class='cr" + (status ? " in" : "") + "'>" + faceHTML(c.id, c.name) + "<div class='cr-main'><div class='cr-top'><b>" + U.esc(c.name) + "</b><small>" + U.esc(c.job || "") + "</small>" +
+      (status ? "<em>" + status + "</em>" : "") + "</div>" + (status ? "" : "<div class='cr-req'>" + chips(items) + "</div>") + (extra ? "<div class='cr-extra'>" + extra + "</div>" : "") + "</div></div>";
+  }
+  function castHTML() {
+    var s = G.state, h = "";
+    var main = D.chars.filter(function (c) { return c.kind === "resident" && c.movein && c.movein.order != null && !c.start; }).sort(function (a, b) { return a.movein.order - b.movein.order; });
+    var others = D.chars.filter(function (c) { return c.kind === "resident" && c.movein && c.movein.order == null && !c.start; });
+    var guests = D.chars.filter(function (c) { return c.kind === "guest" && c.movein; });
+    function brings(c) { return c.brings && D.bById[c.brings] ? "帶來「" + U.esc(D.bById[c.brings].name) + "」" : ""; }
+    function resRow(c) { return castRow(c, s.charsIn[c.id] ? "已入住" : "", reqItems(c.movein, c), brings(c)); }
+    h += "<h4 class='cast-h'>主線（依序入住，前一位來了隔一兩週才輪到）</h4>" + main.map(resRow).join("");
+    h += "<h4 class='cast-h'>街坊（條件到就來）</h4>" + others.map(resRow).join("");
+    h += "<h4 class='cast-h'>外賓（來作客一陣子）</h4>" + guests.map(function (c) {
+      var st = s.visiting === c.id ? "作客中" : (s.guests && s.guests[c.id]) || s.charsIn[c.id] ? "來過了" : "";
+      return castRow(c, st, reqItems(c.movein, c));
+    }).join("");
+    var help = [];
+    D.maps.forEach(function (m) { (m.helpers || []).forEach(function (hp) { var c = D.charById[hp.id]; if (c) help.push({ c: c, m: m, hp: hp }); }); });
+    if (help.length) h += "<h4 class='cast-h'>巡守助陣（出征時來幫忙）</h4>" + help.map(function (x) {
+      var items = [{ t: "出征「" + x.m.name + "」", ok: Battle.mapOpen(x.m) }].concat(reqItems(x.hp.need || {}));
+      return castRow(x.c, "", items, x.hp.once ? "只幫一次" : "");
+    }).join("");
+    var open = !!UI._castOpen;
+    return "<details class='rules cast'" + (open ? " open" : "") + "><summary>角色加入條件</summary>" + h + "</details>";
+  }
   function infoHTML() {
     var s = G.state, st = s.stats, tr = State.traits(), h = "";
     // 位階卡
@@ -269,6 +319,7 @@ window.UI = (function () {
         "</div><b>" + U.esc(c.name) + (on ? "<em>發動中</em>" : "") + "</b><small>" + (on ? "加成中" : "已蓋 " + got + " / " + c.need.length + " 間") + "</small></button>";
       return card + (open ? comboDetail(c, on, got) : "");
     }).join("") + "</div>";
+    h += castHTML();
     h += UI.rulesHTML();
     return h;
   }
@@ -491,7 +542,8 @@ window.UI = (function () {
     });
     body.querySelectorAll("[data-item]").forEach(function (b) { b.onclick = function () { UI.useItem(b.dataset.item); UI.renderSheet(); }; });
     body.querySelectorAll("[data-combo]").forEach(function (b) { b.onclick = function () { SFX.play("open"); UI._comboOpen = UI._comboOpen === b.dataset.combo ? null : b.dataset.combo; UI.renderSheet(); }; });
-    body.querySelectorAll("details.rules").forEach(function (d) { d.ontoggle = function () { UI._rulesOpen = d.open; }; });
+    body.querySelectorAll("details.rules:not(.cast)").forEach(function (d) { d.ontoggle = function () { UI._rulesOpen = d.open; }; });
+    body.querySelectorAll("details.cast").forEach(function (d) { d.ontoggle = function () { UI._castOpen = d.open; }; });
     body.querySelectorAll("[data-speed]").forEach(function (b) { b.onclick = function () { G.state.speed = +b.dataset.speed; UI.renderSheet(); }; });
     body.querySelectorAll("[data-accept]").forEach(function (b) { b.onclick = function () { var r = D.requests.find(function (x) { return x.id === b.dataset.accept; }); UI.closeSheet(); Story.acceptRequest(r); UI.renderSheet(); }; });
     body.querySelectorAll("[data-act-id]").forEach(function (b) { b.onclick = function () { var a = D.activities.find(function (x) { return x.id === b.dataset.actId; }); var why = Story.doActivity(a); if (why) UI.toast(why); UI.renderSheet(); }; });

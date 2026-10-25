@@ -501,3 +501,19 @@ button.pressed, .card.pressed, .slot.pressed, button:active { transform: transla
 .icd-rule { margin: 3px 0 0; }
 .icd-rule b { display: inline-block; margin-right: 6px; padding: 0 5px; font-size: 11px; color: var(--gold2); background: var(--vred); }
 .icd-warn { margin: 6px 0 0; padding: 4px 6px; color: #7a2a10; background: #fbe2c4; border-left: 3px solid var(--vred); }
+
+/* ---- 情報：角色加入條件 ---- */
+.cast { margin-top: 8px; }
+.cast-h { margin: 10px 0 4px; padding: 2px 8px; font-size: 12.5px; color: var(--gold2); background: var(--vred); font-family: var(--serif); letter-spacing: 1px; }
+.cr { display: flex; gap: 8px; align-items: flex-start; padding: 6px 4px; border-bottom: 1px dashed #d6c39a; }
+.cr .face { width: 36px; height: 36px; flex: none; background: #f6ecd2; border-color: #c9a35a; }
+.cr-main { flex: 1; min-width: 0; }
+.cr-top { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.cr-top b { font-size: 13.5px; }
+.cr-top small { font-size: 11px; color: #8a6a4a; }
+.cr-top em { margin-left: auto; padding: 0 6px; font-style: normal; font-size: 11px; color: #fff; background: #3f7a34; }
+.cr.in { opacity: .8; }
+.cr-req { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.cq { padding: 1px 6px; font-size: 11px; color: #6a5440; background: #efe3c6; border: 1px solid #d6c39a; }
+.cq.ok { color: #2f6a2a; background: #dcefcf; border-color: #9cc68a; font-weight: 700; }
+.cr-extra { margin-top: 2px; font-size: 11px; color: #a8242e; }
