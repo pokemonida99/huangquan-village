@@ -317,7 +317,7 @@ HQ.events = [
     ],
     effect: { merit: 90 } },
 
-  { id: "baimei-worry", title: "能不能不要去",
+  { id: "baimei-worry", title: "能不能不要去", once: true,
     when: { trigger: "expedition", party: "lee", resident: "baimei", random: 0.5 },
     lines: [
       [null, "掌管黃泉燒肉店的業鏡羅漢接下護送魔界外賓的任務，生前的戀人白妹很擔心。", "字卡"],

@@ -84,7 +84,8 @@ window.Battle = (function () {
     State.addMods({ trainMul: (D.balance && D.balance.expeditionIncomeMul) || 0.8 }, B.WEEKS);
     UI.toast("🏮 出征「" + m.name + "」：" + members.map(function (r) { return r.name; }).join("、") + "　" + B.WEEKS + " 週後回來");
     Story.trigger("expedition", { party: members.map(function (r) { return r.charId; }).filter(Boolean) });
-    var intro = Story.filterLines(m.lines || [], scenePeople(m));
+    // 打過的地方是來刷關、刷資源的，不再播劇情
+    var intro = Sim.cleared(m.id) ? [] : Story.filterLines(m.lines || [], scenePeople(m));
     if (intro.length) UI.dialog({ title: "出征：" + m.name, lines: intro, present: scenePeople(m) });
     return "";
   };
