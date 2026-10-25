@@ -127,6 +127,12 @@ window.Battle = (function () {
       if (win) r.cheer(3);
     });
     if (loot.gold) { s.money += loot.gold; rw.push("冥紙 +" + loot.gold); }
+    // 出征掉禮物：打贏 1～3 個，地圖越難越容易出稀有的
+    if (win && m) {
+      var ng = 1 + Math.floor(Math.random() * 3), gotG = {};
+      for (var gi = 0; gi < ng; gi++) { var gid = Sim.randomGift(1 + m.lv / 10); Sim.addGift(gid, 1); gotG[gid] = (gotG[gid] || 0) + 1; }
+      rw.push("禮物：" + Object.keys(gotG).map(function (k) { return Sim.giftById(k).name + (gotG[k] > 1 ? "×" + gotG[k] : ""); }).join("、"));
+    }
     if (loot.merit) { s.merit += loot.merit; rw.push("功德 +" + loot.merit); }
     var after = [];
     if (win && m) {

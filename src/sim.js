@@ -266,8 +266,9 @@ window.Sim = (function () {
   }
   S.setup = function (saved) {
     MapGen.generate();
-    G.buildings = []; G.souls = []; G.residents = []; G.mobs = []; G.fx = [];
+    G.buildings = []; G.souls = []; G.residents = []; G.mobs = []; G.fx = []; G.treasures = [];
     var s = G.state;
+    s.bag = s.bag || {};   // 禮物袋 { 禮物 id: 數量 }
     s.roads.forEach(function (r) { MapGen.kind[MapGen.idx(r[0], r[1])] = r[2] != null ? r[2] : K.STONE; });
     if (!saved) {
       D.buildings.filter(function (d) { return d.fixed; }).forEach(placeFixed);
@@ -319,6 +320,7 @@ window.Sim = (function () {
       if (G.train.t > CFG.TRAIN_SEC) G.train = null;
     }
 
+    S.tickTreasure(dt);
     mobT -= dt;
     if (mobT <= 0) { mobT = 2.5; S.spawnMob(); }
 
@@ -436,6 +438,52 @@ window.Sim = (function () {
     var lv = Math.max(1, Math.round((type.lv || depth * 2) * mul));
     G.mobs.push(new Mob(p.x, p.y, type, lv, z.id));
   };
+  // ---------- 禮物 ----------
+  S.giftById = function (id) { return (HQ.gifts || []).find(function (g) { return g.id === id; }); };
+  S.addGift = function (id, n, x, y) {
+    var g = S.giftById(id); if (!g) return;
+    G.state.bag[id] = (G.state.bag[id] || 0) + (n || 1);
+    if (x != null) FX.float(x, y, "禮物：" + g.name + (g.rare ? "（稀有）" : ""), g.rare ? "#ff9ab0" : "#f3d58c", 34);
+  };
+  // 隨機掉落：rareMul 越大越容易出稀有的
+  S.randomGift = function (rareMul) {
+    var list = HQ.gifts || []; if (!list.length) return null;
+    return U.pickWeighted(list, function (g) { return (g.drop || 1) * (g.rare ? rareMul || 1 : 1); }).id;
+  };
+  // 在店裡買
+  S.buyGift = function (id) {
+    var g = S.giftById(id); if (!g || !g.shop) return "買不到";
+    if (!G.buildings.some(function (b) { return b.id === g.shop && Sim.isOpen(b); })) return "要先蓋「" + (D.bById[g.shop] ? D.bById[g.shop].name : g.shop) + "」";
+    if (G.state.money < g.cost) return "冥紙不夠";
+    G.state.money -= g.cost; S.addGift(id, 1);
+    return "";
+  };
+  // 路上的寶物：不時在路上冒出一個禮物盒，點一下撿起來（最多 3 個，放太久會消失）
+  var treasureT = 20;
+  var ROADK = {}; ROADK[K.PATH] = ROADK[K.STONE] = ROADK[K.RED] = 1;
+  S.tickTreasure = function (dt) {
+    treasureT -= dt;
+    G.treasures = (G.treasures || []).filter(function (t) { return t.until > G.time; });
+    if (treasureT > 0) return;
+    treasureT = U.rand(25, 45);
+    if (G.treasures.length >= 3) return;
+    for (var k = 0; k < 40; k++) {
+      var p = MapGen.randomWalkable(function (z) { return MapGen.zoneOpen(z); });
+      if (!p || !ROADK[MapGen.kind[MapGen.idx(p.x, p.y)]]) continue;
+      if (G.treasures.some(function (t) { return t.x === p.x && t.y === p.y; })) continue;
+      G.treasures.push({ x: p.x, y: p.y, gift: S.randomGift(1), until: G.time + CFG.WEEK_SEC * 3 });
+      return;
+    }
+  };
+  S.pickTreasure = function (tx, ty) {
+    var i = (G.treasures || []).findIndex(function (t) { return Math.abs(t.x - tx) <= 0 && Math.abs(t.y - ty) <= 0; });
+    if (i < 0) return false;
+    var t = G.treasures.splice(i, 1)[0];
+    S.addGift(t.gift, 1, t.x * T + T / 2, t.y * T + T - 2);
+    FX.spark(t.x * T + T / 2, t.y * T + T - 2, "#ffe38a", 10);
+    SFX.play("coin");
+    return true;
+  };
   S.mobKilled = function (m, r) {
     m.dead = true;
     G.state.stats.kills++; r.kills++;
@@ -443,6 +491,8 @@ window.Sim = (function () {
     r.money += m.gold;
     if (m.merit) State.addMerit(m.merit, m.px, m.py - 20);
     var chest = Math.min(0.6, 0.1 + r.luck / 500) / 3;
+    // 打怪掉禮物（福報越高越常掉）
+    if (Math.random() < 0.12 + r.luck / 800) S.addGift(S.randomGift(1 + r.luck / 60), 1, m.px, m.py - 10);
     if (Math.random() < chest) {
       var it = U.pick(["incense", "paper", "candy"]);
       G.state.items[it] = (G.state.items[it] || 0) + 1;

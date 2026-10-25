@@ -51,6 +51,7 @@ window.Input = (function () {
     if (!down.moved && Math.abs(dx) + Math.abs(dy) > 8) down.moved = true;
     if (down.moved) {
       if (UI.placing() && down.onGhost) { var w = Render.toWorld(e.clientX, e.clientY); UI.moveGhost(w.x, w.y); return; }
+      if (Render.follow) UI.unfollow();   // 自己拖地圖就停止追蹤
       Render.cam.x = down.cx - dx * Render.dpr / Render.cam.z;
       Render.cam.y = down.cy - dy * Render.dpr / Render.cam.z;
       Render.clamp();

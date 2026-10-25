@@ -335,14 +335,6 @@ window.UI = (function () {
     return "<span class='face ph'>" + U.esc((name || "?").slice(0, 1)) + "</span>";
   }
   // ---- 街坊資訊：照開羅冒險者資訊卡——小場景、滿足／勤奮度、等級經驗、能力表、送禮物 ----
-  var GIFTS = [
-    { id: "candy", name: "金平糖", cost: 60, joy: 8, fav: ["yuelao"] },
-    { id: "chicken", name: "雞胸肉", cost: 80, joy: 10, fav: ["mimi", "cat918", "gongwan"] },
-    { id: "can", name: "罐罐", cost: 80, joy: 10, fav: ["heitang"] },
-    { id: "bento", name: "燒肉便當", cost: 150, joy: 15 },
-    { id: "flower", name: "彼岸花束", cost: 300, joy: 25, fav: ["baimei"] },
-    { id: "charm", name: "紅線御守", cost: 600, joy: 40 }
-  ];
   function joyText(j) { return j >= 80 ? "超開心" : j >= 55 ? "開心" : j >= 30 ? "普通" : j >= 10 ? "有點悶" : "很低落"; }
   function joyFace(j) { return "<q class='jf jf" + (j >= 55 ? 2 : j >= 30 ? 1 : 0) + "'><u></u><u></u><s></s></q>"; }
   function residentHTML(r) {
@@ -365,10 +357,14 @@ window.UI = (function () {
     // 送禮物：點了才展開
     var open = UI._giftFor === r.uid;
     h += "<div class='btns'><button class='go rc-gift' data-act='gift' data-res='" + r.uid + "'>" + (open ? "收起禮物" : "贈送禮物") + "</button><button data-act='focus' data-res='" + r.uid + "'>追蹤</button></div>";
-    if (open) h += "<div class='gifts'>" + GIFTS.map(function (g) {
-      var fav = g.fav && r.charId && g.fav.indexOf(r.charId) >= 0, poor = G.state.money < g.cost;
-      return "<button class='gift" + (fav ? " fav" : "") + (poor ? " dis" : "") + "' data-gift='" + g.id + "' data-res='" + r.uid + "'><b>" + U.esc(g.name) + (fav ? "<em>最愛</em>" : "") + "</b><small>" + Icons.html("coin") + U.fmt(g.cost) + "　滿足 +" + (fav ? g.joy * 2 : g.joy) + "</small></button>";
-    }).join("") + "</div>";
+    if (open) {
+      var bag = G.state.bag || {}, owned = (HQ.gifts || []).filter(function (g) { return bag[g.id] > 0; });
+      if (!owned.length) h += "<p class='hint gift-hint'>禮物袋是空的。可以到店裡買（點孟婆甜食屋、薯條攤、彼岸花飾店……這些店），巡守打怪、出征打贏也會掉，路上偶爾會冒出禮物盒，點一下就能撿。</p>";
+      else h += "<div class='gifts'>" + owned.map(function (g) {
+        var fav = g.fav && r.charId && g.fav.indexOf(r.charId) >= 0;
+        return "<button class='gift" + (fav ? " fav" : "") + (g.rare ? " rare" : "") + "' data-gift='" + g.id + "' data-res='" + r.uid + "'><b>" + U.esc(g.name) + " ×" + bag[g.id] + (fav ? "<em>最愛</em>" : "") + "</b><small>滿足 +" + (fav ? g.joy * 2 : g.joy) + "</small></button>";
+      }).join("") + "</div>";
+    }
     if (c && c.lines.length) h += "<blockquote>「" + U.esc(c.lines[0].text) + "」</blockquote>";
     if (!r.charId) {
       var cur = r.jobDef();
@@ -384,12 +380,19 @@ window.UI = (function () {
     }
     return h;
   }
+  // 追蹤：鏡頭鎖定這個人並一路跟著，拖曳地圖或按「✕」就停
+  UI.follow = function (r) {
+    Render.follow = r;
+    var el = $("follow");
+    el.hidden = false; el.innerHTML = "<span>追蹤中：<b>" + U.esc(r.name) + "</b></span><button>✕</button>";
+    el.querySelector("button").onclick = function (e) { e.stopPropagation(); UI.unfollow(); };
+  };
+  UI.unfollow = function () { Render.follow = null; $("follow").hidden = true; };
   UI.giveGift = function (r, id) {
-    var g = GIFTS.find(function (x) { return x.id === id; });
-    if (!g || !r) return;
-    if (G.state.money < g.cost) { SFX.play("error"); return UI.toast("冥紙不夠"); }
+    var g = Sim.giftById(id), bag = G.state.bag || {};
+    if (!g || !r || !(bag[id] > 0)) return;
     var fav = g.fav && r.charId && g.fav.indexOf(r.charId) >= 0, add = fav ? g.joy * 2 : g.joy;
-    G.state.money -= g.cost;
+    bag[id]--;
     r.joy = Math.min(100, (r.joy || 0) + add);
     r.cheer(fav ? 4 : 2);
     FX.float(r.px, r.py, "❤ 滿足 +" + add, "#ff9ab0", 34);
@@ -459,6 +462,9 @@ window.UI = (function () {
     });
     if (!any) h += "<p class='hint'>沒有道具。街坊在外圍打怪時偶爾會撿到寶箱（看福報）。</p>";
     h += "</div>";
+    var bag = s.bag || {}, owned = (HQ.gifts || []).filter(function (g) { return bag[g.id] > 0; });
+    h += "<h3>禮物袋</h3>" + (owned.length ? "<div class='gifts'>" + owned.map(function (g) { return "<div class='gift" + (g.rare ? " rare" : "") + "'><b>" + U.esc(g.name) + " ×" + bag[g.id] + "</b><small>滿足 +" + g.joy + (g.rare ? "・稀有" : "") + "</small></div>"; }).join("") + "</div><p class='hint'>點街坊，按「贈送禮物」送出去。</p>"
+      : "<p class='hint'>還沒有禮物。到店裡買、巡守打怪或撿路上的禮物盒。</p>");
     var acts = Story.activities();
     if (acts.length) {
       h += "<h3>辦活動（花功德，這季 " + (s.activitiesQ || 0) + "/" + ((window.HQ && HQ.activityPerQuarter) || 7) + " 次）</h3><div class='cards'>";
@@ -530,6 +536,13 @@ window.UI = (function () {
       (b.combos && b.combos.length ? "<br>緣分組合：" + U.esc(b.combos.join("、")) : "") + (b.aura ? "<br>周圍裝飾 品質 +" + b.aura : "") +
       (d.serves.indexOf("tattoo") >= 0 ? "<br>等待文印 " + (b.queue ? b.queue.length : 0) + " 位・本週 " + G.state.pairsWeek + "/" + Sim.wenyinPerWeek() + " 組" : "") +
       (b.closedUntil > State.absWeek() ? "<br>⛔ 暫停營業中" : "") + "</p>";
+    var sells = (HQ.gifts || []).filter(function (g) { return g.shop === d.id; });
+    if (sells.length) {
+      h += "<h3>禮物（買來送街坊）</h3><div class='gifts'>" + sells.map(function (g) {
+        var poor = G.state.money < g.cost, n = (G.state.bag || {})[g.id] || 0;
+        return "<button class='gift" + (poor ? " dis" : "") + "' data-buy='" + g.id + "'><b>" + U.esc(g.name) + (n ? "<em class='own'>有 " + n + "</em>" : "") + "</b><small>" + Icons.html("coin") + U.fmt(g.cost) + "　滿足 +" + g.joy + "</small></button>";
+      }).join("") + "</div>";
+    }
     h += "<div class='btns'>";
     if (b.lv < d.maxLv) h += "<button data-act='upgrade'>⬆️ 升級（💴" + U.fmt(Sim.upgradeCost(b)) + (Sim.upgradeMerit(b) ? "・🪷" + Sim.upgradeMerit(b) : "") + "）</button>";
     if (b.broken) h += "<button data-act='repair'>🔧 修理（💴" + Math.round(d.cost * 0.3) + "）</button>";
@@ -585,6 +598,7 @@ window.UI = (function () {
     body.querySelectorAll("[data-combo]").forEach(function (b) { b.onclick = function () { SFX.play("open"); UI._comboOpen = UI._comboOpen === b.dataset.combo ? null : b.dataset.combo; UI.renderSheet(); }; });
     body.querySelectorAll("details.rules:not(.cast)").forEach(function (d) { d.ontoggle = function () { UI._rulesOpen = d.open; }; });
     body.querySelectorAll("details.cast").forEach(function (d) { d.ontoggle = function () { UI._castOpen = d.open; }; });
+    body.querySelectorAll("[data-buy]").forEach(function (b) { b.onclick = function () { var w = Sim.buyGift(b.dataset.buy); if (w) { SFX.play("error"); UI.toast(w); } else { SFX.play("coin"); UI.toast("買了「" + Sim.giftById(b.dataset.buy).name + "」，放進禮物袋"); } UI.renderSheet(); }; });
     body.querySelectorAll("[data-gift]").forEach(function (b) { b.onclick = function () { UI.giveGift(resById(+b.dataset.res), b.dataset.gift); UI.renderSheet(); }; });
     body.querySelectorAll("[data-speed]").forEach(function (b) { b.onclick = function () { G.state.speed = +b.dataset.speed; UI.renderSheet(); }; });
     body.querySelectorAll("[data-accept]").forEach(function (b) { b.onclick = function () { var r = D.requests.find(function (x) { return x.id === b.dataset.accept; }); UI.closeSheet(); Story.acceptRequest(r); UI.renderSheet(); }; });
@@ -603,7 +617,7 @@ window.UI = (function () {
         else if (a === "depart") { var m = D.maps.find(function (x) { return x.id === b.dataset.map; }); why = Battle.depart(m, G.residents.filter(function (r) { return party.indexOf(r.uid) >= 0; })); if (!why) { UI.closeSheet(); return; } }
         else if (a === "back") { UI.openSheet("patrol"); return; }
         else if (a === "defense") { UI.closeSheet(); Battle.defense(); return; }
-        else if (a === "focus") { var r = resById(+b.dataset.res); if (r && !r.away) { UI.closeSheet(); Render.centerOn(r.px, r.py); } return; }
+        else if (a === "focus") { var r = resById(+b.dataset.res); if (r && !r.away) { UI.closeSheet(); UI.follow(r); } else if (r) UI.toast(r.name + " 出征中，看不到"); return; }
         else if (a === "zin") Render.zoomAt(Render.cam.z + 1, innerWidth / 2, innerHeight / 2);
         else if (a === "zout") Render.zoomAt(Render.cam.z - 1, innerWidth / 2, innerHeight / 2);
         else if (a === "sfx") { SFX.toggle(); }
@@ -688,6 +702,7 @@ window.UI = (function () {
       if (place.def.cat === "road") confirmPlace();
       return;
     }
+    if (Sim.pickTreasure(tx, ty)) return;
     var he = hit && hit.e;
     // 等待抉擇的亡魂
     var soul = he && he.kind === "soul" ? he : null;

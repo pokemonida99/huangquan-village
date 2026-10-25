@@ -275,6 +275,15 @@ window.Render = (function () {
     var img = spr.img, H = img.height, W = img.width, sy = Math.max(0, Math.floor(H * (1 - e))), sh = H - sy;
     if (sh > 0) ctx.drawImage(img, 0, sy, W, sh, SX(o.x), SY(o.y + sy), W * R.cam.z, sh * R.cam.z);
   }
+  // 路上的禮物盒：紅盒金緞帶，上下跳、閃光點
+  function drawTreasure(tr, t) {
+    var c = ISO.g(tr.x + 0.5, tr.y + 0.5), bob = Math.round(Math.abs(Math.sin(t * 3 + tr.x)) * 3), x = c.x, y = c.y - 2 - bob;
+    ctx.globalAlpha = 0.25; px(x - 6, c.y - 1, 12, 3, "#1a1020"); ctx.globalAlpha = 1;
+    px(x - 6, y - 9, 12, 9, "#3a1010"); px(x - 5, y - 8, 10, 7, "#d8283a"); px(x - 5, y - 8, 10, 2, "#f05a5a");
+    px(x - 7, y - 12, 14, 4, "#3a1010"); px(x - 6, y - 11, 12, 2, "#e8404a");
+    px(x - 1, y - 12, 2, 12, "#ffd84a"); px(x - 4, y - 15, 3, 3, "#ffd84a"); px(x + 1, y - 15, 3, 3, "#ffd84a");
+    if (Math.sin(t * 5 + tr.y) > 0.6) { px(x + 6, y - 17, 2, 2, "#fff6c0"); px(x + 5, y - 16, 4, 1, "#fff6c0"); }
+  }
   function drawStanding(s) {
     var img = Assets.get("art/props/" + s.name + ".png");
     var c = ISO.g(s.x + 0.5, s.y + 0.5);
@@ -363,8 +372,18 @@ window.Render = (function () {
     return a.key - b.key;
   }
 
+  R.follow = null;
   R.draw = function () {
     var c = R.cam, t = performance.now() / 1000;
+    // 追蹤中：鏡頭平滑跟著那個人（他進店裡、出征就停在原地）
+    var f = R.follow;
+    if (f) {
+      if (G.residents.indexOf(f) < 0) { if (window.UI) UI.unfollow(); }
+      else if (!f.away) {
+        var fp = ISO.p(f.px, f.py), tx = fp.x - VW / c.z / 2, ty = fp.y - 14 - VH / c.z / 2;
+        c.x += (tx - c.x) * 0.15; c.y += (ty - c.y) * 0.15; R.clamp();
+      }
+    }
     hits = [];
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = "#1d2236"; ctx.fillRect(0, 0, VW, VH);
@@ -401,11 +420,15 @@ window.Render = (function () {
       if (!visible(p.x - 16, p.y - 40, p.x + 16, p.y + 6)) return;
       list.push({ gx: e.px / T, gy: (e.py - 14) / T, key: ISO.entKey(e.px, e.py), e: e });
     }
+    (G.treasures || []).forEach(function (tr) {
+      var p = ISO.g(tr.x + 0.5, tr.y + 0.5);
+      if (visible(p.x - 12, p.y - 24, p.x + 12, p.y + 6)) list.push({ rect: true, x0: tr.x, y0: tr.y, x1: tr.x + 1, y1: tr.y + 1, key: tr.x + tr.y + 1, tr: tr });
+    });
     G.souls.forEach(addE);
     G.residents.forEach(function (e) { if (!e.away) addE(e); });
     G.mobs.forEach(addE);
     list.sort(cmp);
-    list.forEach(function (it) { if (it.b) drawBuilding(it.b); else if (it.s) drawStanding(it.s); else drawWalker(it.e, t); });
+    list.forEach(function (it) { if (it.b) drawBuilding(it.b); else if (it.s) drawStanding(it.s); else if (it.tr) drawTreasure(it.tr, t); else drawWalker(it.e, t); });
 
     // 未開放區塊：一層霧
     var gx0 = 0, gx1 = CFG.W - 1;

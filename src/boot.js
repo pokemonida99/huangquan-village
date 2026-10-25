@@ -3,7 +3,7 @@
   window.HQ = window.HQ || {};
   var DATA_FILES = [
     "data/buildings.js", "data/jobs.js", "data/traits.js", "data/ranks.js",
-    "data/chars.js", "data/requests.js", "data/events.js", "data/calendar.js", "data/maps.js"
+    "data/chars.js", "data/requests.js", "data/events.js", "data/calendar.js", "data/maps.js", "data/gifts.js"
   ];
   var loaded = [], missing = [];
   Loading.init();
