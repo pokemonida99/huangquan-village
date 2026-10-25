@@ -49,7 +49,7 @@ window.State = (function () {
     if (G.noSave || !G.state) return false;
     var s = G.state;
     s.savedAt = Date.now();
-    s.buildings = G.buildings.map(function (b) { return { uid: b.uid, id: b.id, x: b.x, y: b.y, w: b.w, h: b.h, lv: b.lv, visits: b.visits, income: b.income, broken: b.broken || 0, closedUntil: b.closedUntil || 0 }; });
+    s.buildings = G.buildings.map(function (b) { return { uid: b.uid, id: b.id, x: b.x, y: b.y, w: b.w, h: b.h, flip: b.flip ? 1 : 0, lv: b.lv, visits: b.visits, income: b.income, broken: b.broken || 0, closedUntil: b.closedUntil || 0 }; });
     s.residents = G.residents.map(function (r) { return r.toSave(); });
     try { localStorage.setItem(keyOf(slot), JSON.stringify(s)); return true; } catch (e) { return false; }
   }

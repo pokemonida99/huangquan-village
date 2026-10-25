@@ -149,13 +149,32 @@ window.Render = (function () {
     }
   }
   // 建築要畫哪張：等角美術 > 程式方塊屋
-  function buildingSprite(def, broken) {
+  function buildingSprite(def, broken, flip) {
+    var spr = null;
     var iso = HQ.artIndex && HQ.artIndex.iso && HQ.artIndex.iso[def.id];
+    // 轉向：有 GPT 重畫的轉向圖就用（佔地寬高對調）
+    if (flip && iso && iso.turn && !broken) {
+      var ti = Assets.get(Assets.isoTurnPath(def.id));
+      if (ti) return { img: ti, w: def.size[1], h: def.size[0], ox: 0, oy: 0, art: true };
+    }
     if (iso) {
       var img = (broken && iso.damaged && Assets.get("art/iso/" + def.id + "-damaged.png")) || Assets.get(Assets.isoPath(def.id));
-      if (img) return { img: img, w: def.size[0], h: def.size[1], ox: 0, oy: 0, art: true };
+      if (img) spr = { img: img, w: def.size[0], h: def.size[1], ox: 0, oy: 0, art: true };
     }
-    return boxSprite(def);
+    if (!spr) spr = boxSprite(def);
+    return flip ? flipped(spr) : spr;
+  }
+  // 轉向：等角圖左右鏡像，剛好就是寬高對調後的樣子
+  var flipCache = new Map();
+  function flipped(spr) {
+    var f = flipCache.get(spr.img);
+    if (!f) {
+      var c = document.createElement("canvas"); c.width = spr.img.width; c.height = spr.img.height;
+      var g = c.getContext("2d"); g.translate(c.width, 0); g.scale(-1, 1); g.drawImage(spr.img, 0, 0);
+      f = { img: c, w: spr.h, h: spr.w, ox: spr.img.width - (spr.w + spr.h) * ISO.TW / 2 - spr.ox, oy: spr.oy, art: spr.art };
+      flipCache.set(spr.img, f);
+    }
+    return f;
   }
   R.buildingSprite = buildingSprite;
   // 圖的左上角（等角像素）：圖寬對齊佔地菱形，底邊對齊佔地下角
@@ -226,7 +245,8 @@ window.Render = (function () {
   }
 
   function drawBuilding(b) {
-    var spr = buildingSprite(b.def, b.broken), o = spriteOrigin(spr, b.x, b.y);
+    if (R.ghost && R.ghost.move === b) return;   // 搬遷中：原地不畫，只畫跟著手指的預覽
+    var spr = buildingSprite(b.def, b.broken, b.flip), o = spriteOrigin(spr, b.x, b.y);
     var dim = (b.broken && !(spr.art && HQ.artIndex.iso[b.def.id].damaged)) || b.closedUntil > State.absWeek();
     if (dim) ctx.filter = "brightness(55%) saturate(60%)";
     blit(spr.img, o.x, o.y);
@@ -240,7 +260,8 @@ window.Render = (function () {
     blit(img, Math.round(c.x - img.width / 2), Math.round(c.y + 5 - img.height));
   }
   function drawBuildingLabel(b) {
-    var def = b.def, spr = buildingSprite(def, b.broken), o = spriteOrigin(spr, b.x, b.y), cx = o.x + spr.img.width / 2;
+    if (R.ghost && R.ghost.move === b) return;
+    var def = b.def, spr = buildingSprite(def, b.broken, b.flip), o = spriteOrigin(spr, b.x, b.y), cx = o.x + spr.img.width / 2;
     var showName = R.showNames && def.cat !== "deco" && def.cat !== "road" && R.cam.z >= dpr * 0.6;
     if (showName) text(def.name, cx, o.y + 6, 8.5, def.cat === "special" ? "#ffe9a8" : "#ffffff");
     if (def.maxLv > 1 && b.lv > 1 && R.cam.z >= dpr * 0.6) text("Lv" + b.lv, o.x + spr.img.width - 6, o.y + spr.img.height - 10, 7.5, "#bff3ea", "right");
@@ -343,7 +364,7 @@ window.Render = (function () {
     // 建築、樹與道具、人物一起排前後
     var list = [];
     G.buildings.forEach(function (b) {
-      var spr = buildingSprite(b.def, b.broken), o = spriteOrigin(spr, b.x, b.y);
+      var spr = buildingSprite(b.def, b.broken, b.flip), o = spriteOrigin(spr, b.x, b.y);
       if (!visible(o.x, o.y, o.x + spr.img.width, o.y + spr.img.height)) return;
       list.push({ rect: true, x0: b.x, y0: b.y, x1: b.x + b.w, y1: b.y + b.h, key: b.x + b.y + b.w + b.h, b: b });
     });
@@ -442,7 +463,7 @@ window.Render = (function () {
       var sb = R.sel, pulse = 0.5 + 0.5 * Math.sin(t * 5);
       footPath(sb.x, sb.y, sb.w, sb.h); ctx.globalAlpha = 0.25 + 0.2 * pulse; ctx.fillStyle = "#ffe38a"; ctx.fill(); ctx.globalAlpha = 1;
       ctx.strokeStyle = "#ffe38a"; ctx.lineWidth = 2 * dpr; ctx.stroke();
-      var ss = buildingSprite(sb.def, sb.broken), so = spriteOrigin(ss, sb.x, sb.y);
+      var ss = buildingSprite(sb.def, sb.broken, sb.flip), so = spriteOrigin(ss, sb.x, sb.y);
       ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = 0.18 + 0.17 * pulse; blit(ss.img, so.x, so.y);
       ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
       drawArrow(so.x + ss.img.width / 2, so.y - 6 - 3 * Math.abs(Math.sin(t * 4)));
@@ -451,7 +472,7 @@ window.Render = (function () {
     // 擺放預覽
     var gh = R.ghost;
     if (gh && gh.def) {
-      var ok = MapGen.canPlace(gh.def, gh.x, gh.y), w = gh.def.size[0], h = gh.def.size[1];
+      var ok = MapGen.canPlace(gh.def, gh.x, gh.y, gh.flip, gh.move), w = gh.def.size[gh.flip ? 1 : 0], h = gh.def.size[gh.flip ? 0 : 1];
       // 可蓋的格子點點
       var tl = ISO.toWorld(vx0, vy0), br = ISO.toWorld(vx1, vy1), tr = ISO.toWorld(vx1, vy0), bl = ISO.toWorld(vx0, vy1);
       var ax0 = Math.max(0, Math.floor(Math.min(tl.x, bl.x) / T)), ax1 = Math.min(CFG.W - 1, Math.ceil(Math.max(tr.x, br.x) / T));
@@ -464,7 +485,7 @@ window.Render = (function () {
       ctx.strokeStyle = ok ? "#ffffff" : "#ffd0c8"; ctx.lineWidth = 2 * dpr; ctx.stroke(); ctx.setLineDash([]);
       var top = 0;
       if (gh.def.cat !== "road") {
-        var spr = buildingSprite(gh.def), o = spriteOrigin(spr, gh.x, gh.y);
+        var spr = buildingSprite(gh.def, false, gh.flip), o = spriteOrigin(spr, gh.x, gh.y);
         ctx.globalAlpha = 0.55 + 0.25 * gp; blit(spr.img, o.x, o.y - lift); ctx.globalAlpha = 1;
         top = o.y - lift;
         // 佔地框再描一次在建築上面，才看得到底下的格子
@@ -479,7 +500,7 @@ window.Render = (function () {
         drawChevron(e.x + vx * push * 0.3, e.y + vy * push * 0.3, vx, vy, ok);
       });
       var lp = ISO.g(gh.x + w / 2, gh.y);
-      text(gh.def.name + (ok ? "" : "（這裡不能蓋）"), (o ? o.x + spr.img.width / 2 : lp.x), top - 10, 10, ok ? "#ffffff" : "#ffd0c8");
+      text(gh.def.name + (ok ? "" : gh.move ? "（這裡放不下）" : "（這裡不能蓋）"), (o ? o.x + spr.img.width / 2 : lp.x), top - 10, 10, ok ? "#ffffff" : "#ffd0c8");
     }
   };
 

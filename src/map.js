@@ -89,11 +89,15 @@ window.MapGen = (function () {
     if (isRoad) return k === K.GRASS || k === K.FLOWER || k === K.PATH || k === K.STONE || k === K.RED;
     return k === K.GRASS || k === K.FLOWER;
   };
-  M.canPlace = function (def, x, y) {
-    var isRoad = def.cat === "road";
-    for (var dy = 0; dy < def.size[1]; dy++) for (var dx = 0; dx < def.size[0]; dx++) if (!M.canBuildTile(x + dx, y + dy, isRoad)) return false;
-    if (isRoad) return M.kind[idx(x, y)] !== M.roadKind(def);
-    return !!M.doorFor({ x: x, y: y, w: def.size[0], h: def.size[1] });
+  // flip：轉向（佔地寬高對調）；ignore：搬遷中的那棟自己佔的格子當作空的
+  M.canPlace = function (def, x, y, flip, ignore) {
+    var isRoad = def.cat === "road", w = flip ? def.size[1] : def.size[0], h = flip ? def.size[0] : def.size[1];
+    if (ignore) M.setOcc(ignore, 0);
+    var ok = true;
+    for (var dy = 0; dy < h && ok; dy++) for (var dx = 0; dx < w && ok; dx++) if (!M.canBuildTile(x + dx, y + dy, isRoad)) ok = false;
+    if (ok) ok = isRoad ? M.kind[idx(x, y)] !== M.roadKind(def) : !!M.doorFor({ x: x, y: y, w: w, h: h });
+    if (ignore) M.setOcc(ignore, ignore.uid);
+    return ok;
   };
   M.roadKind = function (def) { return def.tile === "dirt" ? K.PATH : def.tile === "redline" ? K.RED : K.STONE; };
   M.setOcc = function (b, v) {

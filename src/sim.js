@@ -89,7 +89,8 @@ window.Sim = (function () {
 
   function makeB(o) {
     var def = D.bById[o.id];
-    var b = { uid: o.uid || U.uid(), id: o.id, x: o.x, y: o.y, w: def.size[0], h: def.size[1], lv: o.lv || 1, visits: o.visits || 0, income: o.income || 0, broken: o.broken || 0, closedUntil: o.closedUntil || 0, def: def, door: null, queue: [], staffedUntil: 0 };
+    var fl = !!o.flip && !def.fixed;
+    var b = { uid: o.uid || U.uid(), id: o.id, x: o.x, y: o.y, w: def.size[fl ? 1 : 0], h: def.size[fl ? 0 : 1], flip: fl, lv: o.lv || 1, visits: o.visits || 0, income: o.income || 0, broken: o.broken || 0, closedUntil: o.closedUntil || 0, def: def, door: null, queue: [], staffedUntil: 0 };
     MapGen.setOcc(b, b.uid);
     G.buildings.push(b);
     return b;
@@ -134,10 +135,10 @@ window.Sim = (function () {
   };
   S.activeCombos = function () { return S._combos || []; };
 
-  S.place = function (def, x, y) {
+  S.place = function (def, x, y, flip) {
     var why = S.canBuild(def);
     if (why) return why;
-    if (!MapGen.canPlace(def, x, y)) return "這裡不能蓋";
+    if (!MapGen.canPlace(def, x, y, flip)) return "這裡不能蓋";
     var cost = S.costOf(def);
     G.state.money -= cost; G.state.merit -= def.merit || 0;
     if (G.state.gifts[def.id]) delete G.state.gifts[def.id];
@@ -148,7 +149,7 @@ window.Sim = (function () {
       G.state.roads.push([x, y, MapGen.kind[i]]); MapGen.redrawTile(x, y);
       return "";
     }
-    var b = makeB({ id: def.id, x: x, y: y });
+    var b = makeB({ id: def.id, x: x, y: y, flip: flip });
     // 不能把別間店的門口全部堵死
     var blocked = G.buildings.filter(function (o) { return o !== b && o.door && (o.def.cat !== "deco" || o.def.serves.length) && !MapGen.doorFor(o); });
     if (blocked.length || !MapGen.doorFor(b)) {
@@ -185,6 +186,29 @@ window.Sim = (function () {
     }
     return null;
   };
+  // 搬遷／轉向：免費，等級、營收都保留。新位置放不下、或會擋到別間門口就不動
+  S.move = function (b, x, y, flip) {
+    if (b.def.fixed) return "這棟不能搬";
+    var def = b.def;
+    if (!MapGen.canPlace(def, x, y, flip, b)) return flip !== b.flip && x === b.x && y === b.y ? "旁邊太擠，轉不過來（先搬到空一點的地方）" : "這裡放不下";
+    var old = { x: b.x, y: b.y, w: b.w, h: b.h, flip: b.flip };
+    MapGen.setOcc(b, 0);
+    b.x = x; b.y = y; b.flip = !!flip; b.w = def.size[flip ? 1 : 0]; b.h = def.size[flip ? 0 : 1];
+    MapGen.setOcc(b, b.uid);
+    var blocked = G.buildings.filter(function (o) { return o !== b && o.door && (o.def.cat !== "deco" || o.def.serves.length) && !MapGen.doorFor(o); });
+    if (blocked.length || !MapGen.doorFor(b)) {
+      MapGen.setOcc(b, 0); Object.assign(b, old); MapGen.setOcc(b, b.uid);
+      return blocked.length ? "會擋住「" + blocked[0].def.name + "」的門口" : "這裡放不下";
+    }
+    S.refreshDoors();
+    // 站在新位置上的人移到門口
+    G.souls.concat(G.residents).forEach(function (w) {
+      if (!w.hidden && w.tx >= b.x && w.tx < b.x + b.w && w.ty >= b.y && w.ty < b.y + b.h && b.door) { w.tx = b.door.x; w.ty = b.door.y; w.px = w.tx * T + T / 2; w.py = w.ty * T + T - 2; w.path = null; }
+    });
+    FX.spark((x + b.w / 2) * T, (y + b.h / 2) * T + 14, "#f3d58c", 16);
+    return "";
+  };
+  S.rotate = function (b) { return S.move(b, b.x, b.y, !b.flip); };
   S.remove = function (b) {
     if (b.def.fixed) return;
     MapGen.setOcc(b, 0);

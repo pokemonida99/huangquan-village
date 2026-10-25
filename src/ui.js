@@ -40,6 +40,7 @@ window.UI = (function () {
     $("tb-speed").onclick = UI.toggleSpeed;
     $("tb-date").onclick = UI.toggleSpeed;
     $("place-ok").onclick = confirmPlace;
+    $("place-rot").onclick = function () { if (!place) return; place.flip = !place.flip; Render.ghost.flip = place.flip; SFX.play("tick"); };
     $("place-cancel").onclick = UI.cancelPlace;
     $("dialog").addEventListener("click", advanceDialog);
     setInterval(UI.refreshTop, 250);
@@ -492,7 +493,7 @@ window.UI = (function () {
     h += "<div class='btns'>";
     if (b.lv < d.maxLv) h += "<button data-act='upgrade'>⬆️ 升級（💴" + U.fmt(Sim.upgradeCost(b)) + (Sim.upgradeMerit(b) ? "・🪷" + Sim.upgradeMerit(b) : "") + "）</button>";
     if (b.broken) h += "<button data-act='repair'>🔧 修理（💴" + Math.round(d.cost * 0.3) + "）</button>";
-    if (!d.fixed) h += "<button data-act='remove' class='danger'>拆除</button>";
+    if (!d.fixed) h += "<button data-act='rotate'>轉向</button><button data-act='move'>搬遷</button><button data-act='remove' class='danger'>拆除</button>";
     h += "</div>";
     return h;
   }
@@ -553,6 +554,8 @@ window.UI = (function () {
         var a = b.dataset.act, why = "";
         if (a === "upgrade") why = Sim.upgrade(sheetArg);
         else if (a === "repair") why = Sim.repair(sheetArg);
+        else if (a === "rotate") { var rw = Sim.rotate(sheetArg); if (rw) { SFX.play("error"); UI.toast(rw); } else { SFX.play("place"); UI.renderSheet(); } return; }
+        else if (a === "move") { UI.startMove(sheetArg); return; }
         else if (a === "remove") { if (confirm("拆除「" + sheetArg.def.name + "」？不會退錢。")) { Sim.remove(sheetArg); UI.closeSheet(); return; } }
         else if (a === "expand") { why = Sim.expand(sheetArg); if (!why) { UI.closeSheet(); return; } }
         else if (a === "depart") { var m = D.maps.find(function (x) { return x.id === b.dataset.map; }); why = Battle.depart(m, G.residents.filter(function (r) { return party.indexOf(r.uid) >= 0; })); if (!why) { UI.closeSheet(); return; } }
@@ -577,24 +580,45 @@ window.UI = (function () {
 
   // ---------- 擺放模式 ----------
   UI.placing = function () { return !!place; };
+  function gw() { return place.def.size[place.flip ? 1 : 0]; }
+  function gh() { return place.def.size[place.flip ? 0 : 1]; }
   UI.startPlace = function (def) {
     $("sheet").hidden = true; sheetKind = null;
     var c = Render.toWorld(innerWidth / 2, innerHeight / 2);
-    place = { def: def };
-    Render.ghost = { def: def, x: Math.floor(c.x / T) - Math.floor((def.size[0] - 1) / 2), y: Math.floor(c.y / T) - Math.floor((def.size[1] - 1) / 2) };
+    place = { def: def, flip: false };
+    Render.ghost = { def: def, flip: false, x: Math.floor(c.x / T) - Math.floor((def.size[0] - 1) / 2), y: Math.floor(c.y / T) - Math.floor((def.size[1] - 1) / 2) };
     $("placebar").hidden = false;
-    $("place-label").innerHTML = U.esc(def.name) + "　" + Icons.html("coin") + " " + U.fmt(Sim.costOf(def)) + "<small>按住建築拖曳，換到想要的位置</small>";
+    $("place-label").innerHTML = U.esc(def.name) + "　" + Icons.html("coin") + " " + U.fmt(Sim.costOf(def)) + "<small>按住建築拖曳換位置，「轉向」換方向</small>";
+    $("place-ok").textContent = "建造";
     $("place-ok").hidden = def.cat === "road";
+    $("place-rot").hidden = def.cat === "road";
+  };
+  // 搬遷：原本那棟跟著手指走，確定才真的搬（免費，等級營收都保留）
+  UI.startMove = function (b) {
+    UI.closeSheet();
+    place = { def: b.def, flip: !!b.flip, move: b };
+    Render.ghost = { def: b.def, flip: !!b.flip, move: b, x: b.x, y: b.y };
+    Render.sel = null;
+    $("placebar").hidden = false;
+    $("place-label").innerHTML = "搬遷「" + U.esc(b.def.name) + "」<small>按住建築拖曳到新位置，「轉向」換方向，免費</small>";
+    $("place-ok").textContent = "搬到這裡";
+    $("place-ok").hidden = false; $("place-rot").hidden = false;
   };
   UI.moveGhost = function (wx, wy) {
     if (!place) return;
-    Render.ghost.x = Math.floor(wx / T) - Math.floor((place.def.size[0] - 1) / 2);
-    Render.ghost.y = Math.floor(wy / T) - Math.floor((place.def.size[1] - 1) / 2);
+    Render.ghost.x = Math.floor(wx / T) - Math.floor((gw() - 1) / 2);
+    Render.ghost.y = Math.floor(wy / T) - Math.floor((gh() - 1) / 2);
   };
-  UI.ghostHit = function (w) { var g = Render.ghost; if (!g || !place) return false; var tx = Math.floor(w.x / T), ty = Math.floor(w.y / T); return tx >= g.x && ty >= g.y && tx < g.x + place.def.size[0] && ty < g.y + place.def.size[1]; };
+  UI.ghostHit = function (w) { var g = Render.ghost; if (!g || !place) return false; var tx = Math.floor(w.x / T), ty = Math.floor(w.y / T); return tx >= g.x && ty >= g.y && tx < g.x + gw() && ty < g.y + gh(); };
   function confirmPlace() {
     if (!place) return;
-    var g = Render.ghost, why = Sim.place(place.def, g.x, g.y);
+    var g = Render.ghost;
+    if (place.move) {
+      var mw = Sim.move(place.move, g.x, g.y, place.flip);
+      if (mw) { SFX.play("error"); return UI.toast(mw); }
+      SFX.play("place"); UI.cancelPlace(); return;
+    }
+    var why = Sim.place(place.def, g.x, g.y, place.flip);
     if (why) { SFX.play("error"); return UI.toast(why); }
     SFX.play("place");
     var def = place.def;

@@ -16,6 +16,8 @@ window.Assets = (function () {
   }
   // 等角建築圖的路徑（index.json 有 v 就加版本號，換圖後手機才不會用舊快取）
   function isoPath(id) { var e = HQ.artIndex && HQ.artIndex.iso && HQ.artIndex.iso[id]; return "art/iso/" + id + ".png" + (e && e.v ? "?v=" + e.v : ""); }
+  // 轉向圖（GPT 照鏡像重畫、招牌字是正的）：沒有就由 Render 直接鏡像
+  function isoTurnPath(id) { var e = HQ.artIndex && HQ.artIndex.iso && HQ.artIndex.iso[id]; return e && e.turn ? "art/iso/" + id + "-r.png?v=" + e.turn : null; }
   // 讀取畫面用：目前排隊的圖載完幾張（失敗也算完成）
   function progress() { var t = 0, d = 0; for (var k in imgs) { t++; if (imgs[k].done) d++; } return { done: d, total: t }; }
   function get(path) { var e = imgs[path]; return e && e.ok ? e.img : null; }
@@ -26,7 +28,7 @@ window.Assets = (function () {
     PROPS.forEach(function (p) { load("art/props/" + p + ".png"); });
     // 等角建築圖（art/iso/index.json 列出的才有；沒有的建築由 Render 程式畫方塊屋）
     var iidx = (HQ.artIndex && HQ.artIndex.iso) || {};
-    Object.keys(iidx).forEach(function (id) { if (id[0] !== "_") { load(isoPath(id)); if (iidx[id].damaged) load("art/iso/" + id + "-damaged.png"); } });
+    Object.keys(iidx).forEach(function (id) { if (id[0] !== "_") { load(isoPath(id)); if (iidx[id].turn) load(isoTurnPath(id)); if (iidx[id].damaged) load("art/iso/" + id + "-damaged.png"); } });
     if (iidx._train) { load("art/iso/train-loco.png"); load("art/iso/train-car.png"); }
     var cidx = HQ.artIndex && HQ.artIndex.chars;
     function tryChar(path, id) { if (cidx && !cidx[id]) return; load(path); }
@@ -55,5 +57,5 @@ window.Assets = (function () {
     return null;
   }
 
-  return { load: load, get: get, progress: progress, isoPath: isoPath, init: init, face: face, mobSprite: mobSprite };
+  return { load: load, get: get, progress: progress, isoPath: isoPath, isoTurnPath: isoTurnPath, init: init, face: face, mobSprite: mobSprite };
 })();

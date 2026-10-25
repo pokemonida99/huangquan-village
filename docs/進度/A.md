@@ -128,3 +128,5 @@ cd /Users/sh/Documents/CLAUDE/0702/huangquan-village && python3 -m http.server 4
 - 評價（星）與位階改成條件一到就升（main.js 每秒呼叫 Story.checkPromotions），觀音現身祝賀、用評定畫面顯示升級與解鎖；季度評定仍照常打分數發功德。
 - 已通關的巡守地出征時不再播開場劇情（通關後的劇情本來就只播第一次）；白妹擔心業鏡羅漢出征的事件改成只發生一次。
 - 情報頁新增「角色加入條件」（可收合，記住開關）：主線、街坊、外賓、巡守助陣，每個條件是小標籤，達成變綠並顯示目前進度。
+- 建築轉向與搬遷：建築資訊多「轉向」「搬遷」按鈕（免費，等級營收保留）；擺放／搬遷模式的工具列有「轉向」。轉向＝等角圖左右鏡像＋佔地寬高對調（b.flip，存檔有存）；MapGen.canPlace 多 flip、ignore 參數；固定建築不能動。
+- 轉向圖：tools/iso_turn.sh 把等角原圖鏡像後請 GPT 重畫（附原圖讓招牌字照抄、不可反字），iso_import.py 用 <id>-r 匯入，index.json 記 turn 版本；Render 轉向時優先用 -r 圖，沒有才鏡像。
